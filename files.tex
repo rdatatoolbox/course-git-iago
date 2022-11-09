@@ -1,0 +1,92 @@
+% Draw something looking like a files hierarchy.
+% Not everything is possible yet, but it's maybe useful at least.
+\tikzmath{
+  \FileNameScale = 1.9;
+  \FileSpacing = 3;
+  \IconSize = 14;
+}
+\tikzset{file icon/.style={
+  line width=1.5,
+  rounded corners,
+  line cap=round,
+  every path/.style={fill=#1},
+}}
+
+% Pad icons to given width.
+\newcommand{\FileIconFrame}{\path[fill=none] (0, 0) rectangle (\IconSize, 0);}
+
+% Folder icon.
+\newsavebox{\FolderBox}
+\savebox{\FolderBox}{\tikz[file icon=Orange2]{
+  \FileIconFrame
+  \draw (0, 0) rectangle (0.4*\IconSize, .75*\IconSize);
+  \draw (0, 0) rectangle (0.85*\IconSize, .65*\IconSize);
+  \begin{scope}[cm={1, 0, .25, .85, (0, 0)}] % Transformation matrix.
+    \draw (0, 0) rectangle (0.85*\IconSize, .65*\IconSize);
+  \end{scope}
+}}
+\newcommand{\Folder}{\usebox{\FolderBox}}
+
+% File icon.
+\newsavebox{\FileBox}
+\savebox{\FileBox}{\tikz[file icon=Light2]{{
+  \FileIconFrame
+  \tikzmath{
+    \W = .7*\IconSize;
+    \H = .9*\IconSize;
+    \o = .15*\IconSize; % horizontal offset
+    \n = 4;   % number of lines
+    \s = 2; % lines shortening
+    \h = \H / (\n + 1); % lines spacing
+  }
+  \draw (\o, 0) rectangle (\W+\o, \H);
+  \foreach \i in {1,...,\n} {%
+    \draw (\o+\s, \i*\h) -- (\W+\o-\s, \i*\h);
+  }
+}}}
+\newcommand{\File}{\usebox{\FileBox}}
+
+\makeatletter
+
+% Label file or folder with a name.
+\define@boolkey{NameFile}[]{file}[true]{}
+\define@boolkey{NameFile}[]{folder}[true]{}
+\NewDocumentCommand{\Name}{ O{file} m m }{{
+  \setkeys{NameFile}{#1}
+  \node[anchor=base west, scale=\FileNameScale]
+    at ($(#2.south east) + (3, \iffile 5\fi\iffolder 3\fi)$)
+    {\tt #3\iffolder /\fi};
+}}
+
+% Step into folder hierarchy.
+\define@boolkey{FirstChild}[]{file}[true]{}
+\define@boolkey{FirstChild}[]{folder}[true]{}
+\NewDocumentCommand{\FirstChild}{ O{file} O{child} m m }{{
+  \setkeys{FirstChild}{#1};
+  \node[below=\FileSpacing of #3.south east, anchor=north west] (#2) {%
+    \iffolder\Folder\fi\iffile\File\fi};
+  \Name[#1]{#2}{#4};
+  \coordinate (#2-parent-slot) at ($(#3.south) + (-1, -2)$);
+  \coordinate (#2-slot) at ($(#2.west) + (-2, -2)$);
+  \coordinate (#2-branch) at (#2-parent-slot |- #2-slot);
+  \draw[file tree line] (#2-parent-slot) -- (#2-branch) -- (#2-slot);
+}}
+
+% Append a new item to the current folder.
+\define@boolkey{AppendSibling}[]{file}[true]{}
+\define@boolkey{AppendSibling}[]{folder}[true]{}
+\define@boolkey{AppendSibling}[]{connect}[true]{}
+\NewDocumentCommand{\AppendSibling}{ O{file} O{sibling} m m }{{
+  \setkeys{AppendSibling}{#1};
+  \node[below=\FileSpacing of #3.south, anchor=north] (#2) {%
+    \iffolder\Folder\fi\iffile\File\fi};
+  \Name[\iffile file\fi\iffolder folder\fi]{#2}{#4};
+  \ifconnect
+    \coordinate (#2-sibling-slot) at (#3-branch);
+    \coordinate (#2-slot) at ($(#2.west) + (-2 ,-2)$);
+    \coordinate (#2-branch) at (#2-sibling-slot |- #2-slot);
+    \draw[file tree line] (#2-sibling-slot) -- (#2-branch) -- (#2-slot);
+  \fi
+}}
+
+\makeatother

@@ -11,6 +11,7 @@
 \usepackage{mathptmx}
 \usepackage[T1]{fontenc}
 
+\usepackage{xkeyval}
 \usepackage{tikz}%
   \usetikzlibrary{math}
   \usetikzlibrary{positioning}
@@ -19,6 +20,7 @@
   x=1mm,
   y=1mm,
   inner sep=0,
+  file tree line/.style={line width=1.5, line cap=round},
 }%
 
 \input{palette}
@@ -39,6 +41,8 @@
 \newcommand{\TitleText}{Title}
 \newcommand{\SubTitleText}{Subtitle}
 \newcommand{\PageNumText}{99}
+
+\input{files}
 
 \begin{document}
 
@@ -81,6 +85,17 @@
   \coordinate (offset) at (\CanvasMargin, \CanvasMargin);
   \node[anchor=south west] at (offset) (Canvas) {\tikz{
     \path (offset) rectangle ($(TitleBar.south east) - (offset)$);}};
+
+  \node[anchor=north west] (A) at (Canvas.north west) {\Folder};
+  \Name[folder]{A}{folder\_name}
+  \AppendSibling[file][B]{A}{filename.ext}
+  \AppendSibling[folder][C]{B}{container}
+
+  \FirstChild[file][D]{C}{contained.ext}
+  \AppendSibling[file, connect][E]{D}{other.ext}
+  \AppendSibling[folder, connect][F]{E}{subcontainer}
+
+  \FirstChild[file]{F}{inner.ext}
 
 \end{tikzpicture}
 
