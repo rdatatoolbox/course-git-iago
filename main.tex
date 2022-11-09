@@ -12,6 +12,7 @@
 \usepackage[T1]{fontenc}
 
 \usepackage{xkeyval}
+\usepackage{etoolbox}
 \usepackage{tikz}%
   \usetikzlibrary{math}
   \usetikzlibrary{positioning}
@@ -43,11 +44,15 @@
 \newcommand{\PageNumText}{99}
 
 \input{files}
+\input{diff}
 
 \begin{document}
 
 
 \begin{tikzpicture}
+
+  \pgfdeclarelayer{background}
+  \pgfsetlayers{background, main}
 
   % Set off global structure first.
 
@@ -96,6 +101,14 @@
   \AppendSibling[folder, connect][F]{E}{subcontainer}
 
   \FirstChild[file]{F}{inner.ext}
+
+  \coordinate (top) at ($(Canvas.center)!.5!(Canvas.north)$);
+
+  \FileContent[+]{$(Canvas.center)!.5!(Canvas.north)$}{Filename.ext}{
+    +/{First line in the file, added style.},
+    0/{Second line, neutral style},
+    -/{Third line, removed style}
+  }
 
 \end{tikzpicture}
 
