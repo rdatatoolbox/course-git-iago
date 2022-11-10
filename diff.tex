@@ -9,11 +9,16 @@
   \CodeLineSpacing = 6;
   \SignOffset = 3;
 }
+\colorlet{plus}{Green5}
+\colorlet{minus}{Red5}
+\colorlet{unchanged}{black}
+\colorlet{modified}{Orange3}
 \tikzset{
   sign icon/.style={line width=2.0},
-  +/.style={Green5},
-  -/.style={Red5},
-  0/.style={},
+  +/.style={plus},
+  -/.style={minus},
+  0/.style={unchanged},
+  m/.style={modified},
 }
 
 % Plus icon.
@@ -33,6 +38,23 @@
   \draw (-\SignRadius, 0) -- (\SignRadius, 0);
 }}
 \newcommand{\Minus}{\usebox{\MinusBox}}
+
+% Tilde icon.
+\newsavebox{\TildeBox}
+\savebox{\TildeBox}{\tikz[sign icon, baseline={(0, \SignBaseHeight)}]{
+  \path (0, -\SignRadius) -- (0, \SignRadius);
+  \tikzmath{
+    \d = .2*\SignRadius;
+    \a = 50;
+    \l = 1.5*\SignRadius;
+  }
+  \coordinate (start) at (-\SignRadius, -\d);
+  \coordinate (end) at  (\SignRadius, \d);
+  \draw[m] (start)
+        .. controls ($(start) + (\a:\l)$) and ($(end) + (180+\a:\l)$)
+        .. (end);
+}}
+\newcommand{\Tilde}{\usebox{\TildeBox}}
 
 \NewDocumentCommand{\FileContent}{ O{0} m m m }{
   % Not exactly the corner we expect, but at least the one of first line.
@@ -73,14 +95,15 @@
   \draw (lower) -- (lower |- upper) -- (upper) -- (upper |- lower);
   \ifstrequal{#1}{0}{}{%
     \node[anchor=base east] at ($(filename.base west) + (-\SignOffset, .5)$)
-      {\ifstrequal{#1}{+}{\Plus}{\Minus}};
+      {\ifstrequal{#1}{m}{\Tilde}{\ifstrequal{#1}{+}{\Plus}{\Minus}}};
   }
 
   % Second pass to append diff signs.
   \foreach \sign/\line [count=\i] in {#4} {
     \node[left=\SignOffset of line-\i.base west, anchor=base east]
-      {\ifdefstring{\sign}{+}{\Plus}{%
-        \ifdefstring{\sign}{-}{\Minus}{}}};
+      {\ifdefstring{\sign}{m}{\Tilde}
+      {\ifdefstring{\sign}{+}{\Plus}
+      {\ifdefstring{\sign}{-}{\Minus}{}}}};
   }
 
 }

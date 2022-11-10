@@ -61,23 +61,24 @@
 \renewcommand{\Progress}{2/3}
 \Step{
 
-  \node[anchor=north west] (A) at (Canvas.north west) {\Folder};
-  \Name[folder]{A}{folder\_name}
-  \AppendSibling[file][B]{A}{filename.ext}
-  \AppendSibling[folder][C]{B}{container}
+  \node[anchor=north west] (A) at (Canvas.north west) {\Folder[m]};
+  \NameFile[folder, mode=m]{A}{folder\_name}
+  \AppendSibling[file]{A}{B}{filename.ext}
+  \AppendSibling[folder]{B}{C}{container}
 
-  \FirstChild[file][D]{C}{contained.ext}
-  \AppendSibling[file, connect][E]{D}{other.ext}
-  \AppendSibling[folder, connect][F]{E}{subcontainer}
+  \FirstChild[file, mod=+]{C}{D}{contained.ext}
+  \AppendSibling[file, connect]{D}{E}{other.ext}
+  \AppendSibling[folder, connect, last, mod=-]{E}{F}{subcontainer}
 
-  \FirstChild[file]{F}{inner.ext}
+  \FirstChild[file, last, mod=-]{F}{G}{inner.ext}
 
   \coordinate (top) at ($(Canvas.center)!.5!(Canvas.north)$);
 
   \FileContent[+]{$(Canvas.center)!.5!(Canvas.north)$}{Filename.ext}{
     +/{First line in the file, added style.},
     0/{Second line, neutral style},
-    -/{Third line, removed style}
+    -/{Third line, removed style},
+    m/{Fourth line, modified style}
   }
 
   \coordinate (tp) at ($(Canvas.south)!.5!(Canvas.south west)$);

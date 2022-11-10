@@ -5,31 +5,36 @@
   \FileSpacing = 3;
   \IconSize = 14;
 }
-\tikzset{file icon/.style={
+\tikzset{file icon/.style 2 args={
   line width=1.5,
   rounded corners,
   line cap=round,
-  every path/.style={fill=#1},
-}}
+  every path/.style={fill=#1, draw=#2},
+  },
+  file icon +/.style={file icon={#1}{plus}},
+  file icon -/.style={file icon={#1}{minus}},
+  file icon 0/.style={file icon={#1}{unchanged}},
+  file icon m/.style={file icon={#1}{modified}},
+}
 
 % Pad icons to given width.
-\newcommand{\FileIconFrame}{\path[fill=none] (0, 0) rectangle (\IconSize, 0);}
+\newcommand{\FileIconFrame}{\path[fill=none, draw=none] (0, 0)
+  rectangle (\IconSize, 0);}
 
 % Folder icon.
-\newsavebox{\FolderBox}
-\savebox{\FolderBox}{\tikz[file icon=Orange2]{
+\NewDocumentCommand{\Folder}{ O{0} }{%
+\tikz[file icon #1={Orange2}, baseline={(0,.35*\IconSize)}]{
   \FileIconFrame
-  \draw (0, 0) rectangle (0.4*\IconSize, .75*\IconSize);
-  \draw (0, 0) rectangle (0.85*\IconSize, .65*\IconSize);
+  \path (0, 0) rectangle (0.4*\IconSize, .75*\IconSize);
+  \path (0, 0) rectangle (0.85*\IconSize, .65*\IconSize);
   \begin{scope}[cm={1, 0, .25, .85, (0, 0)}] % Transformation matrix.
-    \draw (0, 0) rectangle (0.85*\IconSize, .65*\IconSize);
+    \path (0, 0) rectangle (0.85*\IconSize, .65*\IconSize);
   \end{scope}
 }}
-\newcommand{\Folder}{\usebox{\FolderBox}}
 
 % File icon.
-\newsavebox{\FileBox}
-\savebox{\FileBox}{\tikz[file icon=Light2]{{
+\NewDocumentCommand{\File}{ O{0} }{%
+\tikz[file icon #1={Light2}, baseline={(0,.45*\IconSize)}]{{
   \FileIconFrame
   \tikzmath{
     \W = .7*\IconSize;
@@ -39,53 +44,74 @@
     \s = 2; % lines shortening
     \h = \H / (\n + 1); % lines spacing
   }
-  \draw (\o, 0) rectangle (\W+\o, \H);
+  \path (\o, 0) rectangle (\W+\o, \H);
   \foreach \i in {1,...,\n} {%
-    \draw (\o+\s, \i*\h) -- (\W+\o-\s, \i*\h);
+    \path (\o+\s, \i*\h) -- (\W+\o-\s, \i*\h);
   }
 }}}
-\newcommand{\File}{\usebox{\FileBox}}
 
 \makeatletter
 
 % Label file or folder with a name.
+% [keys]{icon-location}{filename}
 \define@boolkey{NameFile}[]{file}[true]{}
 \define@boolkey{NameFile}[]{folder}[true]{}
-\NewDocumentCommand{\Name}{ O{file} m m }{{
+\define@cmdkey{NameFile}[]{mode}[0]{}
+\presetkeys{NameFile}{mode}{}
+\NewDocumentCommand{\NameFile}{ O{file} m m }{{
   \setkeys{NameFile}{#1}
-  \node[anchor=base west, scale=\FileNameScale]
+  \node[anchor=base west, scale=\FileNameScale, \mode] (file-label)
     at ($(#2.south east) + (3, \iffile 5\fi\iffolder 3\fi)$)
-    {\tt #3\iffolder /\fi};
+    {\tt#3\iffolder/\fi};
+  \edef\mode{\mode} % For some reason :\
+  \ifdefstring{\mode}{0}{}{
+    \node[anchor=base west, right=\SignOffset of file-label]
+      {\ifdefstring{\mode}{m}{\Tilde}
+      {\ifdefstring{\mode}{+}{\Plus}
+      {\ifdefstring{\mode}{-}{\Minus}
+      {[\mode]}}}};}
 }}
 
 % Step into folder hierarchy.
+% [keys]{parent-icon-location}{name}{filename}
 \define@boolkey{FirstChild}[]{file}[true]{}
 \define@boolkey{FirstChild}[]{folder}[true]{}
-\NewDocumentCommand{\FirstChild}{ O{file} O{child} m m }{{
-  \setkeys{FirstChild}{#1};
-  \node[below=\FileSpacing of #3.south east, anchor=north west] (#2) {%
-    \iffolder\Folder\fi\iffile\File\fi};
-  \Name[#1]{#2}{#4};
-  \coordinate (#2-parent-slot) at ($(#3.south) + (-1, -2)$);
-  \coordinate (#2-slot) at ($(#2.west) + (-2, -2)$);
-  \coordinate (#2-branch) at (#2-parent-slot |- #2-slot);
-  \draw[file tree line] (#2-parent-slot) -- (#2-branch) -- (#2-slot);
+\define@boolkey{FirstChild}[]{last}[true]{}
+\define@cmdkey{FirstChild}[]{mod}[0]{} % for some reason recurses with NameFile@mode
+\presetkeys{FirstChild}{mod}{}
+\NewDocumentCommand{\FirstChild}{ O{file} m m m }{{
+  \setkeys{FirstChild}{#1}
+  \def\name{#3}
+  \node[below=\FileSpacing of #2.south east, anchor=north west] (\name) {%
+    \iffolder\Folder[\mod]\fi\iffile\File[\mod]\fi};
+  \NameFile[\iffolder folder\fi\iffile file\fi, mode=\mod]{\name}{#4}
+  \coordinate (\name-parent-slot) at ($(#2.south) + (-1, -2)$);
+  \coordinate[left=2 of \name.base west] (\name-slot);
+  \coordinate (\name-branch) at (\name-parent-slot |- \name-slot);
+  \draw[file tree line, \iflast\mod\fi] (\name-parent-slot) -- (\name-branch);
+  \draw[file tree line, \mod] (\name-branch) -- (\name-slot);
 }}
 
 % Append a new item to the current folder.
+% [keys]{parent-icon-location}{name}{filename}
 \define@boolkey{AppendSibling}[]{file}[true]{}
 \define@boolkey{AppendSibling}[]{folder}[true]{}
+\define@boolkey{AppendSibling}[]{last}[true]{}
 \define@boolkey{AppendSibling}[]{connect}[true]{}
-\NewDocumentCommand{\AppendSibling}{ O{file} O{sibling} m m }{{
-  \setkeys{AppendSibling}{#1};
-  \node[below=\FileSpacing of #3.south, anchor=north] (#2) {%
-    \iffolder\Folder\fi\iffile\File\fi};
-  \Name[\iffile file\fi\iffolder folder\fi]{#2}{#4};
+\define@cmdkey{AppendSibling}[]{mod}[0]{}
+\presetkeys{AppendSibling}{mod}{}
+\NewDocumentCommand{\AppendSibling}{ O{file} m m m }{{
+  \setkeys{AppendSibling}{#1}
+  \def\name{#3}
+  \node[below=\FileSpacing of #2.south, anchor=north] (\name)
+    {\iffolder\Folder[\mod]\fi\iffile\File[\mod]\fi};
+  \NameFile[\iffile file\fi\iffolder folder\fi, mode=\mod]{\name}{#4}
   \ifconnect
-    \coordinate (#2-sibling-slot) at (#3-branch);
-    \coordinate (#2-slot) at ($(#2.west) + (-2 ,-2)$);
-    \coordinate (#2-branch) at (#2-sibling-slot |- #2-slot);
-    \draw[file tree line] (#2-sibling-slot) -- (#2-branch) -- (#2-slot);
+    \coordinate (\name-sibling-slot) at (#2-branch);
+    \coordinate[left=2 of \name.base west] (\name-slot);
+    \coordinate (\name-branch) at (\name-sibling-slot |- \name-slot);
+    \draw[file tree line, \iflast\mod\fi] (\name-sibling-slot) -- (\name-branch);
+    \draw[file tree line, \mod] (\name-branch) -- (\name-slot);
   \fi
 }}
 
