@@ -17,12 +17,19 @@
   \usetikzlibrary{math}
   \usetikzlibrary{positioning}
   \usetikzlibrary{calc}
+  \usetikzlibrary{arrows.meta}
 \tikzset{
   x=1mm,
   y=1mm,
   inner sep=0,
   file tree line/.style={line width=1.5, line cap=round},
-}%
+  % https://tex.stackexchange.com/a/447931/72679
+  local to/.style={
+      shift={(#1.center)},
+      x={(#1.east)},
+      y={(#1.north)},
+  }
+}
 
 \input{palette}
 
@@ -45,6 +52,7 @@
 
 \input{files}
 \input{diff}
+\input{commits}
 
 \begin{document}
 
@@ -109,6 +117,17 @@
     0/{Second line, neutral style},
     -/{Third line, removed style}
   }
+
+  \coordinate (tp) at ($(Canvas.south)!.5!(Canvas.south west)$);
+  \Commits{$(tp) + (0, 15)$}{%
+    hash256/{Commit message.},
+    dbc41a4/{Second commit.},
+    9f1d6da/{Third commit with a longer message.},
+    0c4381c/{Latest commit, with the branch and HEAD.}
+  }
+
+  \Branch{0c4381c}{40:20}{-.5,0}{main}
+  \Head{9f1d6da}{155:20}{.5,0}
 
 \end{tikzpicture}
 

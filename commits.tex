@@ -1,0 +1,102 @@
+% Draw something looking like a git network.
+
+\tikzmath{
+  \CommitRadius = 3;
+  \CommitScale = 2.0;
+  \CommitMargins = 5;
+  \CommitBaseHeight = -2;
+  \CommitSpacing = 10;
+  \LabelIsep = 2;
+  % Trig magic to shape the C.ommit A.rrow so it's evenly thick.
+  \CAW = 1.2; % Thickness
+  \CAS = 2; % Shorten to not touch commits.
+  \CAH = 4; % Head height.
+  \CAR = 1.5*\CommitRadius; % Head spread.
+  \CAT = \CommitSpacing - 2 * \CAS; % Total arrow tip height.
+  \CAC = \CAW * (-4 * \CAH * \CAW + \CAR * sqrt(4*\CAH^2+\CAR^2-4*\CAW^2))
+         / (\CAR^2-4*\CAW^2);
+  \CAA = asin(\CAW / \CAC); % Angle to vertical.
+  \CAB = (\CAR - \CAW) / (2 * tan(\CAA)); % Roof-height under the head.
+}
+\tikzset{
+  commit/.style={line width=2.0, fill=Orange3, draw=Dark3},
+  hash/.style={Light5},
+  label/.style={draw, line width=1.5, #1, fill=Light3,
+                inner sep=\LabelIsep, rounded corners},
+  label arrow/.style={-Stealth, line width=1.5, #1,
+                      shorten >=3.5*\CommitRadius},
+}
+
+% Draw one commit with hash and message.
+% [name]{location}{hash}{message}
+\NewDocumentCommand{\Commit}{ O{commit-center} m m m }{
+
+  \coordinate (#1) at (#2);
+  \path[commit] (#1) circle (\CommitRadius);
+
+  % Hash.
+  \node[scale=\CommitScale, anchor=base east, hash]
+    at ($(#1) - (\CommitRadius + \CommitMargins, -\CommitBaseHeight)$)
+    {\tt #3};
+
+  % Message.
+  \node[scale=\CommitScale, anchor=base west, Dark4]
+    at ($(#1) + (\CommitRadius + \CommitMargins, \CommitBaseHeight)$)
+    {\tt #4};
+
+}
+
+% Chain commits together.
+% {location}{hash/message list}
+\NewDocumentCommand{\Commits}{ m m }{
+
+  \coordinate (previous) at (#1);
+
+  \foreach \hash/\message [count=\i] in {#2} {
+    \ifnumcomp{\i}{=}{1}{
+      \Commit[\hash]{previous}{\hash}{\message}
+    }{
+      \coordinate[above=2*\CommitRadius+\CommitSpacing of previous] (\hash);
+      \Commit[\hash]{\hash}{\hash}{\message}
+
+      % Connecting arrow.
+      \fill[Light4] ($(previous) + (0, \CommitRadius + \CAS)$)
+         -- +(\CAW/2, 0) -- +(\CAW/2, \CAT - \CAH + \CAB)
+         -- +(\CAR/2, \CAT - \CAH) -- +(\CAR/2, \CAT - \CAH + \CAC)
+         -- +(0, \CAT)
+         -- +(-\CAR/2, \CAT - \CAH + \CAC) -- +(-\CAR/2, \CAT - \CAH)
+         -- +(-\CAW/2, \CAT - \CAH + \CAB) -- +(-\CAW/2, 0) -- cycle;
+
+      \coordinate (previous) at (\hash);
+    }
+  }
+
+}
+
+% Pick a commit and point label to it.
+% [name][color]{hash}{offset-from-commit}{local-arrow-start}{label-text}
+\NewDocumentCommand{\Label}{ O{label} O{Blue4} m m m m }{
+
+  \node[scale=\CommitScale, label=#2] (#1) at ($(#3) + (#4)$) {\tt #6};
+
+  \begin{pgfonlayer}{background}
+    \begin{scope}[local to=#1]
+      \coordinate (arrow-start) at (#5);
+    \end{scope}
+    \draw[label arrow=#2] (arrow-start) -- (#3);
+  \end{pgfonlayer}
+
+}
+% Basic branch label.
+% [color]{hash}{offset-from-commit}{local-arrow-start}{branch-name}
+\NewDocumentCommand{\Branch}{ O{Blue4} m m m m }{
+  \Label[#5][#1]{#2}{#3}{#4}{#5}
+}
+% Special HEAD label.
+% {hash}{offset-from-commit}{local-arrow-start}
+\NewDocumentCommand{\Head}{ m m m }{
+  \Label[HEAD][Purple4]{#1}{#2}{#3}{HEAD}
+  % Also highlight current commit.
+  \fill[Yellow1] (#1) circle (.9*\CommitRadius);
+}
+
