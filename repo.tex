@@ -47,29 +47,28 @@
 }
 
 % Chain commits together.
-% {location}{hash/message list}
-\NewDocumentCommand{\Commits}{ m m }{
+% [anchor][reponame]{location}{hash/message list}
+\NewDocumentCommand{\Repo}{ O{center} O{repo} m m }{
 
-  \coordinate (previous) at (#1);
+  \node[anchor=#1] (#2) at (#3) {\tikz[remember picture]{
+    \foreach \hash/\message [count=\i] in {#4} {\ifcsempty{hash}{}{
+      \ifnumcomp{\i}{=}{1}{
+        \Commit[\hash]{0, 0}{\hash}{\message}
+      }{
+        \coordinate[above=2*\CommitRadius+\CommitSpacing of previous] (\hash);
+        \Commit[\hash]{\hash}{\hash}{\message}
 
-  \foreach \hash/\message [count=\i] in {#2} {
-    \ifnumcomp{\i}{=}{1}{
-      \Commit[\hash]{previous}{\hash}{\message}
-    }{
-      \coordinate[above=2*\CommitRadius+\CommitSpacing of previous] (\hash);
-      \Commit[\hash]{\hash}{\hash}{\message}
+        % Connecting arrow.
+        \fill[Light4] ($(previous) + (0, \CommitRadius + \CAS)$)
+           -- +(\CAW/2, 0) -- +(\CAW/2, \CAT - \CAH + \CAB)
+           -- +(\CAR/2, \CAT - \CAH) -- +(\CAR/2, \CAT - \CAH + \CAC)
+           -- +(0, \CAT)
+           -- +(-\CAR/2, \CAT - \CAH + \CAC) -- +(-\CAR/2, \CAT - \CAH)
+           -- +(-\CAW/2, \CAT - \CAH + \CAB) -- +(-\CAW/2, 0) -- cycle;
 
-      % Connecting arrow.
-      \fill[Light4] ($(previous) + (0, \CommitRadius + \CAS)$)
-         -- +(\CAW/2, 0) -- +(\CAW/2, \CAT - \CAH + \CAB)
-         -- +(\CAR/2, \CAT - \CAH) -- +(\CAR/2, \CAT - \CAH + \CAC)
-         -- +(0, \CAT)
-         -- +(-\CAR/2, \CAT - \CAH + \CAC) -- +(-\CAR/2, \CAT - \CAH)
-         -- +(-\CAW/2, \CAT - \CAH + \CAB) -- +(-\CAW/2, 0) -- cycle;
-
+      }
       \coordinate (previous) at (\hash);
-    }
-  }
+  }}}};
 
 }
 
