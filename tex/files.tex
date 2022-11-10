@@ -72,12 +72,26 @@
       {[\mode]}}}};}
 }}
 
+% Position first file in the tree.
+% [keys]{position}{name}{filename}
+\define@boolkey{FirstFile}[]{file}[true]{}
+\define@boolkey{FirstFile}[]{folder}[true]{}
+\define@cmdkey{FirstFile}[]{mod}[0]{} % for some reason recurses with NameFile@mode
+\presetkeys{FirstFile}{mod}{}
+\NewDocumentCommand{\FirstFile}{ O{file} m m m }{{
+  \setkeys{FirstFile}{#1}
+  \def\name{#3}
+  \node[anchor=north west] (\name) at (#2)
+    {\iffile\File[\mod]\fi\iffolder\Folder[\mod]\fi};
+  \NameFile[\iffolder folder\fi\iffile file\fi, mode=\mod]{\name}{#4}
+}}
+
 % Step into folder hierarchy.
 % [keys]{parent-icon-location}{name}{filename}
 \define@boolkey{FirstChild}[]{file}[true]{}
 \define@boolkey{FirstChild}[]{folder}[true]{}
 \define@boolkey{FirstChild}[]{last}[true]{}
-\define@cmdkey{FirstChild}[]{mod}[0]{} % for some reason recurses with NameFile@mode
+\define@cmdkey{FirstChild}[]{mod}[0]{}
 \presetkeys{FirstChild}{mod}{}
 \NewDocumentCommand{\FirstChild}{ O{file} m m m }{{
   \setkeys{FirstChild}{#1}

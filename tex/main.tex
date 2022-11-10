@@ -48,29 +48,34 @@
 
 \begin{document}%
 
+% Use SLIDE marks for python to easily find all slides.
+
+% SLIDE Introduction
 \renewcommand{\TitleText}{Introduction}
 \renewcommand{\SubTitleText}{Git and git clients}
 \renewcommand{\PageNumText}{1}
 \renewcommand{\Progress}{1/3}
 \Step{
 
-}
+} % ENDSLIDE
 
+% SLIDE Pizzas
 \renewcommand{\TitleText}{The Pizzas repo}
 \renewcommand{\SubTitleText}{Crafting your first commits}
 \renewcommand{\PageNumText}{2}
 \renewcommand{\Progress}{2/3}
 \Step{
 
-  \node[anchor=north west] (A) at (Canvas.north west) {\Folder[0]};
-  \NameFile[folder, mode=0]{A}{pizzas}
+  \FirstFile[folder, mod=0]{Canvas.north west}{A}{pizzas}
   \FirstChild[folder, mod=0]{A}{B}{.git}
   \AppendSibling[file, mod=0, connect]{B}{C}{README.md}
   \AppendSibling[file, mod=0, connect]{C}{D}{margherita.md}
   \AppendSibling[file, mod=0, connect, last]{D}{E}{regina.md}
 
   \def\FileSpacing{10}
-  \FileContent[0][north east][A]{Canvas.north east}{README.md}{
+
+  \FileContent[0][north east][A]{Canvas.north east}
+  {README.md}{
     0/{Collect and distribute the best pizzas recipes.},
     0/{},
     0/{Where to find the pizza in the project:},
@@ -125,11 +130,10 @@
     45a5b65/{Add note to the Margherita.},
     17514f2/{Add Regina. List pizzas in README.},
   }
-
   \Branch{17514f2}{40:20}{-.5,0}{main}
   \Head{45a5b65}{155:20}{.5,0}
 
-}
+} % ENDSLIDE
 
 \end{document}
 
