@@ -90,8 +90,8 @@
 % [keys]{parent-icon-location}{name}{filename}
 \define@boolkey{FirstChild}[]{file}[true]{}
 \define@boolkey{FirstChild}[]{folder}[true]{}
-\define@boolkey{FirstChild}[]{last}[true]{}
 \define@cmdkey{FirstChild}[]{mod}[0]{}
+\define@boolkey{FirstChild}[]{last}[true]{}
 \presetkeys{FirstChild}{mod}{}
 \NewDocumentCommand{\FirstChild}{ O{file} m m m }{{
   \setkeys{FirstChild}{#1}
@@ -110,8 +110,8 @@
 % [keys]{parent-icon-location}{name}{filename}
 \define@boolkey{AppendSibling}[]{file}[true]{}
 \define@boolkey{AppendSibling}[]{folder}[true]{}
-\define@boolkey{AppendSibling}[]{last}[true]{}
 \define@boolkey{AppendSibling}[]{connect}[true]{}
+\define@boolkey{AppendSibling}[]{last}[true]{}
 \define@cmdkey{AppendSibling}[]{mod}[0]{}
 \presetkeys{AppendSibling}{mod}{}
 \NewDocumentCommand{\AppendSibling}{ O{file} m m m }{{

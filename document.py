@@ -4,7 +4,7 @@
 import os
 from pathlib import Path
 import shutil as shu
-from typing import cast
+from typing import cast, List
 
 from modifiers import Constant, TextModifier
 from slides import *
@@ -20,14 +20,14 @@ class Document(TextModifier):
     _endmark = "% ENDSLIDE"
 
     def __init__(self, input: str):
-        self.non_slides = non_slides = []
-        self.slides = slides = []
+        self.non_slides: List[Constant] = []
+        self.slides : List['Slide'] = []
         chunks = input.split(self._startmark)
-        non_slides.append(Constant(chunks.pop(0)))
+        self.non_slides.append(Constant(chunks.pop(0)))
         for c in chunks:
             s, ns = c.rsplit(self._endmark, 1)
-            slides.append(Slide(s))
-            non_slides.append(Constant(ns))
+            self.slides.append(Slide(s))
+            self.non_slides.append(Constant(ns))
 
     def render(self) -> str:
         ns = iter(self.non_slides)
@@ -88,3 +88,13 @@ class Slide(TextModifier):
             self.header.raw,
             "\n".join(f"\\Step{{{s.render()}}}" for s in self.steps),
         )
+
+    def pop_step(self) -> Step:
+        """Useful to start from without using what's initially in the stub document."""
+        return self.steps.pop()
+
+    def add_step(self, step: Step):
+        """Copy current state and record into the document.
+        """
+        self.steps.append(step.copy())
+

@@ -109,15 +109,17 @@ class Regex(TextModifier):
         m = self._match
         original = m.string
         c = 0
-        for i, v in enumerate(
-            v for k, v in self.__dict__.items() if not k.startswith("_")
-        ):
+        i = 0
+        for k, v in self.__dict__.items():
+            if k.startswith('_'):
+                continue
             s, e = m.span(i + 1)
             # Copy all non-grouped parts of original string.
             result += original[c:s]
             # But skip groups and replace with new value instead.
             result += cast(str, v)
             c = e
+            i += 1
         return result + original[c:]
 
     # Reassure pyright with artificial __[gs]etattr__ methods.

@@ -3,8 +3,10 @@ and duplicate / modify them for animation.
 """
 
 from pathlib import Path
+from typing import cast
 
 from document import Document
+from slides import Pizzas
 
 main_tex = Path("tex", "main.tex")
 with open(main_tex, "r") as file:
@@ -26,12 +28,18 @@ if not (r := doc.render()) == content:
 introduction, pizzas = doc.slides
 
 # Duplicate with small modifications.
-step = pizzas.steps[0].copy()
-step.filetree.git.mod = "+"
-step.filetree.readme.mod = "-"
-step.filetree.margherita.mod = "m"
-step.filetree.regina.filename = r"da\_queen.md"
+step = cast(Pizzas, pizzas.pop_step())
+ft = step.filetree
 
-pizzas.steps.append(step)
+ft.clear()
+root = ft.append("FirstFile", pos="Canvas.north west", name="A", filename="pizzas")
+root.type = "folder"
+
+git = ft.append("FirstChild", filename=".git")
+git.type = "folder"
+git.mod = "+"
+
+pizzas.add_step(step)
+
 
 doc.compile("res.pdf")

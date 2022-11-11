@@ -1,6 +1,8 @@
 """Modifiers concerned with individual slides and their very concrete content.
 """
 
+from typing import cast
+
 from modifiers import Constant, Regex, TextModifier
 
 
@@ -65,36 +67,68 @@ class FileLine(Regex):
     def __init__(self, input: str):
         super().__init__(
             input,
-            r"\s*\\.*?mod=(.).*?(|, last)\]{(.*?)}{(.*?)}{(.*?)}",
-            "mod last pos name filename",
+            r"\s*\\.*?\[(.*?),.*?mod=(.).*?(|, connect)(|, last)\]{(.*?)}{(.*?)}{(.*?)}",
+            "type mod connect last pos name filename",
         )
+
+    @staticmethod
+    def new(command, **kwargs) -> "FileLine":
+        """Create a new line with given model.
+        Cannot set options via this interface, though.
+        """
+        model = r"\{cmd}[file, mod=0]{{{pos}}}{{{name}}}{{{filename}}}"
+        return FileLine(model.format(cmd=command, **kwargs))
+
+    def set_connect(self, on: bool):
+        """Lame option because of the comma, fix with this interface."""
+        self.connect = ", connect" if on else ""
+
+    def set_last(self, on: bool):
+        """Lame option because of the comma, fix with this interface."""
+        self.connect = ", last" if on else ""
 
 
 class FileTree(TextModifier):
-    """Within the file tree. Take advantage that we know it exactly.
+    """Within the file tree.
     Be careful that when hiding one file line,
     the chain of relative positionning needs to be reconnected.
     """
 
     def __init__(self, input: str):
         # Refer to them as list to easily reconnect the chain.
-        self._list = [FileLine(l) for l in input.split("\n")]
-        lines = iter(self._list)
-        # And also as individual files for random access.
-        self.root = next(lines)
-        self.git = next(lines)
-        self.readme = next(lines)
-        self.margherita = next(lines)
-        self.regina = next(lines)
+        self.list = [FileLine(l) for l in input.split("\n")]
 
     def render(self) -> str:
-        return "\n".join(
-            m.render()
-            for m in (
-                self.root,
-                self.git,
-                self.readme,
-                self.margherita,
-                self.regina,
-            )
-        )
+        return "\n".join(m.render() for m in self.list)
+
+    def append(self, command: str, **kwargs) -> FileLine:
+        # Default connect to previous one and use the same name +-next.
+        if not "pos" in kwargs:
+            kwargs["pos"] = self.list[-1].name
+        if not "name" in kwargs:
+            kwargs["name"] = self.list[-1].name + "-next"
+        file = cast(FileLine, FileLine.new(command, **kwargs))
+        self.list.append(file)
+        return file
+
+    def erase(self, file: FileLine):
+        """Remove from the chain, taking care of preserving the chain structure."""
+        i = 0
+        l = self.list
+        assert l  # or it's erasing from empty list
+        for i, f in enumerate(l):
+            if f is file:
+                break
+        if i == len(l):
+            # When erasing last one, previous needto become the last.
+            l.pop()
+            if not l:
+                return
+            l[-1].set_last(True)
+            return
+        # When erasing not the last one, reconnect.
+        l.pop(i)
+        l[i].pos = file.pos
+
+    def clear(self):
+        self.list.clear()
