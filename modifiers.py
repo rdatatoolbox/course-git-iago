@@ -2,8 +2,11 @@
 of every slide we need to animate, so we can parse it easily.
 """
 
-from typing import cast, Self
+import os
+from pathlib import Path
 import re
+import shutil as shu
+from typing import Self, cast
 
 
 class TextModifier(object):
@@ -21,7 +24,7 @@ class TextModifier(object):
     def render(self) -> str:
         raise NotImplementedError(f"Cannot render text for {type(self).__name__}")
 
-    def copy(self) -> "TextModifier":
+    def copy(self) -> Self:
         return type(self)(self.render())
 
     _tab = " "
@@ -156,8 +159,37 @@ class Document(TextModifier):
             result += non_slide.render()
         return result
 
+    def compile(self, filename: str):
+        """Render to a file then compile.
+        Use a temporary folder destroyed afterwards.
+        """
+        base, _ = filename.rsplit(".", 1)
+        output = Path(filename)
 
-class Content(TextModifier):
+        build = Path("tex")
+        if not os.path.exists(build):
+            raise RuntimeError(f"Could not find {build} folder.")
+
+        current = os.getcwd()
+        os.chdir(build)
+        genname = "generated_steps"
+        texfile = Path(genname + ".tex")
+        print(f"Render to {texfile}..")
+        with open(texfile, "w") as file:
+            file.write(self.render())
+        print(f"Compile {texfile}..")
+        # Compile three times so `remember pictures` eventually works.
+        for _ in range(3):
+            os.system(f"lualatex {str(texfile)}")
+        os.chdir(current)
+
+        print(f"Copy to {output}..")
+        shu.copy(Path(build, genname + ".pdf"), output)
+
+        print("done.")
+
+
+class Step(TextModifier):
     """Special abstract parent of slide bodies,
     whose individual slides inherit of.
     """
@@ -178,7 +210,7 @@ class Slide(TextModifier):
         self.name = name.strip()
         self.header = Constant(header)
         SlideType = eval(self.name)
-        self.steps = [cast(Content, SlideType(body.rstrip()))]
+        self.steps = [cast(Step, SlideType(body.rstrip()))]
 
     def render(self) -> str:
         return " {}\n{}{} ".format(
@@ -188,7 +220,7 @@ class Slide(TextModifier):
         )
 
 
-class Introduction(Content):
+class Introduction(Step):
     """Empty slide for now."""
 
     def __init__(self, input: str):
@@ -198,7 +230,7 @@ class Introduction(Content):
         return "\n\n"
 
 
-class Pizzas(Content):
+class Pizzas(Step):
     """The slide with repo / project folder / file content."""
 
     def __init__(self, input: str):
@@ -212,8 +244,8 @@ class Pizzas(Content):
         self.regina = next(it)
         self.repo = next(it)
         try:
-            next(it)
-            assert False
+            while some := next(it):
+                assert not some
         except StopIteration:
             pass
 

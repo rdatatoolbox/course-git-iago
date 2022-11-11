@@ -23,3 +23,16 @@ if not (r := doc.render()) == content:
         "Rendering without modifications did not yield a result identical to input. "
         f"Diff {repr(filename)} against {repr(str(main_tex))} to investigate."
     )
+
+introduction, pizzas = doc.slides
+
+# Duplicate with small modifications.
+step = pizzas.steps[0].copy()
+step.filetree.git.mod = "+"
+step.filetree.readme.mod = "-"
+step.filetree.margherita.mod = "m"
+step.filetree.regina.filename = r"da\_queen.md"
+
+pizzas.steps.append(step)
+
+doc.compile("res.pdf")
