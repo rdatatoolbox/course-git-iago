@@ -49,6 +49,9 @@
 \begin{document}%
 
 % Use SLIDE marks for python to easily find all slides.
+% Also, this file is parsed lexically in a very brutal way,
+% so whitespace and comments are not always insignificant.
+% Just use it as a stub so python scripts can bootstrap and generate steps.
 
 % SLIDE Introduction
 \renewcommand{\TitleText}{Introduction}
@@ -69,55 +72,11 @@
   \FirstFile[folder, mod=0]{Canvas.north west}{A}{rootfolder}
 
   \def\FileSpacing{10}
-
-  \FileContent[0][north east][A]{Canvas.north east}
-  {README.md}{
-    0/{Collect and distribute the best pizzas recipes.},
-    0/{},
-    0/{Where to find the pizza in the project:},
-    0/{},
-    0/{- \_\_Margherita\_\_: `./margherita.md`},
-    0/{- \_\_Regina\_\_: `./regina.md`},
+  \Diff[m][north east][A]{Canvas.north east}{file.ext}{
+    +/{One line},
   }
-
-  \FileContent[0][north east][A]{$(A.south east) + (0, -\FileSpacing)$}
-  {margherita.md}{
-    0/{\# Margerita},
-    0/{},
-    0/{The simplest and most famous,},
-    0/{the one to pick when you're unsure},
-    0/{whether the cook is good.},
-    0/{},
-    0/{\_\_Base:\_\_ tomato sauce},
-    0/{\_\_Topping:\_\_},
-    0/{- Mozzarella},
-    0/{- Basil},
-    0/{},
-    0/{*Note:*},
-    0/{It is said that this pizza},
-    0/{has only three ingredients},
-    0/{corresponding to the three colors},
-    0/{on the Italian flag.},
-    0/{Nevertheless, it is always good},
-    0/{and *authorized* to add},
-    0/{olive oil, salt, or oregano.},
-  }
-
-  \FileContent[0][north east]{$(A.south east) + (0, -\FileSpacing)$}
-  {regina.md}{
-    0/{\# Regina},
-    0/{},
-    0/{This audacious pizza},
-    0/{would be named from queen},
-    0/{Elena of Montenegro.},
-    0/{Created by pizzaiolo},
-    0/{Raffaele Esposito.},
-    0/{},
-    0/{\_\_Base:\_\_ tomato sauce  },
-    0/{\_\_Topping:\_\_},
-    0/{- Mozzarella},
-    0/{- Ham},
-    0/{- Mushrooms },
+  \Diff[0][north east][A]{$(A.south east) + (0, -\FileSpacing)$}{other.ext}{
+    -/{Another line.},
   }
 
   \Repo[south west]{Canvas.south west}{

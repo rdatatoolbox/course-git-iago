@@ -7,7 +7,7 @@ import shutil as shu
 from typing import cast, List
 
 from modifiers import Constant, TextModifier
-from slides import *
+from slides import *  # Needed for dynamic evaluation of section type.
 
 
 class Document(TextModifier):

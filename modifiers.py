@@ -3,7 +3,7 @@ of every slide we need to animate, so we can parse it easily.
 """
 
 import re
-from typing import Self, cast
+from typing import Dict, Self, cast
 
 
 class TextModifier(object):
@@ -87,22 +87,32 @@ class Constant(TextModifier):
 
 
 class Regex(TextModifier):
-    """Common leaf modifier.
+    """Common modifier.
     Feed with a regex containing groups and their list of names.
     The names become modifiable members,
     and the input is rendered with the corresponding group modified.
+    Provide a few TextModifier types if some members are non-leaves.
     """
 
     _short = True
 
-    def __init__(self, input: str, pattern: str, groups: str):
-        if not (m := re.compile(pattern).match(input)):
+    def __init__(
+        self,
+        input: str,
+        pattern: str,
+        groups: str,
+        **kwargs: type,
+    ):
+        if not (m := re.compile(pattern, re.DOTALL).match(input)):
             raise ValueError(
                 f"The given pattern:\n  {pattern}\ndoes not match input:\n {input}"
             )
         self._match = m  # Members with no trailing '_' are group values.
         for i, name in enumerate(groups.strip().split()):
-            self.__dict__[name] = m.group(i + 1)
+            group = cast(str, m.group(i + 1))
+            if name in kwargs:
+                group = cast(TextModifier, kwargs[name](group))
+            self.__dict__[name] = group
 
     def render(self) -> str:
         result = ""
@@ -111,20 +121,56 @@ class Regex(TextModifier):
         c = 0
         i = 0
         for k, v in self.__dict__.items():
-            if k.startswith('_'):
+            if k.startswith("_"):
                 continue
             s, e = m.span(i + 1)
             # Copy all non-grouped parts of original string.
             result += original[c:s]
             # But skip groups and replace with new value instead.
-            result += cast(str, v)
+            result += v.render() if isinstance(v, TextModifier) else str(v)
             c = e
             i += 1
         return result + original[c:]
 
     # Reassure pyright with artificial __[gs]etattr__ methods.
-    def __getattr__(self, name: str) -> str:
+    def __getattr__(self, name: str) -> str | TextModifier:
         return self.__dict__[name]
 
     def __setattr__(self, name: str, value: str | re.Match):
         self.__dict__[name] = value
+
+
+class ListOf(TextModifier):
+    """Construct a TextModifier type that is just a trivial list of another one,
+    with head and tail considered constant if requested.
+    """
+
+    separator: str
+    type: type
+    with_head: bool
+    with_tail: bool
+
+    def __init__(self, input: str):
+        chunks = input.split(self.separator)
+        self.head = Constant(chunks.pop(0)) if self.with_head else None
+        self.tail = Constant(chunks.pop() if chunks else "") if self.with_tail else None
+        self.list = [cast(TextModifier, self.type(c)) for c in chunks]
+
+    def render(self) -> str:
+        return self.separator.join(
+            m.render() for m in [self.head] + self.list + [self.tail] if m
+        )
+
+    def append(self, *args, **kwargs):
+        self.list.append(getattr(self.type, "new")(*args, **kwargs))
+
+
+def MakeListOf(tp: type, sep=",\n", head=False, tail=False) -> type:
+    class NewListOf(ListOf):
+        separator = sep
+        type = tp
+        with_head = head
+        with_tail = tail
+
+    NewListOf.__name__ = "ListOf" + tp.__name__
+    return NewListOf
