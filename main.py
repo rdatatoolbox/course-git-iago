@@ -3,9 +3,8 @@ and duplicate / modify them for animation.
 """
 
 from pathlib import Path
-from textwrap import dedent
 
-from modifiers import Document, Regex
+from document import Document
 
 main_tex = Path("tex", "main.tex")
 with open(main_tex, "r") as file:
