@@ -1,6 +1,7 @@
 """Modifiers concerned with individual slides and their very concrete content.
 """
 
+import re
 from typing import cast
 
 from modifiers import Constant, Regex, TextModifier
@@ -79,13 +80,9 @@ class FileLine(Regex):
         model = r"\{cmd}[file, mod=0]{{{pos}}}{{{name}}}{{{filename}}}"
         return FileLine(model.format(cmd=command, **kwargs))
 
-    def set_connect(self, on: bool):
-        """Lame option because of the comma, fix with this interface."""
-        self.connect = ", connect" if on else ""
-
-    def set_last(self, on: bool):
-        """Lame option because of the comma, fix with this interface."""
-        self.connect = ", last" if on else ""
+    def set_keyword_option(self, option: str, on: bool):
+        """Lame options because of the comma, fix with this interface."""
+        setattr(self, option, f", {option}" if on else "")
 
 
 class FileTree(TextModifier):
@@ -102,12 +99,25 @@ class FileTree(TextModifier):
         return "\n".join(m.render() for m in self.list)
 
     def append(self, command: str, **kwargs) -> FileLine:
-        # Default connect to previous one and use the same name +-next.
+        # Default connect to previous one and use the same name +1.
+        # Default name to "F0".
         if not "pos" in kwargs:
             kwargs["pos"] = self.list[-1].name
         if not "name" in kwargs:
-            kwargs["name"] = self.list[-1].name + "-next"
+            prevname = self.list[-1].name if self.list else "F"
+            try:
+                m = cast(re.Match, re.compile(r"(.*)(\d+)$").match(prevname))
+                prevname, n = m.group(1), int(m.group(2))
+            except:
+                n = 0
+            kwargs["name"] = prevname + str(n + 1)
         file = cast(FileLine, FileLine.new(command, **kwargs))
+        for option in "type mod".split():
+            if option in kwargs:
+                setattr(file, option, kwargs[option])
+        for option in "connect last".split():
+            if option in kwargs:
+                file.set_keyword_option(option, kwargs[option])
         self.list.append(file)
         return file
 
@@ -124,7 +134,7 @@ class FileTree(TextModifier):
             l.pop()
             if not l:
                 return
-            l[-1].set_last(True)
+            l[-1].set_keyword_option("last", True)
             return
         # When erasing not the last one, reconnect.
         l.pop(i)

@@ -32,14 +32,11 @@ step = cast(Pizzas, pizzas.pop_step())
 ft = step.filetree
 
 ft.clear()
-root = ft.append("FirstFile", pos="Canvas.north west", name="A", filename="pizzas")
-root.type = "folder"
-
-pizzas.add_step(step)
-
-git = ft.append("FirstChild", filename=".git")
-git.type = "folder"
-git.mod = "+"
+root = ft.append("FirstFile", pos="Canvas.north west", filename="pizzas", type="folder")
+git = ft.append("FirstChild", filename=".git", type="folder")
+readme = ft.append("AppendSibling", filename="README.md", connect=True)
+margherita = ft.append("AppendSibling", filename="margherita.md", connect=True)
+regina = ft.append("AppendSibling", filename="regina.md", connect=True, last=True)
 
 pizzas.add_step(step)
 
