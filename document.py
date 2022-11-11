@@ -21,7 +21,7 @@ class Document(TextModifier):
 
     def __init__(self, input: str):
         self.non_slides: List[Constant] = []
-        self.slides : List['Slide'] = []
+        self.slides: List["Slide"] = []
         chunks = input.split(self._startmark)
         self.non_slides.append(Constant(chunks.pop(0)))
         for c in chunks:
@@ -38,7 +38,12 @@ class Document(TextModifier):
             result += non_slide.render()
         return result
 
-    def compile(self, filename: str):
+    def compile(
+        self,
+        filename: str,
+        only_slide: int | None = None,
+        only_step: int | None = None,
+    ):
         """Render to a file then compile.
         Use a temporary folder destroyed afterwards.
         """
@@ -52,9 +57,27 @@ class Document(TextModifier):
         os.chdir(build)
         genname = "generated_steps"
         texfile = Path(genname + ".tex")
+
         print(f"Render to {texfile}..")
+        if only_slide is not None:
+            restrict = self.copy()
+            restrict.slides = [restrict.slides[only_slide]]
+            restrict.non_slides = [
+                Constant(
+                    "".join(c.render() for c in restrict.non_slides[: only_slide + 1])
+                ),
+                Constant(
+                    "".join(c.render() for c in restrict.non_slides[only_slide + 1 :])
+                ),
+            ]
+            if only_step is not None:
+                slide = restrict.slides[0]
+                slide.steps = [slide.steps[only_step]]
+        else:
+            restrict = self
         with open(texfile, "w") as file:
-            file.write(self.render())
+            file.write(restrict.render())
+
         print(f"Compile {texfile}..")
         # Compile three times so `remember pictures` eventually works.
         for _ in range(3):
@@ -74,13 +97,14 @@ class Slide(TextModifier):
     """
 
     def __init__(self, input: str):
-        name, body = input.split("\n", 1)
-        header, body = body.split(r"\Step{", 1)
-        body, _ = body.rsplit(r"}", 1)
+        name, bodies = input.split("\n", 1)
+        bodies = bodies.split(r"\Step{")
+        header = bodies.pop(0)
+        bodies = [b.rsplit("}", 1)[0].rstrip() for b in bodies]
         self.name = name.strip()
         self.header = Constant(header)
         SlideType = eval(self.name)
-        self.steps = [cast(Step, SlideType(body.rstrip()))]
+        self.steps = [cast(Step, SlideType(b)) for b in bodies]
 
     def render(self) -> str:
         return " {}\n{}{} ".format(
@@ -94,7 +118,5 @@ class Slide(TextModifier):
         return self.steps.pop()
 
     def add_step(self, step: Step):
-        """Copy current state and record into the document.
-        """
+        """Copy current state and record into the document."""
         self.steps.append(step.copy())
-

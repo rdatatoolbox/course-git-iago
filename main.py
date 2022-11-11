@@ -35,11 +35,12 @@ ft.clear()
 root = ft.append("FirstFile", pos="Canvas.north west", name="A", filename="pizzas")
 root.type = "folder"
 
+pizzas.add_step(step)
+
 git = ft.append("FirstChild", filename=".git")
 git.type = "folder"
 git.mod = "+"
 
 pizzas.add_step(step)
 
-
-doc.compile("res.pdf")
+doc.compile("res.pdf", 1, 0)
