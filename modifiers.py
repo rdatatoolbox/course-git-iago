@@ -3,7 +3,7 @@ of every slide we need to animate, so we can parse it easily.
 """
 
 import re
-from typing import Dict, Self, cast
+from typing import Self, cast
 
 
 class TextModifier(object):
