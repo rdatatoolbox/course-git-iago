@@ -1,7 +1,6 @@
 """Craft/edit diffed files.
 """
 
-import re
 from textwrap import dedent
 from typing import cast
 

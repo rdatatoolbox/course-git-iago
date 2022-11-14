@@ -4,7 +4,7 @@
 from diffs import DiffList
 from repo import Repo
 from filetree import FileTree
-from modifiers import TextModifier
+from modifiers import TextModifier, Regex
 
 
 class Step(TextModifier):
@@ -36,6 +36,10 @@ class Pizzas(Step):
         self.diffs = DiffList(next(it))
         self.repo = Repo(next(it))
         try:
+            self.command = Command(next(it))
+        except StopIteration:
+            self.command = Command("")
+        try:
             while some := next(it):
                 assert not some
         except StopIteration:
@@ -50,7 +54,35 @@ class Pizzas(Step):
                     self.filetree,
                     self.diffs,
                     self.repo,
+                    self.command,
                 )
             )
             + "\n\n"
         )
+
+
+class Command(Regex):
+    """Optionally a git command to position, but maybe nothing instead."""
+
+    def __init__(self, input: str):
+        if input.strip():
+            super().__init__(
+                input,
+                r"\s*\\Command\[(.*?)\]{(.*?)}{(.*?)}",
+                "anchor loc cmd",
+            )
+            self._visible = True
+        else:
+            self._visible = False
+
+    @staticmethod
+    def new(*args) -> "Command":
+        model = (r"  \Command[{}]" + "{{{}}}" * 2).format(*args)
+        res = Command(model)
+        res._visible = True
+        return res
+
+    def render(self) -> str:
+        if not self._visible:
+            return ""
+        return super().render()
