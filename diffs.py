@@ -51,7 +51,7 @@ class Diff(Regex):
     def __init__(self, input: str):
         super().__init__(
             input,
-            r"\[(.*?)\]" * 3 + r"{(.*?)}.*?" * 2 + r"{(.*)}",
+            r"\[(.*?)\]" * 3 + r"{(.*?)}.*?" * 2 + r"{\s*(.*)\n?\s*}\s*",
             "mod anchor name pos filename lines",
             lines=DiffLines,
         )
@@ -59,7 +59,7 @@ class Diff(Regex):
     @staticmethod
     def new(**kwargs) -> "Diff":
         """Create a new line with given parameters (minus leading separator)."""
-        model = "[{mod}][{anchor}][{name}]{{{pos}}}{{{filename}}}{{}}"
+        model = "[{mod}][{anchor}][{name}]{{{pos}}}{{{filename}}}{{\n}}\n"
         return Diff(model.format(**kwargs))
 
     def set_text(self, input: str):
@@ -71,31 +71,22 @@ class Diff(Regex):
         for line in dedent(input).strip().split("\n"):
             cast(ListOf, self.lines).append(mod=0, text=line)
 
-    def render(self) -> str:
-        """Cheat a tiny bit to insert newline in front of first line."""
-        l = cast(ListOf, self.lines).list
-        if l:
-            first = cast(Regex, l[0])
-            m = first._match
-            if not m.string.startswith("\n"):
-                first._match = cast(re.Match, m.re.match("\n" + m.string))
-                assert first._match  # or the cheat failed.
-        return super().render()
-
 
 class DiffLine(Regex):
     """One diff line."""
 
+    _short = True
+
     def __init__(self, input: str):
         super().__init__(
             input,
-            r"\s*(.*?)/{(.*)}",
+            r"\s*(.*?)/{(.*)}\s*",
             "mod text",
         )
 
     @staticmethod
     def new(**kwargs) -> "DiffLine":
-        model = "{mod}/{{{text}}}"
+        model = "    {mod}/{{{text}}}"
         return DiffLine(model.format(**kwargs))
 
 

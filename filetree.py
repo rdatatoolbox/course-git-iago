@@ -1,4 +1,4 @@
-"""Craft/edit the file tree.
+"""Craft/edit a simple file tree.
 """
 
 from typing import cast
@@ -64,6 +64,8 @@ class FileTree(TextModifier):
 
 class FileTreeLine(Regex):
     """Parse special line displaying one file in the tree folder."""
+
+    _short = True
 
     def __init__(self, input: str):
         super().__init__(

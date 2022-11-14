@@ -2,6 +2,7 @@
 """
 
 from diffs import DiffList
+from repo import Repo
 from filetree import FileTree
 from modifiers import TextModifier
 
@@ -33,7 +34,7 @@ class Pizzas(Step):
         next(it)  # Ignore leading_whitespace
         self.filetree = FileTree(next(it))
         self.diffs = DiffList(next(it))
-        self.repo = next(it)
+        self.repo = Repo(next(it))
         try:
             while some := next(it):
                 assert not some

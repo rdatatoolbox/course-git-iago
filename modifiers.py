@@ -3,7 +3,7 @@ of every slide we need to animate, so we can parse it easily.
 """
 
 import re
-from typing import Self, cast
+from typing import Callable, Self, cast
 
 
 class TextModifier(object):
@@ -94,8 +94,6 @@ class Regex(TextModifier):
     Provide a few TextModifier types if some members are non-leaves.
     """
 
-    _short = True
-
     def __init__(
         self,
         input: str,
@@ -146,7 +144,7 @@ class ListOf(TextModifier):
     """
 
     separator: str
-    type: type
+    type: Callable
     with_head: bool
     with_tail: bool
 
@@ -164,8 +162,11 @@ class ListOf(TextModifier):
     def append(self, *args, **kwargs):
         self.list.append(getattr(self.type, "new")(*args, **kwargs))
 
+    def clear(self):
+        self.list.clear()
 
-def MakeListOf(tp: type, sep=",\n", head=False, tail=False) -> type:
+
+def MakeListOf(tp: Callable, sep=",\n", head=False, tail=False) -> type:
     class NewListOf(ListOf):
         separator = sep
         type = tp

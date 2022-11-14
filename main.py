@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import cast
 
 from document import Document
+from repo import Branch, Head
 from slides import Pizzas
 
 main_tex = Path("tex", "main.tex")
@@ -94,6 +95,15 @@ d_regina.set_text(
     - Mushrooms
     """
 )
+
+rp = step.repo
+rp.clear()
+rp.commits.append("01e8c8c", "First commit, the intent.")
+rp.commits.append("4e29052", "First pizza: Margherita.")
+rp.commits.append("45a5b65", "Add note to the Margherita.")
+rp.commits.append("17514f2", "Add Regina. List pizzas in README.")
+rp.labels.append("Blue4", "17514f2", "40:20", "-.5:0", "main")
+rp.labels.append("45a5b65", "155:20", ".5:0")
 
 pizzas.add_step(step)
 
