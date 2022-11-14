@@ -69,7 +69,7 @@ class Command(Regex):
             super().__init__(
                 input,
                 r"\s*\\Command\[(.*?)\]{(.*?)}{(.*?)}",
-                "anchor loc cmd",
+                "anchor loc text",
             )
             self._visible = True
         else:
@@ -86,3 +86,11 @@ class Command(Regex):
         if not self._visible:
             return ""
         return super().render()
+
+    def on(self) -> "Command":
+        self._visible = True
+        return self
+
+    def off(self) -> "Command":
+        self._visible = False
+        return self

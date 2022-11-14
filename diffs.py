@@ -40,12 +40,29 @@ class DiffList(TextModifier):
         self.files.append(diff)
         return diff
 
+    def erase(self, file: "Diff"):
+        """Remove from the chain, taking care of preserving the chain structure."""
+        i = 0
+        l = self.files
+        assert l  # or it's erasing from empty list
+        for i, f in enumerate(l):
+            if f is file:
+                break
+        # When erasing not the last one, reconnect.
+        if i == len(l) - 1:
+            l.pop()
+            return
+        l.pop(i)
+        l[i].pos = cast(str, file.pos)
+
     def clear(self):
         self.files.clear()
 
 
 class Diff(Regex):
     """One diffed file"""
+
+    lines: ListOf
 
     def __init__(self, input: str):
         super().__init__(
@@ -61,14 +78,41 @@ class Diff(Regex):
         model = "[{mod}][{anchor}][{name}]{{{pos}}}{{{filename}}}{{\n}}\n"
         return Diff(model.format(**kwargs))
 
-    def set_text(self, input: str):
-        """Construct the lines list from raw text.
-        Escaping for tex.
-        """
+    @staticmethod
+    def latex_escape(input: str) -> str:
+        """Escape special characters for Latex input."""
         input = input.replace("_", r"\_")
         input = input.replace("#", r"\#")
-        for line in dedent(input).strip().split("\n"):
-            cast(ListOf, self.lines).append(mod=0, text=line)
+        return input
+
+    def append_text(self, input: str, mod="0"):
+        r"""Construct the lines list from raw text.
+        Escaping for tex.
+        Input is stripped, unless it starts with \n\n in which case \n is kept.
+        """
+        lines = dedent(self.latex_escape(input)).strip().split("\n")
+        if input.startswith('\n\n'):
+            lines = [''] + lines
+        for line in lines:
+            self.lines.append(mod=mod, text=line)
+
+    def set_mod(self, mod: str, start: int, end=None):
+        """Modify the state of one or several lines."""
+        if end is None:
+            end = start
+        if end == -1:
+            end = len(self.lines.list)
+        for line in self.lines.list[start:end]:
+            line = cast(DiffLine, line)
+            line.mod = mod
+
+    def delete_lines(self, start: int, end=None):
+        """Modify the state of one or several lines."""
+        if end is None:
+            end = start
+        if end == -1:
+            end = len(self.lines.list)
+        self.lines.list = self.lines.list[:start] + self.lines.list[end + 1 :]
 
 
 class DiffLine(Regex):

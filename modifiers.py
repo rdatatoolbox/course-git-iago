@@ -159,11 +159,14 @@ class ListOf(TextModifier):
             m.render() for m in [self.head] + self.list + [self.tail] if m
         )
 
-    def append(self, *args, **kwargs):
-        self.list.append(getattr(self.type, "new")(*args, **kwargs))
+    def append(self, *args, **kwargs) -> TextModifier:
+        new = getattr(self.type, "new")(*args, **kwargs)
+        self.list.append(new)
+        return new
 
-    def clear(self):
+    def clear(self) -> Self:
         self.list.clear()
+        return self
 
 
 def MakeListOf(tp: Callable, sep=",\n", head=False, tail=False) -> type:

@@ -47,10 +47,10 @@ class FileTree(TextModifier):
         for i, f in enumerate(l):
             if f is file:
                 break
-        if i == len(l):
+        if i == len(l) - 1:
             # When erasing last one, previous needto become the last.
             l.pop()
-            if not l:
+            if len(l) <= 1:
                 return
             l[-1].set_keyword_option("last", True)
             return
