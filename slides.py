@@ -2,9 +2,9 @@
 """
 
 from diffs import DiffList
-from repo import Repo
 from filetree import FileTree
-from modifiers import TextModifier, Regex
+from modifiers import Regex, TextModifier, render_function, MakeListOf, Constant
+from repo import Repo
 
 
 class Step(TextModifier):
@@ -15,14 +15,13 @@ class Step(TextModifier):
     pass
 
 
-class Introduction(Step):
-    """Empty slide for now."""
+ListOfChunks = MakeListOf(Constant, sep="\n\n", head=True, tail=True)
 
-    def __init__(self, input: str):
-        assert not input.strip()
 
-    def render(self) -> str:
-        return "\n\n"
+class Clients(Step, ListOfChunks):
+    """Good example of simple slide to animate simply with various chunks."""
+
+    pass
 
 
 class Pizzas(Step):
@@ -45,6 +44,7 @@ class Pizzas(Step):
         except StopIteration:
             pass
 
+    @render_function
     def render(self) -> str:
         return (
             "\n\n"
@@ -57,7 +57,7 @@ class Pizzas(Step):
                     self.command,
                 )
             )
-            + "\n\n"
+            + "\n"
         )
 
 
@@ -71,26 +71,13 @@ class Command(Regex):
                 r"\s*\\Command\[(.*?)\]{(.*?)}{(.*?)}",
                 "anchor loc text",
             )
-            self._visible = True
+            self._rendered = True
         else:
-            self._visible = False
+            self._rendered = False
 
     @staticmethod
     def new(*args) -> "Command":
         model = (r"  \Command[{}]" + "{{{}}}" * 2).format(*args)
         res = Command(model)
-        res._visible = True
+        res._rendered = True
         return res
-
-    def render(self) -> str:
-        if not self._visible:
-            return ""
-        return super().render()
-
-    def on(self) -> "Command":
-        self._visible = True
-        return self
-
-    def off(self) -> "Command":
-        self._visible = False
-        return self

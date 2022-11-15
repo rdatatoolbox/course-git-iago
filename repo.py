@@ -1,7 +1,7 @@
 """Craft and edit a simple repo.
 """
 
-from modifiers import Regex, MakeListOf, ListOf
+from modifiers import ListOf, MakeListOf, Regex
 
 
 class Repo(Regex):

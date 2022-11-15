@@ -4,7 +4,7 @@
 from textwrap import dedent
 from typing import cast
 
-from modifiers import Constant, ListOf, MakeListOf, Regex, TextModifier
+from modifiers import Constant, ListOf, MakeListOf, Regex, TextModifier, render_function
 from utils import increment_name
 
 
@@ -21,6 +21,7 @@ class DiffList(TextModifier):
         self.head = Constant(files.pop(0))
         self.files = [Diff(f) for f in files]
 
+    @render_function
     def render(self) -> str:
         return self._sep.join(m.render() for m in [self.head] + self.files)
 

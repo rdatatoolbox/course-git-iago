@@ -15,6 +15,8 @@ class TextModifier(object):
     Copying it should be always possible by a simple render/parse loop.
     """
 
+    _rendered = True  # Set to false on instances to not render.
+
     def __init__(self, _: str):
         raise NotImplementedError(f"Cannot parse input text for {type(self).__name__}")
 
@@ -23,6 +25,16 @@ class TextModifier(object):
 
     def copy(self) -> Self:
         return type(self)(self.render())
+
+    def on(self) -> Self:
+        """Make rendered."""
+        self._rendered = True
+        return self
+
+    def off(self) -> Self:
+        """Make unrendered."""
+        self._rendered = False
+        return self
 
     _tab = " "
     _short = False  # Override in children for shorter display.
@@ -71,6 +83,17 @@ class TextModifier(object):
         return self.display(0)
 
 
+def render_function(f: Callable) -> Callable:
+    """Decorate render functions so they render nothing if _rendered is False."""
+
+    def render(self, *args, **kwargs) -> str:
+        if not self._rendered:
+            return ""
+        return f(self, *args, **kwargs)
+
+    return render
+
+
 class Constant(TextModifier):
     """Trivial leaf modifier that offers no modification API. Just wraps an immutable string."""
 
@@ -79,6 +102,7 @@ class Constant(TextModifier):
     def __init__(self, input: str):
         self.raw = input
 
+    @render_function
     def render(self) -> str:
         return self.raw
 
@@ -112,6 +136,7 @@ class Regex(TextModifier):
                 group = cast(TextModifier, kwargs[name](group))
             self.__dict__[name] = group
 
+    @render_function
     def render(self) -> str:
         result = ""
         m = self._match
@@ -154,6 +179,7 @@ class ListOf(TextModifier):
         self.tail = Constant(chunks.pop() if chunks else "") if self.with_tail else None
         self.list = [cast(TextModifier, self.type(c)) for c in chunks]
 
+    @render_function
     def render(self) -> str:
         return self.separator.join(
             m.render() for m in [self.head] + self.list + [self.tail] if m

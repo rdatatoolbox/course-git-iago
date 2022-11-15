@@ -3,7 +3,7 @@
 
 from typing import cast
 
-from modifiers import Regex, TextModifier
+from modifiers import Regex, TextModifier, render_function
 from utils import increment_name
 
 
@@ -17,6 +17,7 @@ class FileTree(TextModifier):
         # Refer to them as list to easily reconnect the chain.
         self.list = [FileTreeLine(l) for l in input.split("\n")]
 
+    @render_function
     def render(self) -> str:
         return "\n".join(m.render() for m in self.list)
 

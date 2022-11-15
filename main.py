@@ -10,7 +10,7 @@ from document import Document
 from filetree import FileTree
 from repo import Repo
 from repo import Branch, Head
-from slides import Pizzas, Command
+from slides import Command, Pizzas, Clients
 
 main_tex = Path("tex", "main.tex")
 with open(main_tex, "r") as file:
@@ -30,7 +30,37 @@ if not (r := doc.render()) == content:
         f"Diff {repr(filename)} against {repr(str(main_tex))} to investigate."
     )
 
-introduction, pizzas = doc.slides
+clients, pizzas = doc.slides
+
+# Animate clients slide, lightly.
+step = cast(Clients, clients.pop_step())
+STEP = lambda: clients.add_step(step)
+(
+    git,
+    console,
+    vscode,
+    rstudio,
+    github,
+    gitlab,
+    arrows,
+    highlight,
+) = [m.off() for m in step.list]
+
+git.on()
+STEP()
+
+console.on()
+vscode.on()
+rstudio.on()
+STEP()
+
+github.on()
+gitlab.on()
+STEP()
+
+arrows.on()
+highlight.on()
+STEP()
 
 # Animate pizzas slide so it reproduces the small git history.
 step = cast(Pizzas, pizzas.pop_step())
@@ -105,7 +135,7 @@ d_readme = df.append(pos="Canvas.north east", filename="README.md")
 d_readme.append_text(readme_text[0])
 STEP()
 
-cmd._visible = True
+cmd._rendered = True
 cmd.on().text = "git init"
 ft.erase(readme)
 git = ft.append("FirstChild", type="folder", filename=".git", mod="+")
@@ -222,4 +252,4 @@ cmd.off()
 STEP()
 
 
-doc.compile("res.pdf", 1)
+doc.compile("res.pdf", 0)

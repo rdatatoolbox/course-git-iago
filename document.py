@@ -4,9 +4,9 @@
 import os
 from pathlib import Path
 import shutil as shu
-from typing import cast, List
+from typing import List, cast
 
-from modifiers import Constant, TextModifier
+from modifiers import Constant, TextModifier, render_function
 from slides import *  # Needed for dynamic evaluation of section type.
 
 
@@ -29,6 +29,7 @@ class Document(TextModifier):
             self.slides.append(Slide(s))
             self.non_slides.append(Constant(ns))
 
+    @render_function
     def render(self) -> str:
         ns = iter(self.non_slides)
         s = iter(self.slides)
@@ -106,11 +107,12 @@ class Slide(TextModifier):
         SlideType = eval(self.name)
         self.steps = [cast(Step, SlideType(b)) for b in bodies]
 
+    @render_function
     def render(self) -> str:
         return " {}\n{}{} ".format(
             self.name,
             self.header.raw,
-            "\n".join(f"\\Step{{{s.render()}}}" for s in self.steps),
+            "\n".join(f"\\Step{{{s.render()}\n}}" for s in self.steps),
         )
 
     def pop_step(self) -> Step:
