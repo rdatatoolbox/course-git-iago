@@ -10,6 +10,7 @@
   \PageNumScale = 2.0;
   \ProgressHeight = 1.7;
   \CanvasMargin = 5;
+  \LargeScale = 3.0;
 }
 \tikzset{
   progress made/.style={fill=Orange2},
@@ -68,4 +69,15 @@
 \end{tikzpicture}%
 \end{step}
 
+}
+
+% Factorize bounding box highlighting procedure.
+% [padding]{node}
+\NewDocumentCommand{\Highlight}{ O{5} m }{
+  \begin{pgfonlayer}{background}%
+    \coordinate (offset) at (#1, #1);
+    \coordinate (lower) at ($(#2.south west) - (offset)$);
+    \coordinate (upper) at ($(#2.north east) + (offset)$);
+    \shade[inner color=Yellow1] (lower) rectangle (upper);
+  \end{pgfonlayer}
 }

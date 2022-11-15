@@ -13,6 +13,8 @@
 
 \usepackage{xkeyval}
 \usepackage{etoolbox}
+\usepackage{graphicx}
+  \graphicspath{{./pictures}}
 \usepackage{tikz}%
   \usetikzlibrary{math}
   \usetikzlibrary{positioning}
@@ -59,8 +61,51 @@
 \renewcommand{\SubTitleText}{Git and git clients}
 \renewcommand{\PageNumText}{1}
 \renewcommand{\Progress}{1/3}
+\newlength{\U}
 \Step{
+  \begin{scope}[inner sep=10]
+    \setlength{\U}{75mm}
+    \tikzmath{
+      \boffset = -5;
+    }
 
+    \node[anchor=north, below=5 of Canvas.north] (git)
+      {\includegraphics[width=\U]{git_logo.png}};
+
+    \node[anchor=north, below=20 of git] (console)
+      {\includegraphics[height=\U]{console_git.png}};
+    \node[below=\boffset of console, scale=\LargeScale]
+      {command-line console};
+
+    \node[anchor=east, left=30 of console] (vscode)
+      {\includegraphics[height=\U]{vscode_extension.png}};
+    \node[below=\boffset of vscode, scale=\LargeScale]
+      {VSCode extension};
+
+    \node[anchor=west, right=30 of console] (rstudio)
+      {\includegraphics[height=\U]{rstudio_extension.png}};
+    \node[below=\boffset of rstudio, scale=\LargeScale]
+      {RStudio extension};
+
+    \coordinate (tp) at ($(vscode)!.5!(console)$);
+    \node[anchor=north, below=65 of tp] (github)
+      {\includegraphics[width=1.5\U]{github_logo.png}};
+
+    \coordinate (tp) at ($(console)!.5!(rstudio)$);
+    \node[anchor=north] (gitlab) at (github -| tp)
+      {\includegraphics[width=1.5\U]{gitlab_logo.png}};
+
+    \begin{scope}[every path/.style={-Stealth, line width=2, Dark4}]
+      \draw (vscode.north) -- (git.west);
+      \draw (console.north) -- (git.south);
+      \draw (rstudio.north) -- (git.east);
+      \draw (github.north) .. controls +(0, 100) .. (git.south west);
+      \draw (gitlab.north) .. controls +(0, 130) .. (git.south east);
+    \end{scope}
+
+    \Highlight{git}
+
+  \end{scope}
 } % ENDSLIDE
 
 % SLIDE Pizzas
