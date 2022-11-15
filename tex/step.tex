@@ -24,8 +24,9 @@
 \begin{step}%
 \begin{tikzpicture}
 
+  \pgfdeclarelayer{highlight}
   \pgfdeclarelayer{background}
-  \pgfsetlayers{background, main}
+  \pgfsetlayers{highlight, background, main}
 
   % Set off global structure first.
 
@@ -71,10 +72,18 @@
 
 }
 
-% Factorize bounding box highlighting procedure.
-% [padding]{node}
-\NewDocumentCommand{\Highlight}{ O{5} m }{
-  \begin{pgfonlayer}{background}%
+% Factorize bounding box highlighting procedures.
+% [padding]{lower}{upper}
+\NewDocumentCommand{\HighlightSquare}{ O{5} m m }{
+  \begin{pgfonlayer}{highlight}%
+    \coordinate (offset) at (#1, #1);
+    \coordinate (lower) at ($(#2) - (offset)$);
+    \coordinate (upper) at ($(#3) + (offset)$);
+    \draw[Light5, line width=1, fill=Yellow1] (lower) rectangle (upper);
+  \end{pgfonlayer}
+}
+\NewDocumentCommand{\HighlightShade}{ O{5} m }{
+  \begin{pgfonlayer}{highlight}%
     \coordinate (offset) at (#1, #1);
     \coordinate (lower) at ($(#2.south west) - (offset)$);
     \coordinate (upper) at ($(#2.north east) + (offset)$);

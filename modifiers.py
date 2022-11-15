@@ -4,7 +4,7 @@ of every slide we need to animate, so we can parse it easily.
 
 from copy import deepcopy
 import re
-from typing import Callable, Self, cast
+from typing import Callable, Self, cast, List
 
 
 class TextModifier(object):
@@ -18,6 +18,7 @@ class TextModifier(object):
     """
 
     _rendered = True  # Lower on instances so they render to nothing.
+    _epilog: List["TextModifier"]  # Set to append after rendering.
 
     def __init__(self, _: str):
         raise NotImplementedError(f"Cannot parse input text for {type(self).__name__}.")
@@ -41,6 +42,13 @@ class TextModifier(object):
         """Make unrendered."""
         self._rendered = False
         return self
+
+    def add_epilog(self, m: "TextModifier") -> "TextModifier":
+        try:
+            self._epilog.append(m)
+        except AttributeError:
+            self._epilog = [m]
+        return m
 
     _tab = " "
     _short = False  # Override in children for shorter display.
@@ -90,12 +98,17 @@ class TextModifier(object):
 
 
 def render_function(f: Callable) -> Callable:
-    """Decorate render functions so they render nothing if _rendered is False."""
+    """Decorate render functions so they take `_rendered` and `_epilog` into account."""
 
     def render(self, *args, **kwargs) -> str:
         if not self._rendered:
             return ""
-        return f(self, *args, **kwargs)
+        result = f(self, *args, **kwargs)
+        try:
+            result += "".join(m.render() for m in self._epilog)
+        except AttributeError:
+            pass
+        return result
 
     return render
 
@@ -143,6 +156,30 @@ class Regex(TextModifier):
                 group = cast(TextModifier, kwargs[name](group))
             self.__dict__[name] = group
 
+    @staticmethod
+    def new(pattern: str, **kwargs) -> "Regex":
+        """Construct pattern given placeholders in <> tags, all empty by default
+        unless otherwise specified in kwargs."""
+        chunks = pattern.strip().split("<")
+        input = chunks.pop(0)
+        regex = re.escape(input)
+        placeholders = []
+        type_kwargs = {}
+        for c in chunks:
+            ph, literal = c.split(">", 1)
+            regex += r"(.*?)"
+            placeholders.append(ph)
+            if ph in kwargs:
+                if type(v := kwargs[ph]) is type:
+                    type_kwargs[ph] = v
+                elif type(v) is str:
+                    input += v
+                else:
+                    input += v.render()
+            input += literal
+            regex += re.escape(literal)
+        return Regex(input, regex, " ".join(placeholders), **type_kwargs)
+
     @render_function
     def render(self) -> str:
         result = ""
@@ -166,7 +203,10 @@ class Regex(TextModifier):
     def __getattr__(self, name: str) -> str | TextModifier:
         if name.startswith("__") and name.endswith("__"):  # keep python internals safe
             return self.__getattribute__(name)
-        return self.__dict__[name]
+        try:
+            return self.__dict__[name]
+        except KeyError as e:
+            raise AttributeError(str(e))
 
     def __setattr__(self, name: str, value: str | re.Match):
         self.__dict__[name] = value

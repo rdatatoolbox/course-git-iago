@@ -28,3 +28,35 @@ class Command(Regex):
     def new(*args) -> "Command":
         model = (r"\Command[{}]" + "{{{}}}" * 2).format(*args)
         return Command(model)
+
+
+class HighlightSquare(Regex):
+    """Make a node glow a little bit."""
+
+    def __init__(self, input: str):
+        super().__init__(
+            input.strip(),
+            r"\\HighlightSquare\[(.*?)\]{(.*?)}{(.*?)}",
+            "padding lower upper",
+        )
+
+    @staticmethod
+    def new(lower, upper, padding=5) -> "HighlightSquare":
+        model = (r"\HighlightSquare[{2}]{{{0}}}{{{1}}}").format(lower, upper, padding)
+        return HighlightSquare(model)
+
+class HighlightShade(Regex):
+    """Make a node glow a little bit."""
+
+    def __init__(self, input: str):
+        super().__init__(
+            input.strip(),
+            r"\\HighlightShade\[(.*?)\]{(.*?)}",
+            "padding node",
+        )
+
+    @staticmethod
+    def new(node, padding=5) -> "HighlightShade":
+        model = (r"\HighlightShade[{1}]{{{0}}}").format(node, padding)
+        return HighlightShade(model)
+
