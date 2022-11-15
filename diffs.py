@@ -92,8 +92,8 @@ class Diff(Regex):
         Input is stripped, unless it starts with \n\n in which case \n is kept.
         """
         lines = dedent(self.latex_escape(input)).strip().split("\n")
-        if input.startswith('\n\n'):
-            lines = [''] + lines
+        if input.startswith("\n\n"):
+            lines = [""] + lines
         for line in lines:
             self.lines.append(mod=mod, text=line)
 
