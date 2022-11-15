@@ -15,22 +15,16 @@ class Step(TextModifier):
 
 
 class Command(Regex):
-    """Optionally a git command to position, but maybe nothing instead."""
+    """Common git command to position, but maybe nothing instead."""
 
     def __init__(self, input: str):
-        if input.strip():
-            super().__init__(
-                input,
-                r"\s*\\Command\[(.*?)\]{(.*?)}{(.*?)}",
-                "anchor loc text",
-            )
-            self._rendered = True
-        else:
-            self._rendered = False
+        super().__init__(
+            input.strip(),
+            r"\\Command\[(.*?)\]{(.*?)}{(.*?)}",
+            "anchor loc text",
+        )
 
     @staticmethod
     def new(*args) -> "Command":
-        model = (r"  \Command[{}]" + "{{{}}}" * 2).format(*args)
-        res = Command(model)
-        res._rendered = True
-        return res
+        model = (r"\Command[{}]" + "{{{}}}" * 2).format(*args)
+        return Command(model)

@@ -58,9 +58,7 @@ class Document(TextModifier):
         only_slide: int | None = None,
         only_step: int | None = None,
     ):
-        """Render to a file then compile.
-        Use a temporary folder destroyed afterwards.
-        """
+        """Render to a file then compile in tex folder and copy result to destination."""
         output = Path(filename)
 
         build = Path("tex")
@@ -108,15 +106,15 @@ class Slide(TextModifier):
     """The slide section is parsed for header and body.
     Bodies may be multiplied and edited into steps, but the header remains the same.
     The section name determines which parser to use for the body.
-    Like Step, keeps a meta-list of subclasses to be matched against document data
+    Like Step, keep a meta-list of subclasses to be matched against document data
     for finding the correct type to construct.
     """
 
     def __init__(self, name: str, input: str):
         self.name = name
         bodies = input.split(r"\Step{")
-        header = bodies.pop(0)
-        bodies = [b.rsplit("}", 1)[0].rstrip() for b in bodies]
+        header = bodies.pop(0).strip()
+        bodies = [b.rsplit("}", 1)[0].strip() for b in bodies]
         self.header = Constant(header)
         # Match name against Step type names to find the correct type.
         found = False
@@ -133,14 +131,16 @@ class Slide(TextModifier):
 
     @render_function
     def render(self) -> str:
-        return " {}\n{}{} ".format(
+        return " {}\n{}\n{} ".format(
             self.name,
             self.header.raw,
-            "\n".join(f"\\Step{{{s.render()}\n}}" for s in self.steps),
+            "\n".join("\\Step{{\n{}  \n}}".format(s.render()) for s in self.steps),
         )
 
     def pop_step(self) -> Step:
-        """Useful to start from without using what's initially in the stub document."""
+        """Useful to start from what's initially in the stub document
+        but without using it.
+        """
         return self.steps.pop()
 
     def add_step(self, step: Step):

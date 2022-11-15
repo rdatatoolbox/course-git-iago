@@ -16,18 +16,6 @@ with open(main_tex, "r") as file:
 
 doc = Document(content)
 
-# Check that rendering works well,
-# so the document is exactly the same if no modifications has been made.
-# TODO: remove this check to get more latitude with whitespacing.
-if not (r := doc.render()) == content:
-    filename = "wrong_render"
-    with open(filename, "w") as file:
-        file.write(r)
-    raise ValueError(
-        "Rendering without modifications did not yield a result identical to input. "
-        f"Diff {repr(filename)} against {repr(str(main_tex))} to investigate."
-    )
-
 for slide in doc.slides:
     slide.animate()
 

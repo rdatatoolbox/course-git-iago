@@ -2,6 +2,7 @@
 of every slide we need to animate, so we can parse it easily.
 """
 
+from copy import deepcopy
 import re
 from typing import Callable, Self, cast
 
@@ -12,19 +13,24 @@ class TextModifier(object):
     It parses it into a python object
     exposing various edition methods.
     Then it may be rendered into a modified version of the text.
-    Copying it should be always possible by a simple render/parse loop.
+    Some modifiers are not actually created from strings and are only rendered,
+    in this case they provide a `new()` static method.
     """
 
-    _rendered = True  # Set to false on instances to not render.
+    _rendered = True  # Lower on instances so they render to nothing.
 
     def __init__(self, _: str):
-        raise NotImplementedError(f"Cannot parse input text for {type(self).__name__}")
+        raise NotImplementedError(f"Cannot parse input text for {type(self).__name__}.")
+
+    @classmethod
+    def new(cls, *_, **__) -> Self:
+        raise NotImplementedError(f"Cannot create new {type(cls).__name__}.")
 
     def render(self) -> str:
-        raise NotImplementedError(f"Cannot render text for {type(self).__name__}")
+        raise NotImplementedError(f"Cannot render text for {type(self).__name__}.")
 
     def copy(self) -> Self:
-        return type(self)(self.render())
+        return deepcopy(self)
 
     def on(self) -> Self:
         """Make rendered."""
@@ -127,7 +133,8 @@ class Regex(TextModifier):
     ):
         if not (m := re.compile(pattern, re.DOTALL).match(input)):
             raise ValueError(
-                f"The given pattern:\n  {pattern}\ndoes not match input:\n {input}"
+                f"The given pattern:\n  {pattern}\ndoes not match input:\n {input}\n"
+                f"in Regex type {type(self).__name__}."
             )
         self._match = m  # Members with no trailing '_' are group values.
         for i, name in enumerate(groups.strip().split()):
@@ -157,6 +164,8 @@ class Regex(TextModifier):
 
     # Reassure pyright with artificial __[gs]etattr__ methods.
     def __getattr__(self, name: str) -> str | TextModifier:
+        if name.startswith("__") and name.endswith("__"):  # keep python internals safe
+            return self.__getattribute__(name)
         return self.__dict__[name]
 
     def __setattr__(self, name: str, value: str | re.Match):
@@ -182,7 +191,7 @@ class ListOf(TextModifier):
     @render_function
     def render(self) -> str:
         return self.separator.join(
-            m.render() for m in [self.head] + self.list + [self.tail] if m
+            r for m in [self.head] + self.list + [self.tail] if m and (r := m.render())
         )
 
     def append(self, *args, **kwargs) -> TextModifier:
@@ -195,7 +204,7 @@ class ListOf(TextModifier):
         return self
 
 
-def MakeListOf(tp: Callable, sep=",\n", head=False, tail=False) -> type:
+def MakeListOf(tp: Callable, sep: str, head=False, tail=False) -> type:
     class NewListOf(ListOf):
         separator = sep
         type = tp

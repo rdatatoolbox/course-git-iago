@@ -61,14 +61,14 @@ class DiffList(TextModifier):
 
 
 class Diff(Regex):
-    """One diffed file"""
+    """One diffed file."""
 
     lines: ListOf
 
     def __init__(self, input: str):
         super().__init__(
-            input,
-            r"\[(.*?)\]" * 3 + r"{(.*?)}.*?" * 2 + r"{\s*(.*)\n?\s*}\s*",
+            input.strip(),
+            r"\[(.*?)\]" * 3 + r"{(.*?)}.*?" * 2 + r"{(.*)}",
             "mod anchor name pos filename lines",
             lines=DiffLines,
         )
@@ -76,7 +76,7 @@ class Diff(Regex):
     @staticmethod
     def new(**kwargs) -> "Diff":
         """Create a new line with given parameters (minus leading separator)."""
-        model = "[{mod}][{anchor}][{name}]{{{pos}}}{{{filename}}}{{\n}}\n"
+        model = "[{mod}][{anchor}][{name}]{{{pos}}}{{{filename}}}{{}}"
         return Diff(model.format(**kwargs))
 
     @staticmethod
@@ -123,15 +123,15 @@ class DiffLine(Regex):
 
     def __init__(self, input: str):
         super().__init__(
-            input,
-            r"\s*(.*?)/{(.*)}\s*",
+            input.strip(),
+            r"(.*?)/{(.*)}",
             "mod text",
         )
 
     @staticmethod
     def new(**kwargs) -> "DiffLine":
-        model = "    {mod}/{{{text}}}"
+        model = "{mod}/{{{text}}}"
         return DiffLine(model.format(**kwargs))
 
 
-DiffLines = MakeListOf(DiffLine, tail=True)
+DiffLines = MakeListOf(DiffLine, sep=",\n", tail=True)

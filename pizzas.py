@@ -16,14 +16,10 @@ class PizzasStep(Step):
     def __init__(self, input: str):
         chunks = input.split("\n\n")
         it = iter(chunks)
-        next(it)  # Ignore leading_whitespace
         self.filetree = FileTree(next(it))
         self.diffs = DiffList(next(it))
         self.repo = Repo(next(it))
-        try:
-            self.command = Command(next(it))
-        except StopIteration:
-            self.command = Command("")
+        self.command = Command(next(it))
         try:
             while some := next(it):
                 assert not some
@@ -32,18 +28,14 @@ class PizzasStep(Step):
 
     @render_function
     def render(self) -> str:
-        return (
-            "\n\n"
-            + "\n\n".join(
-                m.render() if isinstance(m, TextModifier) else m
-                for m in (
-                    self.filetree,
-                    self.diffs,
-                    self.repo,
-                    self.command,
-                )
+        return "\n\n".join(
+            m.render() if isinstance(m, TextModifier) else m
+            for m in (
+                self.filetree,
+                self.diffs,
+                self.repo,
+                self.command,
             )
-            + "\n"
         )
 
 

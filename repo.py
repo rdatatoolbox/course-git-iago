@@ -16,8 +16,8 @@ class Repo(Regex):
 
     def __init__(self, input: str):
         super().__init__(
-            input,
-            r"\s*\\Repo\[(.*?)\]{(.*?)}{\n(.*?)}%(.*)",
+            input.strip(),
+            r"\\Repo\[(.*?)\]{(.*?)}{\n(.*?)}%\n(.*)",
             "anchor pos commits labels",
             commits=Commits,
             labels=Labels,
@@ -36,14 +36,14 @@ class Commit(Regex):
 
     def __init__(self, input: str):
         super().__init__(
-            input,
-            r"\s*(.*?)/{(.*?)}",
+            input.strip(),
+            r"(.*?)/{(.*?)}",
             "hash message",
         )
 
     @staticmethod
     def new(*args) -> "Commit":
-        model = r"    {}/{{{}}}".format(*args)
+        model = r"{}/{{{}}}".format(*args)
         return Commit(model)
 
 
@@ -65,14 +65,14 @@ class Head(Regex):
 
     def __init__(self, input: str):
         super().__init__(
-            input,
-            r"\s*\\Head{(.*?)}{(.*?)}{(.*?)}",
+            input.strip(),
+            r"\\Head{(.*?)}{(.*?)}{(.*?)}",
             "hash offset local",
         )
 
     @staticmethod
     def new(*args) -> "Head":
-        model = (r"  \Head" + "{{{}}}" * 3).format(*args)
+        model = (r"\Head" + "{{{}}}" * 3).format(*args)
         return Head(model)
 
 
@@ -82,16 +82,16 @@ class Branch(Regex):
 
     def __init__(self, input: str):
         super().__init__(
-            input,
-            r"\s*\\Branch\[(.*?)\]{(.*?)}{(.*?)}{(.*?)}{(.*?)}",
+            input.strip(),
+            r"\\Branch\[(.*?)\]" + "{(.*?)}" * 4,
             "color hash offset local name",
         )
 
     @staticmethod
     def new(*args) -> "Branch":
-        model = (r"  \Branch[{}]" + "{{{}}}" * 4).format(*args)
+        model = (r"\Branch[{}]" + "{{{}}}" * 4).format(*args)
         return Branch(model)
 
 
 Commits = MakeListOf(Commit, sep=",\n", tail=True)
-Labels = MakeListOf(Label, sep="\n", head=True)
+Labels = MakeListOf(Label, sep="\n")

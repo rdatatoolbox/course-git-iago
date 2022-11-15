@@ -70,9 +70,9 @@ class FileTreeLine(Regex):
 
     def __init__(self, input: str):
         super().__init__(
-            input,
-            r"\s*\\.*?\[(.*?),.*?mod=(.).*?(|, connect)(|, last)\]{(.*?)}{(.*?)}{(.*?)}",
-            "type mod connect last pos name filename",
+            input.strip(),
+            r"\\(.*?)\[(.*?),.*?mod=(.).*?(|, connect)(|, last)\]{(.*?)}{(.*?)}{(.*?)}",
+            "cmd type mod connect last pos name filename",
         )
 
     @staticmethod
