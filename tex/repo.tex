@@ -1,4 +1,5 @@
 % Draw something looking like a git network.
+% Only 2 parallel git chains supported now.
 
 \tikzmath{
   \CommitRadius = 3;
@@ -6,96 +7,136 @@
   \CommitMargins = 5;
   \CommitBaseHeight = -2;
   \CommitSpacing = 10;
+  \BranchesSpacing = 8;
   \LabelIsep = 2;
-  % Trig magic to shape the C.ommit A.rrow so it's evenly thick.
-  \CAW = 1.2; % Thickness
-  \CAS = 2; % Shorten to not touch commits.
-  \CAH = 4; % Head height.
-  \CAR = 1.5*\CommitRadius; % Head spread.
-  \CAT = \CommitSpacing - 2 * \CAS; % Total arrow tip height.
-  \CAC = \CAW * (-4 * \CAH * \CAW + \CAR * sqrt(4*\CAH^2+\CAR^2-4*\CAW^2))
-         / (\CAR^2-4*\CAW^2);
-  \CAA = asin(\CAW / \CAC); % Angle to vertical.
-  \CAB = (\CAR - \CAW) / (2 * tan(\CAA)); % Roof-height under the head.
+  \CommitArrowShorten = \CommitRadius + 2;
+  \LabelArrowShorten = \CommitRadius + 2;
 }
 \tikzset{
   commit/.style={line width=2.0, fill=Orange3, draw=Dark3},
   hash/.style={Light5},
+  commit arrow/.style={-{Straight Barb[angle'=70, length=3mm]},
+                       Light4, line width=4.5,
+                       shorten >=\CommitArrowShorten mm,
+                       shorten <=\CommitArrowShorten mm,
+                       },
   label/.style={draw, line width=1.5, #1, fill=Light3,
                 inner sep=\LabelIsep, rounded corners},
   label arrow/.style={-Stealth, line width=1.5, #1,
-                      shorten >=3.5*\CommitRadius},
+                      shorten >=\LabelArrowShorten mm},
 }
 
-% Draw one commit with hash and message.
-% [name]{location}{hash}{message}
-\NewDocumentCommand{\Commit}{ O{commit-center} m m m }{
+% Draw one commit with hash and message, use [offset] to align with 2 branches.
+% [name][hash-offset][messa-offset]{location}{hash}{message}
+\NewDocumentCommand{\Commit}{ O{commit-center} O{0} O{0} m m m }{
 
-  \coordinate (#1) at (#2);
+  \coordinate (#1) at (#4);
   \path[commit] (#1) circle (\CommitRadius);
 
   % Hash.
-  \node[scale=\CommitScale, anchor=base east, hash]
-    at ($(#1) - (\CommitRadius + \CommitMargins, -\CommitBaseHeight)$)
-    {\tt #3};
+  \node[scale=\CommitScale, anchor=base east, hash] (#5-hash)
+    at ($(#1) - (\CommitRadius + \CommitMargins + #2, -\CommitBaseHeight)$)
+    {\tt #5};
 
   % Message.
-  \node[scale=\CommitScale, anchor=base west, Dark4]
-    at ($(#1) + (\CommitRadius + \CommitMargins, \CommitBaseHeight)$)
-    {\tt #4};
+  \node[scale=\CommitScale, anchor=base west, Dark4] (#5-message)
+    at ($(#1) + (\CommitRadius + \CommitMargins - #2 + #3, \CommitBaseHeight)$)
+    {\tt #6};
 
 }
 
 % Chain commits together.
-% [anchor][reponame]{location}{hash/message list}
-\NewDocumentCommand{\Repo}{ O{center} O{repo} m m }{
+% [anchor][reponame][simple|double]{location}{type/hash/message list}
+\NewDocumentCommand{\Repo}{ O{center} O{repo} O{simple} m m }{
 
-  \node[anchor=#1] (#2) at (#3) {\tikz[remember picture]{
-    \foreach \hash/\message [count=\i] in {#4} {\ifcsempty{hash}{}{
+
+  \begin{scope}[local to=Canvas]\coordinate (loc) at (#4);\end{scope}
+  \node[anchor=#1] (#2) at (loc) {\tikz[remember picture]{
+    \def\merged{1} % Lower when there are two chains.
+    % Vertical/Horizontal commit spacing.
+    \tikzmath{
+      \V = 2*\CommitRadius + \CommitSpacing;
+      \H = \BranchesSpacing;
+      \Hoff = 0;
+    }
+    % All messages need to be offset by 1 unit if the repo is double
+    % so they remain aligned.
+    \ifstrequal{#3}{double}{\tikzmath{ \Hoff = \H; }}{}
+    \foreach \type/\hash/\message [count=\i] in {#5} {\ifcsempty{hash}{}{
       \ifnumcomp{\i}{=}{1}{
-        \Commit[\hash]{0, 0}{\hash}{\message}
+        \Commit[\hash][0][\Hoff]{0, 0}{\hash}{\message}
+        % Keep track of last commit on the straight/parallel chain..
+        \coordinate (straight) at (\hash);
+        \coordinate (parallel) at (\hash); % (but they start merged)
+        \coordinate (last) at (\hash); % .. and of last commit at all.
       }{
-        \coordinate[above=2*\CommitRadius+\CommitSpacing of previous] (\hash);
-        \Commit[\hash]{\hash}{\hash}{\message}
-
-        % Connecting arrow.
-        \fill[Light4] ($(previous) + (0, \CommitRadius + \CAS)$)
-           -- +(\CAW/2, 0) -- +(\CAW/2, \CAT - \CAH + \CAB)
-           -- +(\CAR/2, \CAT - \CAH) -- +(\CAR/2, \CAT - \CAH + \CAC)
-           -- +(0, \CAT)
-           -- +(-\CAR/2, \CAT - \CAH + \CAC) -- +(-\CAR/2, \CAT - \CAH)
-           -- +(-\CAW/2, \CAT - \CAH + \CAB) -- +(-\CAW/2, 0) -- cycle;
-
-      }
-      \coordinate (previous) at (\hash);
+        \coordinate (\hash) at ($(straight |- last) + (\H, \V)$);
+        % Commit position depends on its type.
+        % I: commit on the straight chain.
+        % Y: fork commit (the first on the parallel chain).
+        % H: commit on the parallel chain.
+        % A: merge commit (on the straight chain).
+        \ifdefstring{\type}{Y}{
+          \coordinate (parallel) at (straight);
+        }{}
+        \ifboolexpr{ test {\ifdefstring{\type}{H}}
+                  or test {\ifdefstring{\type}{Y}} }{
+          \ifdefstring{\merged}{1}{
+            \draw[commit arrow] (parallel) -- (\hash);
+          }{
+            \coordinate
+              [above=\CommitRadius + .5*\CommitSpacing of parallel] (c);
+            \draw[commit arrow] (parallel) .. controls (\hash |- c) .. (\hash);
+          }
+          \coordinate (parallel) at (\hash);
+          \def\merged{0}
+        }{
+          \coordinate (\hash) at (straight |- \hash);
+          \draw[commit arrow] (straight) -- (\hash);
+          \coordinate (straight) at (\hash);
+          \tikzmath{ \H = 0; }
+        }
+        \Commit[\hash][\H][\Hoff]{\hash}{\hash}{\message}
+        \ifdefstring{\type}{A}{%
+          \coordinate[below=\CommitRadius + .5*\CommitSpacing of \hash] (c);
+          \draw[commit arrow] (parallel)
+                  .. controls (parallel |- c) .. (\hash);
+          \coordinate (straight) at (\hash);
+          \coordinate (parallel) at (\hash);
+          \def\merged{1}
+        }{}
+    }
+    \coordinate (last) at (\hash);
   }}}};
 
 }
 
 % Pick a commit and point label to it.
-% [name][color]{hash}{offset-from-commit}{local-arrow-start}{label-text}
-\NewDocumentCommand{\Label}{ O{label} O{Blue4} m m m m }{
+% [name][color][anchor]
+% {hash}{offset-from-commit}{local-arrow-start}{label-text}
+\NewDocumentCommand{\Label}{ O{label} O{Blue4} O{base} m m m m }{
 
-  \node[scale=\CommitScale, label=#2] (#1) at ($(#3) + (#4)$) {\tt #6};
+  \node[scale=\CommitScale, label=#2, anchor=#3]
+    (#1) at ($(#4) + (#5)$) {\tt #7};
 
   \begin{pgfonlayer}{background}
     \begin{scope}[local to=#1]
-      \coordinate (arrow-start) at (#5);
+      \coordinate (arrow-start) at (#6);
     \end{scope}
-    \draw[label arrow=#2] (arrow-start) -- (#3);
+    \draw[label arrow=#2] (arrow-start) -- (#4);
   \end{pgfonlayer}
 
 }
 % Basic branch label.
-% [color]{hash}{offset-from-commit}{local-arrow-start}{branch-name}
-\NewDocumentCommand{\Branch}{ O{Blue4} m m m m }{
-  \Label[#5][#1]{#2}{#3}{#4}{#5}
+% [color][anchor]{hash}{offset-from-commit}{local-arrow-start}{branch-name}
+\NewDocumentCommand{\Branch}{ O{Blue4} O{base} m m m m }{
+  \Label[#6][#1][#2]{#3}{#4}{#5}{#6}
 }
 % Special HEAD label.
-% {hash}{offset-from-commit}{local-arrow-start}
-\NewDocumentCommand{\Head}{ m m m }{
-  \Label[HEAD][Purple4]{#1}{#2}{#3}{HEAD}
+% [anchor]{hash}{offset-from-commit}{local-arrow-start}
+\NewDocumentCommand{\Head}{ O{base} m m m }{
+  \Label[HEAD][Purple4][#1]{#2}{#3}{#4}{HEAD}
   % Also highlight current commit.
-  \fill[Yellow1] (#1) circle (.9*\CommitRadius);
+  \fill[Yellow1] (#2) circle (.9*\CommitRadius);
 }
 
