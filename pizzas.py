@@ -5,8 +5,8 @@ from typing import cast
 from diffs import DiffList
 from document import Slide
 from filetree import FileTree
-from modifiers import Regex, TextModifier, render_function
-from repo import Branch, Head, Repo
+from modifiers import AnonymousPlaceHolder, Regex, render_method
+from repo import Repo
 from steps import Command, HighlightSquare, Step
 
 
@@ -19,17 +19,17 @@ class PizzasStep(Step):
         self.filetree = FileTree(next(it))
         self.diffs = DiffList(next(it))
         self.repo = Repo(next(it))
-        self.command = Command(next(it))
+        self.command = Command.parse(next(it))
         try:
             while some := next(it):
                 assert not some
         except StopIteration:
             pass
 
-    @render_function
+    @render_method
     def render(self) -> str:
         return "\n\n".join(
-            m.render() if isinstance(m, TextModifier) else m
+            m.render()
             for m in [
                 self.filetree,
                 self.diffs,
@@ -61,17 +61,14 @@ class PizzasSlide(Slide):
             )
         ).off()
 
-        image = cast(
-            Regex,
-            step.add_epilog(
-                Regex.new(
-                    r"""
+        image = step.add_epilog(
+            AnonymousPlaceHolder(
+                r"""
                 \node (im) at (Canvas.center)
                     {\includegraphics[width=15cm]{<filename>}};
                  """,
-                    filename="pizzas_various.jpg",
-                )
-            ),
+                filename="pizzas_various.jpg",
+            )
         ).off()
 
         readme_text = [
@@ -165,11 +162,10 @@ class PizzasSlide(Slide):
 
         # First commit.
         cmd.text = "git commit"
-        rp.commits.append("d1e8c8c", "First commit, the intent.")
-        head = cast(Head, rp.labels.append("d1e8c8c", "140:20", ".5,0"))
-        main = cast(
-            Branch, rp.labels.append("Blue4", "d1e8c8c", "40:20", "-.5,0", "main")
-        )
+        rp.commits.append("I", "d1e8c8c", "First commit, the intent.")
+        head = rp.labels.append("d1e8c8c", "140:20", ".5,0")
+        main = rp.labels.append("Blue4", "d1e8c8c", "40:20", "-.5,0", "main")
+
         STEP()
 
         hi_on = lambda: (hi_gitfolder.on(), hi_repo.on())
@@ -202,7 +198,7 @@ class PizzasSlide(Slide):
         cmd.text = "git commit"
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 0, -1)
-        rp.commits.append("4e29052", "First pizza: Margherita.")
+        rp.commits.append("I", "4e29052", "First pizza: Margherita.")
         head.hash = main.hash = "4e29052"
         hi_on()
         STEP()
@@ -210,7 +206,6 @@ class PizzasSlide(Slide):
         cmd.off()
         hi_off()
         STEP()
-
 
         # Editing Margherita
         d_margherita.append_text(margherita_text[1])
@@ -228,7 +223,7 @@ class PizzasSlide(Slide):
         cmd.on().text = "git commit"
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 0, -1)
-        rp.commits.append("45a5b65", "Add note to the Margherita.")
+        rp.commits.append("I", "45a5b65", "Add note to the Margherita.")
         head.hash = main.hash = "45a5b65"
         hi_on()
         STEP()
@@ -250,21 +245,21 @@ class PizzasSlide(Slide):
 
         f_readme.mod = d_readme.mod = "m"
         d_regina.mod = f_regina.mod = "+"
-        d_regina.set_mod('+', 0, -1)
-        d_readme.set_mod('+', 1, -1)
+        d_regina.set_mod("+", 0, -1)
+        d_readme.set_mod("+", 1, -1)
         cmd.on().text = "git diff"
         STEP()
 
         cmd.on().text = "git status"
-        d_readme.mod = '0'
-        d_regina.mod = '0'
+        d_readme.mod = "0"
+        d_regina.mod = "0"
         d_readme.set_mod("0", 0, -1)
         d_regina.set_mod("0", 0, -1)
         STEP()
 
         d_readme.mod = d_regina.mod = f_regina.mod = f_readme.mod = "0"
         cmd.on().text = "git commit"
-        rp.commits.append("17514f2", "Add Regina. List pizzas in README.")
+        rp.commits.append("I", "17514f2", "Add Regina. List pizzas in README.")
         head.hash = main.hash = "17514f2"
         hi_on()
         STEP()

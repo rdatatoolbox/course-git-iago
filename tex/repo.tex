@@ -50,7 +50,7 @@
 \NewDocumentCommand{\Repo}{ O{center} O{repo} O{simple} m m }{
 
 
-  \begin{scope}[local to=Canvas]\coordinate (loc) at (#4);\end{scope}
+  \IntensiveCoordinates{Canvas}{loc}{#4}
   \node[anchor=#1] (#2) at (loc) {\tikz[remember picture]{
     \def\merged{1} % Lower when there are two chains.
     % Vertical/Horizontal commit spacing.
@@ -140,3 +140,25 @@
   \fill[Yellow1] (#2) circle (.9*\CommitRadius);
 }
 
+% {anchor}{same-x-as}{label}
+\newcommand{\LocalRepoLabel}[3]{%
+  \coordinate (c) at (#2 |- Canvas.west);
+  \node[scale=\NormalScale, draw=Light5, fill=Light2,
+       inner sep=2, below=20 of c, anchor=#1] at (c)
+    {#3};
+}
+% {repo-name}{accout-name}
+\newcommand{\RemoteRepoLabel}[2]{%
+  \coordinate (c) at (#1.west |- Canvas.north);
+  \node[below=10 of c, anchor=base west, inner sep=2,
+       scale=\NormalScale, Blue4, draw=Light5, fill=Light2]
+    {\tt https://github.com/%
+      \tikz[baseline={(n.base)},inner sep=.5]{\node[fill=Yellow1](n){#2};}%
+      /Pizzas};
+}
+% [left|right][bend]{start}{end}
+\NewDocumentCommand{\RemoteArrow}{ O{left} O{50} m m }{
+  \begin{scope}[transparency group, opacity=.5]
+      \draw[-Stealth, line width=20, Brown2] (#3) to[bend #1=#2] (#4);
+  \end{scope}
+}

@@ -32,6 +32,12 @@
       y={(#1.north)},
   }
 }
+% Define a point wrt to existing node with relative coordinates.
+\NewDocumentCommand{\IntensiveCoordinates}{ m m m }{
+  \begin{scope}[local to=#1]
+    \coordinate (#2) at (#3);
+  \end{scope}
+}
 
 \tikzmath{
   \eps = 0.1; % Useful to avoid seemingly pixel-rounding errors.
@@ -47,7 +53,7 @@
 \newcommand{\TitleText}{<no-title>}
 \newcommand{\SubTitleText}{<no-subtitle>}
 \newcommand{\PageNumText}{<no-page-number>}
-\newcommand{\Progress}{1/2}
+\newcommand{\Progress}{0/1}
 
 \begin{document}%
 
@@ -60,7 +66,7 @@
 \renewcommand{\TitleText}{Introduction}
 \renewcommand{\SubTitleText}{Git and git clients}
 \renewcommand{\PageNumText}{1}
-\renewcommand{\Progress}{1/3}
+\renewcommand{\Progress}{1/4}
 \newlength{\U}
 \Step{
   \begin{scope}[inner sep=10]
@@ -112,13 +118,15 @@
 \renewcommand{\TitleText}{The Pizzas repo}
 \renewcommand{\SubTitleText}{Crafting your first commits}
 \renewcommand{\PageNumText}{2}
-\renewcommand{\Progress}{2/3}
+\renewcommand{\Progress}{2/4}
 \Step{
 
-  \FirstFile[folder, mod=0]{Canvas.north west}{A}{rootfolder}
+  \IntensiveCoordinates{Canvas}{A}{-1, 1}
+  \FirstFile[folder, mod=0]{A}{A}{rootfolder}
 
+  \IntensiveCoordinates{Canvas}{A}{1, 1}
   \def\FileSpacing{8}
-  \Diff[m][north east][A]{Canvas.north east}{file.ext}{
+  \Diff[m][north east][A]{A}{file.ext}{
     +/{One line},
   }
   \Diff[0][north east][A]{$(A.south east) + (0, -\FileSpacing)$}{other.ext}{
@@ -126,12 +134,176 @@
   }
 
   \Repo[south west]{Canvas.south west}{
-    hash256/{Commit message.},
+    I/hash256/{Commit message.},
   }%
   \Branch[Blue4]{hash256}{40:20}{-.5,0}{branch}
   \Head{hash256}{155:20}{.5,0}
 
   \Command[base]{0, 0}{git init}
+
+} % ENDSLIDE
+
+% SLIDE Remote
+\renewcommand{\TitleText}{Collaborating}
+\renewcommand{\SubTitleText}{Working with a remote}
+\renewcommand{\PageNumText}{3}
+\renewcommand{\Progress}{3/4}
+\Step{
+
+  \IntensiveCoordinates{Canvas}{A}{-1, 1}
+  \FirstFile[folder, mod=0]{A}{A}{root}
+
+  \IntensiveCoordinates{Canvas}{B}{.7, 1}
+  \FirstFile[folder, mod=0]{B}{B}{root}
+
+  \IntensiveCoordinates{Canvas}{c}{1, .85}
+  \Diff[m][north east][A]{c}{file.ext}{
+    +/{One line},
+  }
+
+  \begin{scope}[local to=Canvas]
+    \node[opacity=.2] (github) at (0, .5)
+      {\includegraphics[width=75mm]{github_logo.png}};
+    \foreach \xy/\file in {{-.7,-.6}/my_machine,
+                           { .7,-.6}/their_machine}{%
+      \node[opacity=.2] (github) at (\xy)
+        {\includegraphics[width=75mm]{\file.png}};
+    }
+  \end{scope}
+
+  \Repo[south west][mine][double]{-1, -1}{
+    I/hash256/{Commit message.},
+    H/075f8fc/{Divergent commit.},
+    H/f6b005f/{Second branch commit.},
+    A/d9c4395/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+  }%
+  \LocalRepoLabel{base west}{mine.west}{my machine}
+  \Branch[Blue4]{58d8fe0}{25:20}{-.5,0}{main}
+  \Head{58d8fe0}{155:20}{.5,0}
+
+
+  \Repo[base west][hub][double]{-.75, .1}{
+    I/hash256/{Commit message.},
+    H/075f8fc/{Divergent commit.},
+    H/f6b005f/{Second branch commit.},
+    A/d9c4395/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+  }%
+  \RemoteRepoLabel{hub}{MyAccount}
+  \Branch[Blue4]{58d8fe0}{25:20}{-.5,0}{main}
+  \Head{58d8fe0}{155:20}{.5,0}
+
+
+  \Repo[base][theirs][double]{.65, -1}{
+    I/hash256/{Commit message.},
+    H/075f8fc/{Divergent commit.},
+    H/f6b005f/{Second branch commit.},
+    A/d9c4395/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+  }%
+  \LocalRepoLabel{base east}{Canvas.east}{their machine}
+  \Branch[Blue4]{58d8fe0}{25:20}{-.5,0}{main}
+  \Head{58d8fe0}{155:20}{.5,0}
+
+  \Command[center]{-.5, -.1}{git push}
+  \Command[center]{+.5, -.1}{git fetch}
+
+  \IntensiveCoordinates{Canvas}{start}{-.5, .5}
+  \IntensiveCoordinates{Canvas}{end}{.4, .5}
+  \RemoteArrow[left][50]{start}{end}
+
+} % ENDSLIDE
+
+% SLIDE Fork
+\renewcommand{\TitleText}{Collaborating}
+\renewcommand{\SubTitleText}{Working with a fork}
+\renewcommand{\PageNumText}{4}
+\renewcommand{\Progress}{4/4}
+\Step{
+
+  \IntensiveCoordinates{Canvas}{A}{-1, 1}
+  \FirstFile[folder, mod=0]{A}{A}{root}
+
+  \IntensiveCoordinates{Canvas}{c}{1, .85}
+  \Diff[m][north east][A]{c}{file.ext}{
+    +/{One line},
+  }
+
+  \begin{scope}[local to=Canvas]
+    \foreach \xy in {{-.4,.5},{.4,.5}}{%
+      \node[opacity=.2] (github) at (\xy)
+        {\includegraphics[width=75mm]{github_logo.png}};
+    }
+    \foreach \xy/\file in {{-.7,-.6}/my_machine,
+                           { .7,-.6}/their_machine}{%
+      \node[opacity=.2] (github) at (\xy)
+        {\includegraphics[width=75mm]{\file.png}};
+    }
+  \end{scope}
+
+  \Repo[south west][mine][double]{-1, -1}{
+    I/hash256/{Commit message.},
+    H/075f8fc/{Divergent commit.},
+    H/f6b005f/{Second branch commit.},
+    A/d9c4395/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+  }%
+  \LocalRepoLabel{base west}{mine.west}{my machine}
+  \Branch[Blue4]{58d8fe0}{25:20}{-.5,0}{main}
+  \Head{58d8fe0}{155:20}{.5,0}
+
+
+  \Repo[base west][hub][double]{-.75, .1}{
+    I/hash256/{Commit message.},
+    H/075f8fc/{Divergent commit.},
+    H/f6b005f/{Second branch commit.},
+    A/d9c4395/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+  }%
+  \RemoteRepoLabel{hub}{MyAccount}
+  \Branch[Blue4]{58d8fe0}{25:20}{-.5,0}{main}
+  \Head{58d8fe0}{155:20}{.5,0}
+
+
+  \Repo[base east][fork][double]{.75, .1}{
+    I/hash256/{Commit message.},
+    H/075f8fc/{Divergent commit.},
+    H/f6b005f/{Second branch commit.},
+    A/d9c4395/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+  }%
+  \RemoteRepoLabel{fork}{TheirAccount}
+  \Branch[Blue4]{58d8fe0}{25:20}{-.5,0}{main}
+  \Head{58d8fe0}{155:20}{.5,0}
+
+  \Repo[base][theirs][double]{.65, -1}{
+    I/hash256/{Commit message.},
+    H/075f8fc/{Divergent commit.},
+    H/f6b005f/{Second branch commit.},
+    A/d9c4395/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+    I/58d8fe0/{Merge commit.},
+  }%
+  \LocalRepoLabel{base east}{Canvas.east}{their machine}
+  \Branch[Blue4]{58d8fe0}{25:20}{-.5,0}{main}
+  \Head{58d8fe0}{155:20}{.5,0}
+
+  \Command[center]{-.5, -.1}{git push}
+  \Command[center]{+.5, -.1}{git fetch}
+  \Command[center]{-.05, +.5}{git fetch}
+
+  \IntensiveCoordinates{Canvas}{start}{-.5, .5}
+  \IntensiveCoordinates{Canvas}{end}{.4, .5}
+  \RemoteArrow[left][50]{start}{end}
+
+  \node[below=5 of command, draw=Blue4, line width=7]{\includegraphics[height=15mm]{sync_fork_button.png}};
 
 } % ENDSLIDE
 

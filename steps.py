@@ -1,7 +1,7 @@
 """Modifiers concerned with individual slides and their very concrete content.
 """
 
-from modifiers import Regex, TextModifier
+from modifiers import MakePlaceHolder, TextModifier
 
 
 class Step(TextModifier):
@@ -14,49 +14,23 @@ class Step(TextModifier):
     pass
 
 
-class Command(Regex):
-    """Common git command to position, but maybe nothing instead."""
-
-    def __init__(self, input: str):
-        super().__init__(
-            input.strip(),
-            r"\\Command\[(.*?)\]{(.*?)}{(.*?)}",
-            "anchor loc text",
-        )
-
-    @staticmethod
-    def new(*args) -> "Command":
-        model = (r"\Command[{}]" + "{{{}}}" * 2).format(*args)
-        return Command(model)
-
-
-class HighlightSquare(Regex):
-    """Make a node glow a little bit."""
-
-    def __init__(self, input: str):
-        super().__init__(
-            input.strip(),
-            r"\\HighlightSquare\[(.*?)\]{(.*?)}{(.*?)}",
-            "padding lower upper",
-        )
-
-    @staticmethod
-    def new(lower, upper, padding=5) -> "HighlightSquare":
-        model = (r"\HighlightSquare[{2}]{{{0}}}{{{1}}}").format(lower, upper, padding)
-        return HighlightSquare(model)
-
-class HighlightShade(Regex):
-    """Make a node glow a little bit."""
-
-    def __init__(self, input: str):
-        super().__init__(
-            input.strip(),
-            r"\\HighlightShade\[(.*?)\]{(.*?)}",
-            "padding node",
-        )
-
-    @staticmethod
-    def new(node, padding=5) -> "HighlightShade":
-        model = (r"\HighlightShade[{1}]{{{0}}}").format(node, padding)
-        return HighlightShade(model)
-
+# Common commands.
+CommandModifier, Command = MakePlaceHolder(
+    "Command",
+    r"\Command[<anchor>]{<loc>}{<text>}",
+    anchor="center",
+)
+HighlightSquareModifier, HighlightSquare = MakePlaceHolder(
+    "HighlightSquare",
+    r"\HighlightSquare[<padding>]{<lower>}{<upper>}",
+    padding="5",
+)
+HighlightShadeModifier, HighlightShade = MakePlaceHolder(
+    "HighlightShade",
+    r"\HighlightShade[<padding>]{<node>}",
+    padding="5",
+)
+IntensiveCoordinatesModifier, IntensiveCoordinates = MakePlaceHolder(
+    "IntensiveCoordinates",
+    r"\IntensiveCoordinates{<node>}{<name>}{<x>,<y>}",
+)

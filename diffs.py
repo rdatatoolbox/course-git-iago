@@ -4,7 +4,16 @@
 from textwrap import dedent
 from typing import cast
 
-from modifiers import Constant, ListOf, MakeListOf, Regex, TextModifier, render_function
+from modifiers import (
+    Constant,
+    ListBuilder,
+    ListOf,
+    MakePlaceHolder,
+    Regex,
+    TextModifier,
+    render_method,
+)
+from steps import IntensiveCoordinates
 from utils import increment_name
 
 
@@ -17,13 +26,20 @@ class DiffList(TextModifier):
     _sep = r"\Diff"
 
     def __init__(self, input: str):
-        files = input.split(self._sep)
+        """First line is an intensive coordinate supposed to locate the first Diff."""
+        xy, rest = input.split("\n", 1)
+        self.xy = IntensiveCoordinates.parse(xy)
+        files = rest.split(self._sep)
         self.head = Constant(files.pop(0))
         self.files = [Diff(f) for f in files]
 
-    @render_function
+    @render_method
     def render(self) -> str:
-        return self._sep.join(m.render() for m in [self.head] + self.files)
+        return (
+            self.xy.render()
+            + "\n"
+            + self._sep.join(m.render() for m in [self.head] + self.files)
+        )
 
     def append(self, **kwargs) -> "Diff":
         # Default connect to previous one and use the same name +1.
@@ -95,7 +111,7 @@ class Diff(Regex):
         if input.startswith("\n\n"):
             lines = [""] + lines
         for line in lines:
-            self.lines.append(mod=mod, text=line)
+            self.lines.append(mod, line)
 
     def set_mod(self, mod: str, start: int, end=None):
         """Modify the state of one or several lines."""
@@ -104,7 +120,7 @@ class Diff(Regex):
         if end == -1:
             end = len(self.lines.list)
         for line in self.lines.list[start:end]:
-            line = cast(DiffLine, line)
+            line = cast(Regex, line)
             line.mod = mod
 
     def delete_lines(self, start: int, end=None):
@@ -116,22 +132,9 @@ class Diff(Regex):
         self.lines.list = self.lines.list[:start] + self.lines.list[end + 1 :]
 
 
-class DiffLine(Regex):
-    """One diff line."""
+DiffLineModifier, DiffLine = MakePlaceHolder(
+    "DiffLine",
+    r"<mod>/{<text>}",
+)
 
-    _short = True
-
-    def __init__(self, input: str):
-        super().__init__(
-            input.strip(),
-            r"(.*?)/{(.*)}",
-            "mod text",
-        )
-
-    @staticmethod
-    def new(**kwargs) -> "DiffLine":
-        model = "{mod}/{{{text}}}"
-        return DiffLine(model.format(**kwargs))
-
-
-DiffLines = MakeListOf(DiffLine, sep=",\n", tail=True)
+DiffLines = ListBuilder(DiffLine, ",\n", tail=True)

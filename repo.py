@@ -1,7 +1,7 @@
 """Craft and edit a simple repo.
 """
 
-from modifiers import ListOf, MakeListOf, Regex
+from modifiers import Builder, ListBuilder, ListOf, MakePlaceHolder, PlaceHolder, Regex
 
 
 class Repo(Regex):
@@ -11,8 +11,8 @@ class Repo(Regex):
     Also, use labels to point to commits like `HEAD` and `main`.
     """
 
-    commits: ListOf
-    labels: ListOf
+    commits: ListOf[PlaceHolder]
+    labels: ListOf[PlaceHolder]
 
     def __init__(self, input: str):
         super().__init__(
@@ -29,69 +29,65 @@ class Repo(Regex):
         self.labels.clear()
 
 
-class Commit(Regex):
-    """Plain hash number and commit message."""
-
-    _short = True
-
-    def __init__(self, input: str):
-        super().__init__(
-            input.strip(),
-            r"(.*?)/{(.*?)}",
-            "hash message",
-        )
-
-    @staticmethod
-    def new(*args) -> "Commit":
-        model = r"{}/{{{}}}".format(*args)
-        return Commit(model)
-
-
-def Label(_, input: str):
-    """Either HEAD or a branch label."""
-    try:
-        return Head(input)
-    except ValueError:
-        return Branch(input)
-
-
-# Cheat to make Label.new automatically happen based on number of arguments.
-Label.new = lambda *args: Head.new(*args) if len(args) == 3 else Branch.new(*args)
+CommitModifier, Commit = MakePlaceHolder(
+    "Commit",
+    r"<type>/<hash>/{<message>}",
+)
+HeadModifier, Head = MakePlaceHolder(
+    "Head",
+    r"\Head{<hash>}{<offset>}{<local>}",
+)
+BranchModifier, Branch = MakePlaceHolder(
+    "Branch",
+    r"\Branch[<color>]{<hash>}{<offset>}{<local>}{<name>}",
+)
+LocalRepoLabelModifier, LocalRepoLabel = MakePlaceHolder(
+    "LocalRepoLabel",
+    r"\LocalRepoLabel{<anchor>}{<x_like>}{<label>}",
+)
+RemoteRepoLabelModifier, RemoteRepoLabel = MakePlaceHolder(
+    "RemoteRepoLabel",
+    r"\RemoteRepoLabel{<repo>}{<account>}",
+)
+RemoteArrowModifier, RemoteArrow = MakePlaceHolder(
+    "RemoteArrow",
+    r"\RemoteArrow[<side>][<bend>]{<start>}{<end>}",
+    side="left",
+    bend="50",
+)
 
 
-class Head(Regex):
+class _LabelBuilder(Builder[PlaceHolder]):
+    """Artificial singleton to automatically parse into correct label
+    and create the correct label based on the given arguments.
+    """
 
-    _short = True
+    def parse(self, input: str) -> PlaceHolder:
+        try:
+            return Head.parse(input)
+        except ValueError:
+            pass
+        try:
+            return Branch.parse(input)
+        except ValueError:
+            pass
+        try:
+            return LocalRepoLabel.parse(input)
+        except ValueError:
+            pass
+        return RemoteRepoLabel.parse(input)
 
-    def __init__(self, input: str):
-        super().__init__(
-            input.strip(),
-            r"\\Head{(.*?)}{(.*?)}{(.*?)}",
-            "hash offset local",
-        )
-
-    @staticmethod
-    def new(*args) -> "Head":
-        model = (r"\Head" + "{{{}}}" * 3).format(*args)
-        return Head(model)
-
-
-class Branch(Regex):
-
-    _short = True
-
-    def __init__(self, input: str):
-        super().__init__(
-            input.strip(),
-            r"\\Branch\[(.*?)\]" + "{(.*?)}" * 4,
-            "color hash offset local name",
-        )
-
-    @staticmethod
-    def new(*args) -> "Branch":
-        model = (r"\Branch[{}]" + "{{{}}}" * 4).format(*args)
-        return Branch(model)
+    def new(self, *args) -> PlaceHolder:
+        """Assuming 'new' is undesired for RepoLabels,
+        decide based on number of arguments.
+        """
+        if len(args) == 3:
+            return Head.new(*args)
+        else:
+            return Branch.new(*args)
 
 
-Commits = MakeListOf(Commit, sep=",\n", tail=True)
-Labels = MakeListOf(Label, sep="\n")
+LabelBuilder = _LabelBuilder()
+
+Commits = ListBuilder(Commit, ",\n", tail=True)
+Labels = ListBuilder(LabelBuilder, "\n")

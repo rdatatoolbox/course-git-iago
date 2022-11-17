@@ -6,7 +6,7 @@ from pathlib import Path
 import shutil as shu
 from typing import Callable, List, cast
 
-from modifiers import Constant, TextModifier, render_function
+from modifiers import Constant, TextModifier, render_method
 from steps import Step
 
 
@@ -42,7 +42,7 @@ class Document(TextModifier):
             self.slides.append(cast(Slide, cast(Callable, SlideType)(name, s)))
             self.non_slides.append(Constant(ns))
 
-    @render_function
+    @render_method
     def render(self) -> str:
         ns = iter(self.non_slides)
         s = iter(self.slides)
@@ -129,7 +129,7 @@ class Slide(TextModifier):
             )
         self.steps = [cast(Step, cast(Callable, StepType)(b)) for b in bodies]
 
-    @render_function
+    @render_method
     def render(self) -> str:
         return " {}\n{}\n{} ".format(
             self.name,

@@ -5,7 +5,7 @@
 }
 
 % Position relatively to the canvas.
-% [anchor]{position}{command}
+% [anchor]{location}{command}
 \NewDocumentCommand{\Command}{ O{base} m m }{
   \begin{scope}[local to=Canvas]
     \node[scale=\CommandScale, anchor=#1, inner sep=2, fill=Light4]

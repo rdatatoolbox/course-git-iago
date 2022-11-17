@@ -4,7 +4,10 @@ of every slide we need to animate, so we can parse it easily.
 
 from copy import deepcopy
 import re
-from typing import Callable, Self, cast, List
+from typing import Callable, Dict, Generic, List, Self, Set, Tuple, TypeVar, cast
+
+
+TM = TypeVar("TM", bound="TextModifier")
 
 
 class TextModifier(object):
@@ -19,13 +22,6 @@ class TextModifier(object):
 
     _rendered = True  # Lower on instances so they render to nothing.
     _epilog: List["TextModifier"]  # Set to append after rendering.
-
-    def __init__(self, _: str):
-        raise NotImplementedError(f"Cannot parse input text for {type(self).__name__}.")
-
-    @classmethod
-    def new(cls, *_, **__) -> Self:
-        raise NotImplementedError(f"Cannot create new {type(cls).__name__}.")
 
     def render(self) -> str:
         raise NotImplementedError(f"Cannot render text for {type(self).__name__}.")
@@ -43,7 +39,7 @@ class TextModifier(object):
         self._rendered = False
         return self
 
-    def add_epilog(self, m: "TextModifier") -> "TextModifier":
+    def add_epilog(self, m: TM) -> TM:
         try:
             self._epilog.append(m)
         except AttributeError:
@@ -60,7 +56,8 @@ class TextModifier(object):
         level += 1
         tab = TextModifier._tab
         base_indent = level * tab
-        result = type(self).__name__ + "(" + ("" if self._short else "\n")
+        name = type(self).__name__
+        result = name + "(" + ("" if self._short else "\n")
         modifiers = []
         others = []
         for k, v in self.__dict__.items():
@@ -97,7 +94,7 @@ class TextModifier(object):
         return self.display(0)
 
 
-def render_function(f: Callable) -> Callable:
+def render_method(f: Callable) -> Callable:
     """Decorate render functions so they take `_rendered` and `_epilog` into account."""
 
     def render(self, *args, **kwargs) -> str:
@@ -113,6 +110,20 @@ def render_function(f: Callable) -> Callable:
     return render
 
 
+class Builder(Generic[TM]):
+    """Define interface for objects supposed to create particular TextModifiers."""
+
+    def parse(self, _: str) -> TM:
+        """Construct from parsed input string."""
+        raise NotImplementedError(
+            f"Cannot parse input to construct {TM.__name__} value."
+        )
+
+    def new(self, *_, **__) -> TM:
+        """Construct from desired content of the string."""
+        raise NotImplementedError(f"Cannot construct {TM.__name__} from data.")
+
+
 class Constant(TextModifier):
     """Trivial leaf modifier that offers no modification API. Just wraps an immutable string."""
 
@@ -121,12 +132,28 @@ class Constant(TextModifier):
     def __init__(self, input: str):
         self.raw = input
 
-    @render_function
+    @render_method
     def render(self) -> str:
         return self.raw
 
     def display(self, _: int) -> str:
         return f"Constant({repr(self.raw)})"
+
+
+class _ConstantBuilder(Builder[Constant]):
+    """Degenerated singleton producing constant text modifiers."""
+
+    def parse(self, input: str) -> Constant:
+        return Constant(input)
+
+    def new(self, input: str) -> Constant:
+        return Constant(input)
+
+    def __repr__(self):
+        return f"{type(self).__name__}"
+
+
+ConstantBuilder = _ConstantBuilder()
 
 
 class Regex(TextModifier):
@@ -140,47 +167,27 @@ class Regex(TextModifier):
     def __init__(
         self,
         input: str,
-        pattern: str,
+        pattern: str | re.Pattern,
         groups: str,
-        **kwargs: type,
+        **kwargs: Builder,
     ):
-        if not (m := re.compile(pattern, re.DOTALL).match(input)):
+        if type(pattern) is str:
+            pattern = re.compile(pattern, re.DOTALL)
+        pattern = cast(re.Pattern, pattern)
+        if not (m := pattern.match(input)):
             raise ValueError(
-                f"The given pattern:\n  {pattern}\ndoes not match input:\n {input}\n"
+                f"The given pattern:\n  {pattern.pattern}\n"
+                f"does not match input:\n  {input}\n"
                 f"in Regex type {type(self).__name__}."
             )
         self._match = m  # Members with no trailing '_' are group values.
         for i, name in enumerate(groups.strip().split()):
             group = cast(str, m.group(i + 1))
             if name in kwargs:
-                group = cast(TextModifier, kwargs[name](group))
+                group = cast(TextModifier, kwargs[name].parse(group))
             self.__dict__[name] = group
 
-    @staticmethod
-    def new(pattern: str, **kwargs) -> "Regex":
-        """Construct pattern given placeholders in <> tags, all empty by default
-        unless otherwise specified in kwargs."""
-        chunks = pattern.strip().split("<")
-        input = chunks.pop(0)
-        regex = re.escape(input)
-        placeholders = []
-        type_kwargs = {}
-        for c in chunks:
-            ph, literal = c.split(">", 1)
-            regex += r"(.*?)"
-            placeholders.append(ph)
-            if ph in kwargs:
-                if type(v := kwargs[ph]) is type:
-                    type_kwargs[ph] = v
-                elif type(v) is str:
-                    input += v
-                else:
-                    input += v.render()
-            input += literal
-            regex += re.escape(literal)
-        return Regex(input, regex, " ".join(placeholders), **type_kwargs)
-
-    @render_function
+    @render_method
     def render(self) -> str:
         result = ""
         m = self._match
@@ -212,30 +219,140 @@ class Regex(TextModifier):
         self.__dict__[name] = value
 
 
-class ListOf(TextModifier):
+class PlaceHolder(Regex):
+    """Trivial Regex object with simple placeholders,
+    with simplified API and constructible from simple patterns with special <>.
+    """
+
+    pass
+
+
+PH = TypeVar("PH", bound=PlaceHolder)
+
+
+class PlaceHolderBuilder(Builder[PH]):
+    """Constructs trivial Regexes objects with simple placeholders
+    given a simple literal patterns with <> special marks.
+    """
+
+    def __init__(
+        self,
+        _built_type: type,
+        _pattern: str,
+        # List members set as positional arguments (otherwise named),
+        # default to all members positional except options.
+        _positionals: None | str = None,
+        # Give named members default values and/or types.
+        **options: str | type | Tuple[str, type],
+    ):
+        self.built_type = _built_type
+        self.options = options
+        self.pattern = _pattern
+        if _positionals is None:
+            auto_pos = True
+            pos: Set[str] = set()
+        else:
+            auto_pos = False
+            pos = set(_positionals.strip().split())
+
+        # Construct 'regex' for Regex.__init__() (fed into re.compile)
+        # and 'model' for Regex.new() (fed into str.format()).
+        py_escape = lambda s: s.replace("{", "{{").replace("}", "}}")
+        chunks = _pattern.strip().split("<")
+        head = chunks.pop(0)
+        regex = re.escape(head)
+        model = cast(str, py_escape(head))
+        placeholders: List[str] = []
+        types: Dict[str, type] = {}
+        for c in chunks:
+            ph, literal = c.split(">", 1)
+            regex += r"(.*?)"
+            model += (
+                "{}"
+                if (ph in pos) or (auto_pos and (ph not in options))
+                else f"{{{ph}}}"
+            )
+            if ph in options:
+                v = options[ph]
+                if type(v) is tuple:
+                    v, t = v
+                    types[ph] = t
+                    options[ph] = v
+                elif type(v) is type:
+                    options[ph] = v
+            placeholders.append(ph)
+            regex += re.escape(literal)
+            model += cast(str, py_escape(literal))
+        self.placeholders = placeholders
+        self.regex = regex
+        self.model = model
+        self.types = types
+
+    def parse(self, input: str) -> PH:
+        groups = " ".join(self.placeholders)
+        return self.built_type(
+            input.strip(),
+            self.regex,
+            groups,
+            **self.types,
+        )
+
+    def new(self, *args, **kwargs) -> PH:
+        kw = self.options.copy()
+        kw.update(kwargs)
+        return self.parse(self.model.format(*args, **kw))
+
+    def __call__(self, *args, **kwargs) -> PH:
+        """Direct calls mean 'new'."""
+        return self.new(*args, **kwargs)
+
+    def __repr__(self):
+        return f"{type(self).__name__}[{self.built_type.__name__}]"
+
+
+def MakePlaceHolder(
+    _name,
+    *args,
+    **kwargs,
+) -> Tuple[type, PlaceHolderBuilder[PlaceHolder]]:
+    """Construct a pair of PlaceHolder subtypes and associated builder.
+    To clarify uses of builder, the shortest name goes to it,
+    and the other is suffixed with -Modifier.
+    """
+    SubPH = type(_name + "Modifier", (PlaceHolder,), {})
+    SubPHBuilder = PlaceHolderBuilder[SubPH](SubPH, *args, **kwargs)
+    return SubPH, SubPHBuilder
+
+
+def AnonymousPlaceHolder(pattern, **kwargs) -> PlaceHolder:
+    """Useful for one-liners,
+    PlaceHolder objects that will only be parsed/created in one place.
+    """
+    _, SubPHBuilder = MakePlaceHolder("Anonymous", pattern, _positionals="")
+    return SubPHBuilder.new(**kwargs)
+
+
+class ListOf(Generic[TM], TextModifier):
     """Construct a TextModifier type that is just a trivial list of another one,
     with head and tail considered constant if requested.
     """
 
-    separator: str
-    type: Callable
-    with_head: bool
-    with_tail: bool
+    def __init__(
+        self,
+        list: List[TM],
+        builder: Builder[TM],
+        separator: str,
+        head: Constant | None = None,
+        tail: Constant | None = None,
+    ):
+        self.builder = builder
+        self.separator = separator
+        self.head = head
+        self.list = list
+        self.tail = tail
 
-    def __init__(self, input: str):
-        chunks = input.split(self.separator)
-        self.head = Constant(chunks.pop(0)) if self.with_head else None
-        self.tail = Constant(chunks.pop() if chunks else "") if self.with_tail else None
-        self.list = [cast(TextModifier, self.type(c)) for c in chunks]
-
-    @render_function
-    def render(self) -> str:
-        return self.separator.join(
-            r for m in [self.head] + self.list + [self.tail] if m and (r := m.render())
-        )
-
-    def append(self, *args, **kwargs) -> TextModifier:
-        new = getattr(self.type, "new")(*args, **kwargs)
+    def append(self, *args, **kwargs) -> TM:
+        new = self.builder.new(*args, **kwargs)
         self.list.append(new)
         return new
 
@@ -243,13 +360,46 @@ class ListOf(TextModifier):
         self.list.clear()
         return self
 
+    def __iter__(self):
+        for m in self.list:
+            yield m
 
-def MakeListOf(tp: Callable, sep: str, head=False, tail=False) -> type:
-    class NewListOf(ListOf):
-        separator = sep
-        type = tp
-        with_head = head
-        with_tail = tail
+    @render_method
+    def render(self) -> str:
+        return self.separator.join(
+            m.render() for m in [self.head] + self.list + [self.tail] if m
+        )
 
-    NewListOf.__name__ = "ListOf" + tp.__name__
-    return NewListOf
+
+class ListBuilder(Builder[ListOf[TM]]):
+    def __init__(
+        self,
+        builder: Builder[TM],
+        separator: str,
+        head=False,
+        tail=False,
+    ):
+        self.builder = builder
+        self.separator = separator
+        self.with_head = head
+        self.with_tail = tail
+
+    def parse(self, input: str) -> ListOf[TM]:
+        chunks = input.split(self.separator)
+        head = Constant(chunks.pop(0)) if self.with_head else None
+        tail = Constant(chunks.pop() if chunks else "") if self.with_tail else None
+        list = [self.builder.parse(c) for c in chunks]
+        return ListOf[TM](list, self.builder, self.separator, head, tail)
+
+    def new(
+        self,
+        list: List[TM] = [],
+        head: Constant | None = None,
+        tail: Constant | None = None,
+    ) -> ListOf[TM]:
+        return ListOf[TM](list, self.builder, self.separator, head, tail)
+
+    def __repr__(self):
+        return f"{type(self).__name__}[{self.builder}]({{}})".format(
+            ", ".join(f"{k}: {v}" for k, v in self.__dict__)
+        )

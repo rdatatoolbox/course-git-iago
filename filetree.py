@@ -3,7 +3,8 @@
 
 from typing import cast
 
-from modifiers import Regex, TextModifier, render_function
+from modifiers import Regex, TextModifier, render_method
+from steps import IntensiveCoordinates
 from utils import increment_name
 
 
@@ -14,12 +15,17 @@ class FileTree(TextModifier):
     """
 
     def __init__(self, input: str):
+        """First line is an intensive coordinate supposed to locate the second line.
+        The chain only contains 1 element in the stub.
+        """
+        xy, first_file = input.split("\n")
+        self.xy = IntensiveCoordinates.parse(xy)
         # Refer to them as list to easily reconnect the chain.
-        self.list = [FileTreeLine(l) for l in input.split("\n")]
+        self.list = [FileTreeLine(first_file)]
 
-    @render_function
+    @render_method
     def render(self) -> str:
-        return "\n".join(m.render() for m in self.list)
+        return "\n".join(m.render() for m in [self.xy] + self.list)
 
     def append(self, command: str, **kwargs) -> "FileTreeLine":
         # Default connect to previous one and use the same name +1.

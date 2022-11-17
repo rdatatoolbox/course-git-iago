@@ -4,11 +4,14 @@ and duplicate / modify them for animation.
 
 from pathlib import Path
 
-# All imports needed for subclasses of `Step` and `Slide` to be generated.
 import clients
 from document import Document
+import fork
 import pizzas
+import remote
 
+# All imports needed for subclasses of `Step` and `Slide` to be generated.
+(clients, fork, pizzas, remote)  # type: ignore
 
 main_tex = Path("tex", "main.tex")
 with open(main_tex, "r") as file:

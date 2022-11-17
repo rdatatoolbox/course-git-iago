@@ -1,0 +1,6 @@
+{
+    "reportUnnecessaryIsInstance": true,
+    "reportUnnecessaryCast": true,
+    "reportUnnecessaryComparison": true,
+    "reportUnnecessaryContains": true
+}
