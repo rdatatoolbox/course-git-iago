@@ -35,11 +35,15 @@ CommitModifier, Commit = MakePlaceHolder(
 )
 HeadModifier, Head = MakePlaceHolder(
     "Head",
-    r"\Head{<hash>}{<offset>}{<local>}",
+    r"\Head[<anchor>][<style>]{<hash>}{<offset>}{<local>}",
+    anchor="base",
+    style="label",
 )
 BranchModifier, Branch = MakePlaceHolder(
     "Branch",
-    r"\Branch[<color>]{<hash>}{<offset>}{<local>}{<name>}",
+    r"\Branch[<color>][<anchor>][<style>]{<hash>}{<offset>}{<local>}{<name>}",
+    anchor="base",
+    style="label",
 )
 LocalRepoLabelModifier, LocalRepoLabel = MakePlaceHolder(
     "LocalRepoLabel",
@@ -55,6 +59,12 @@ RemoteArrowModifier, RemoteArrow = MakePlaceHolder(
     side="left",
     bend="50",
 )
+
+
+def hi_label(label: PlaceHolder, on: bool):
+    label.style = "label" + ("-hi" if on else "")
+    if on:
+        label.on()
 
 
 class _LabelBuilder(Builder[PlaceHolder]):

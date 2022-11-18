@@ -22,4 +22,4 @@ doc = Document(content)
 for slide in doc.slides:
     slide.animate()
 
-doc.compile("res.pdf")
+doc.compile("res.pdf", "Pizza")

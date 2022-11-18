@@ -6,7 +6,7 @@ from diffs import DiffList
 from document import Slide
 from filetree import FileTree
 from modifiers import AnonymousPlaceHolder, Regex, render_method
-from repo import Repo
+from repo import Repo, hi_label
 from steps import Command, HighlightSquare, Step
 
 
@@ -56,7 +56,7 @@ class PizzasSlide(Slide):
 
         hi_repo = step.add_epilog(
             HighlightSquare.new(
-                r"$(repo.south west) + (3*\eps, 0)$",
+                r"$(repo.south west) + (3*\eps, 3*\eps)$",
                 "repo.east |- main.north",
             )
         ).off()
@@ -151,7 +151,11 @@ class PizzasSlide(Slide):
             name="git",
         )
         hi_gitfolder = git.add_epilog(
-            HighlightSquare.new("git.south west", "file-label.east |- git.north", 2)
+            HighlightSquare.new(
+                "git.south west",
+                "file-label.east |- git.north",
+                padding=2,
+            )
         ).off()
         f_readme = ft.append("AppendSibling", filename="README.md", connect=True)
         STEP()
@@ -161,7 +165,7 @@ class PizzasSlide(Slide):
         STEP()
 
         # First commit.
-        cmd.text = "git commit"
+        cmd.on().text = "git commit"
         rp.commits.append("I", "d1e8c8c", "First commit, the intent.")
         head = rp.labels.append("d1e8c8c", "140:20", ".5,0")
         main = rp.labels.append("Blue4", "d1e8c8c", "40:20", "-.5,0", "main")
@@ -195,7 +199,7 @@ class PizzasSlide(Slide):
         d_margherita.set_mod("+", 0, -1)
         STEP()
 
-        cmd.text = "git commit"
+        cmd.on().text = "git commit"
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 0, -1)
         rp.commits.append("I", "4e29052", "First pizza: Margherita.")
@@ -270,22 +274,35 @@ class PizzasSlide(Slide):
 
         # Rewinding !
         cmd.on().text = "git checkout 45a5b65"
+        STEP()
+
+        hi_label(head, True)
+        STEP()
+
         head.hash = "45a5b65"
-        head.offset = "157:20"
+        head.offset = "163:20"
+        STEP()
+
         f_readme.mod = d_readme.mod = "m"
         f_regina.mod = d_regina.mod = "-"
         d_readme.set_mod("-", 1, -1)
         d_regina.set_mod("-", 0, -1)
         STEP()
 
-        cmd.off()
         d_readme.delete_lines(1, -1)
         f_readme.mod = d_readme.mod = "0"
         ft.erase(f_regina)
         df.erase(d_regina)
         STEP()
 
+        cmd.off()
+        hi_label(head, False)
+        STEP()
+
         cmd.on().text = "git checkout d1e8c8c"
+        hi_label(head, True)
+        STEP()
+
         ft.erase(f_margherita)
         df.erase(d_margherita)
         d_readme.delete_lines(0, -1)
@@ -293,13 +310,19 @@ class PizzasSlide(Slide):
         head.hash = "d1e8c8c"
         STEP()
 
+        hi_label(head, False)
         cmd.off()
         STEP()
+
+        hi_on()
+        STEP()
+        hi_off()
 
         cmd.on().text = "git checkout 17514f2"
         STEP()
 
         cmd.on().text = "git checkout main"
+        hi_label(main, True)
         STEP()
 
         f_margherita = ft.append(
@@ -315,6 +338,7 @@ class PizzasSlide(Slide):
         head.offset = "140:20"
         STEP()
 
+        hi_label(main, False)
         cmd.off()
         STEP()
 

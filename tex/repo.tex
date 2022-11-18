@@ -22,6 +22,7 @@
                        },
   label/.style={draw, line width=1.5, #1, fill=Light3,
                 inner sep=\LabelIsep, rounded corners},
+  label-hi/.style={label=#1, fill=Yellow1},
   label arrow/.style={-Stealth, line width=1.5, #1,
                       shorten >=\LabelArrowShorten mm},
 }
@@ -112,32 +113,40 @@
 }
 
 % Pick a commit and point label to it.
-% [name][color][anchor]
+% [name][color][anchor][style]
 % {hash}{offset-from-commit}{local-arrow-start}{label-text}
-\NewDocumentCommand{\Label}{ O{label} O{Blue4} O{base} m m m m }{
+\NewDocumentCommand{\Label}{ O{label} O{Blue4} O{base} O{label} m m m m }{
 
-  \node[scale=\CommitScale, label=#2, anchor=#3]
-    (#1) at ($(#4) + (#5)$) {\tt #7};
+  \node[scale=\CommitScale, #4=#2, anchor=#3]
+    (#1) at ($(#5) + (#6)$) {\tt #8};
+
+  \ifstrequal{#4}{label-hi}{
+    \coordinate (pad) at (1, 1);
+    \coordinate (lo) at ($(#1.south west) - (pad)$);
+    \coordinate (up) at ($(#1.north east) + (pad)$);
+    \draw[Yellow1, line width=4] (lo) rectangle (up);
+  }{}
 
   \begin{pgfonlayer}{background}
     \begin{scope}[local to=#1]
-      \coordinate (arrow-start) at (#6);
+      \coordinate (arrow-start) at (#7);
     \end{scope}
-    \draw[label arrow=#2] (arrow-start) -- (#4);
+    \draw[label arrow=#2] (arrow-start) -- (#5);
   \end{pgfonlayer}
 
 }
 % Basic branch label.
-% [color][anchor]{hash}{offset-from-commit}{local-arrow-start}{branch-name}
-\NewDocumentCommand{\Branch}{ O{Blue4} O{base} m m m m }{
-  \Label[#6][#1][#2]{#3}{#4}{#5}{#6}
+% [color][anchor][style]
+% {hash}{offset-from-commit}{local-arrow-start}{branch-name}
+\NewDocumentCommand{\Branch}{ O{Blue4} O{base} O{label} m m m m }{
+  \Label[#7][#1][#2][#3]{#4}{#5}{#6}{#7}
 }
 % Special HEAD label.
-% [anchor]{hash}{offset-from-commit}{local-arrow-start}
-\NewDocumentCommand{\Head}{ O{base} m m m }{
-  \Label[HEAD][Purple4][#1]{#2}{#3}{#4}{HEAD}
+% [anchor][style]{hash}{offset-from-commit}{local-arrow-start}
+\NewDocumentCommand{\Head}{ O{base} O{label} m m m }{
+  \Label[HEAD][Purple4][#1][#2]{#3}{#4}{#5}{HEAD}
   % Also highlight current commit.
-  \fill[Yellow1] (#2) circle (.9*\CommitRadius);
+  \fill[Yellow1] (#3) circle (.9*\CommitRadius);
 }
 
 % {anchor}{same-x-as}{label}

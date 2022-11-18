@@ -55,8 +55,8 @@ class Document(TextModifier):
     def compile(
         self,
         filename: str,
-        only_slide: int | None = None,
-        only_step: int | None = None,
+        only_slide: int | str | None = None,  # Counting from 1 or slide name.
+        only_step: int | range | None = None,  # Counting from 1.
     ):
         """Render to a file then compile in tex folder and copy result to destination."""
         output = Path(filename)
@@ -72,6 +72,19 @@ class Document(TextModifier):
 
         print(f"Render to {texfile}..")
         if only_slide is not None:
+            if type(only_slide) is str:
+                # Look for a slide containing the given name.
+                found = False
+                i = 0
+                for i, slide in enumerate(self.slides):
+                    if only_slide in type(slide).__name__:
+                        found = True
+                        break
+                if not found:
+                    raise ValueError(f"Found no such slide: {repr(only_slide)}")
+                only_slide = i + 1
+            # Back to 0-based.
+            only_slide = cast(int, only_slide) - 1
             restrict = self.copy()
             restrict.slides = [restrict.slides[only_slide]]
             restrict.non_slides = [
@@ -83,8 +96,11 @@ class Document(TextModifier):
                 ),
             ]
             if only_step is not None:
+                if type(only_step) is int:
+                    only_step = range(only_step, only_step + 1)
+                only_step = cast(range, only_step)
                 slide = restrict.slides[0]
-                slide.steps = [slide.steps[only_step]]
+                slide.steps = [slide.steps[i] for i in only_step]
         else:
             restrict = self
         with open(texfile, "w") as file:
