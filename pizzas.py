@@ -1,6 +1,6 @@
 """The slide with repo / project folder / file content."""
 
-from typing import cast
+from typing import Tuple, cast
 
 from diffs import DiffList
 from document import Slide
@@ -42,7 +42,7 @@ class PizzasStep(Step):
 class PizzasSlide(Slide):
     """Animate pizzas slide so it reproduces the small git history."""
 
-    def animate(self):
+    def animate(self) -> Tuple[Repo, FileTree, DiffList]:
         step = cast(PizzasStep, self.pop_step())
         ft = step.filetree
         df = step.diffs
@@ -345,3 +345,5 @@ class PizzasSlide(Slide):
         hi_off()
         image.on().file = "VariousPizzas"
         STEP()
+
+        return rp, ft, df

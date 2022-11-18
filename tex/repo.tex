@@ -16,7 +16,7 @@
   commit/.style={line width=2.0, fill=Orange3, draw=Dark3},
   hash/.style={Light5},
   commit arrow/.style={-{Straight Barb[angle'=70, length=3mm]},
-                       Light4, line width=4.5,
+                       Light5, line width=4.5,
                        shorten >=\CommitArrowShorten mm,
                        shorten <=\CommitArrowShorten mm,
                        },
@@ -25,6 +25,7 @@
   label-hi/.style={label=#1, fill=Yellow1},
   label arrow/.style={-Stealth, line width=1.5, #1,
                       shorten >=\LabelArrowShorten mm},
+  repo label/.style={scale=\NormalScale, inner sep=2, draw=Light5, fill=Light2}
 }
 
 % Draw one commit with hash and message, use [offset] to align with 2 branches.
@@ -149,20 +150,17 @@
   \fill[Yellow1] (#3) circle (.9*\CommitRadius);
 }
 
-% {anchor}{same-x-as}{label}
+% {anchor}{location}{label}
 \newcommand{\LocalRepoLabel}[3]{%
-  \coordinate (c) at (#2 |- Canvas.west);
-  \node[scale=\NormalScale, draw=Light5, fill=Light2,
-       inner sep=2, below=20 of c, anchor=#1] at (c)
-    {#3};
+  \IntensiveCoordinates{Canvas}{c}{#2}
+  \node[repo label, anchor=#1] at (c) {#3};
 }
-% {repo-name}{accout-name}
-\newcommand{\RemoteRepoLabel}[2]{%
-  \coordinate (c) at (#1.west |- Canvas.north);
-  \node[below=10 of c, anchor=base west, inner sep=2,
-       scale=\NormalScale, Blue4, draw=Light5, fill=Light2]
+% {anchor}{location}{accout-name}
+\newcommand{\RemoteRepoLabel}[3]{%
+  \IntensiveCoordinates{Canvas}{c}{#2}
+  \node[Blue4, repo label, anchor=#1] at (c)
     {\tt https://github.com/%
-      \tikz[baseline={(n.base)},inner sep=.5]{\node[fill=Yellow1](n){#2};}%
+      \tikz[baseline={(n.base)},inner sep=.5]{\node[fill=Yellow1](n){#3};}%
       /Pizzas};
 }
 % [left|right][bend]{start}{end}

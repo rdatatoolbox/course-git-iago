@@ -47,11 +47,11 @@ BranchModifier, Branch = MakePlaceHolder(
 )
 LocalRepoLabelModifier, LocalRepoLabel = MakePlaceHolder(
     "LocalRepoLabel",
-    r"\LocalRepoLabel{<anchor>}{<x_like>}{<label>}",
+    r"\LocalRepoLabel{<anchor>}{<location>}{<label>}",
 )
 RemoteRepoLabelModifier, RemoteRepoLabel = MakePlaceHolder(
     "RemoteRepoLabel",
-    r"\RemoteRepoLabel{<repo>}{<account>}",
+    r"\RemoteRepoLabel{<anchor>}{<location>}{<account>}",
 )
 RemoteArrowModifier, RemoteArrow = MakePlaceHolder(
     "RemoteArrow",

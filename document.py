@@ -4,6 +4,7 @@
 import os
 from pathlib import Path
 import shutil as shu
+from typing import Any
 from typing import Callable, List, cast
 
 from modifiers import Constant, TextModifier, render_method
@@ -163,10 +164,11 @@ class Slide(TextModifier):
         """Copy current state and record into the document."""
         self.steps.append(step.copy())
 
-    def animate(self):
+    def animate(self, *args, **kwargs) -> Any:
         """Override to construct individual steps from the current ones.
         Only called once during the generation process,
         in a state where only the stub step(s) are present.
         Default to doing nothing.
+        Return possible interesting data for later use by the other slides.
         """
         pass

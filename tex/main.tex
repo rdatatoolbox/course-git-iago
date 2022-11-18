@@ -185,49 +185,23 @@
 
   \begin{scope}[local to=Canvas]
     \node[opacity=.2] (github) at (0, .5) {\PicGithubLogo{10cm}{!}};
-    \foreach \xy/\Pic in {{-.7,-.6}/MyMachine,
-                         { .7,-.6}/TheirMachine}{%
-      \node[opacity=.2] (github) at (\xy) {\csname Pic\Pic\endcsname{75mm}{!}};
-    }
+    \node[opacity=.2] (mymachine) at (-.7, -.6) {\PicMyMachine{75mm}{!}};
+    \node[opacity=.2] (mymachine) at (+.7, -.6) {\PicTheirMachine{75mm}{!}};
   \end{scope}
 
   \Repo[south west][mine][double]{-1, -1}{
-    I/hash256/{Commit message.},
-    H/075f8fc/{Divergent commit.},
-    H/f6b005f/{Second branch commit.},
-    A/d9c4395/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
   }%
-  \LocalRepoLabel{base west}{mine.west}{my machine}
-  \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
-  \Head[base][label]{58d8fe0}{155:20}{.5,0}
+  \LocalRepoLabel{base west}{Canvas.west}{my machine}
 
 
-  \Repo[base][hub][double]{.1, .1}{
-    I/hash256/{Commit message.},
-    H/075f8fc/{Divergent commit.},
-    H/f6b005f/{Second branch commit.},
-    A/d9c4395/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
+  \Repo[base][remote][double]{.1, .1}{
   }%
-  \RemoteRepoLabel{hub}{MyAccount}
-  \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
-  \Head[base][label]{58d8fe0}{155:20}{.5,0}
+  \RemoteRepoLabel{north}{.0, 1}{MyAccount}
 
 
   \Repo[base][theirs][double]{.65, -1}{
-    I/hash256/{Commit message.},
-    H/075f8fc/{Divergent commit.},
-    H/f6b005f/{Second branch commit.},
-    A/d9c4395/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
   }%
   \LocalRepoLabel{base east}{Canvas.east}{their machine}
-  \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
-  \Head[base][label]{58d8fe0}{155:20}{.5,0}
 
   \IntensiveCoordinates{Canvas}{start}{-.8, -.1}
   \IntensiveCoordinates{Canvas}{end}{-.2, .6}
@@ -272,7 +246,7 @@
     I/58d8fe0/{Merge commit.},
     I/58d8fe0/{Merge commit.},
   }%
-  \LocalRepoLabel{base west}{mine.west}{my machine}
+  \LocalRepoLabel{base west}{-1, -.15}{my machine}
   \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
   \Head[base][label]{58d8fe0}{155:20}{.5,0}
 
@@ -285,7 +259,7 @@
     I/58d8fe0/{Merge commit.},
     I/58d8fe0/{Merge commit.},
   }%
-  \RemoteRepoLabel{hub}{MyAccount}
+  \RemoteRepoLabel{north}{-.40, 1}{MyAccount}
   \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
   \Head[base][label]{58d8fe0}{155:20}{.5,0}
 
@@ -298,7 +272,7 @@
     I/58d8fe0/{Merge commit.},
     I/58d8fe0/{Merge commit.},
   }%
-  \RemoteRepoLabel{fork}{TheirAccount}
+  \RemoteRepoLabel{north}{.40, 1}{TheirAccount}
   \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
   \Head[base][label]{58d8fe0}{155:20}{.5,0}
 
@@ -310,7 +284,7 @@
     I/58d8fe0/{Merge commit.},
     I/58d8fe0/{Merge commit.},
   }%
-  \LocalRepoLabel{base east}{Canvas.east}{their machine}
+  \LocalRepoLabel{base east}{1, -.15}{their machine}
   \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
   \Head[base][label]{58d8fe0}{155:20}{.5,0}
 

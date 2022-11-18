@@ -29,14 +29,14 @@ class TextModifier(object):
     def copy(self) -> Self:
         return deepcopy(self)
 
-    def on(self) -> Self:
+    def on(self, on=True) -> Self:
         """Make rendered."""
-        self._rendered = True
+        self._rendered = on
         return self
 
-    def off(self) -> Self:
+    def off(self, on=False) -> Self:
         """Make unrendered."""
-        self._rendered = False
+        self._rendered = on
         return self
 
     def add_epilog(self, m: TM) -> TM:
@@ -363,6 +363,9 @@ class ListOf(Generic[TM], TextModifier):
     def __iter__(self):
         for m in self.list:
             yield m
+
+    def __getitem__(self, i):
+        return self.list[i]
 
     @render_method
     def render(self) -> str:
