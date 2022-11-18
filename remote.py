@@ -4,7 +4,7 @@
 from typing import cast
 
 from diffs import DiffList
-from document import Slide
+from document import IntensiveCoordinates, Slide
 from filetree import FileTree
 from modifiers import (
     ConstantBuilder,
@@ -14,8 +14,8 @@ from modifiers import (
     Regex,
     render_method,
 )
-from repo import RemoteArrow, Repo
-from steps import Command, IntensiveCoordinates, Step
+from repo import Command, RemoteArrow, Repo
+from steps import Step
 
 
 Images = ListBuilder(ConstantBuilder, "\n", head=False, tail=True)

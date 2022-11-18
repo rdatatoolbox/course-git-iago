@@ -2,6 +2,7 @@
 """
 
 from modifiers import Builder, ListBuilder, ListOf, MakePlaceHolder, PlaceHolder, Regex
+from document import FindPlaceHolder
 
 
 class Repo(Regex):
@@ -29,36 +30,14 @@ class Repo(Regex):
         self.labels.clear()
 
 
-CommitModifier, Commit = MakePlaceHolder(
-    "Commit",
-    r"<type>/<hash>/{<message>}",
-)
-HeadModifier, Head = MakePlaceHolder(
-    "Head",
-    r"\Head[<anchor>][<style>]{<hash>}{<offset>}{<local>}",
-    anchor="base",
-    style="label",
-)
-BranchModifier, Branch = MakePlaceHolder(
-    "Branch",
-    r"\Branch[<color>][<anchor>][<style>]{<hash>}{<offset>}{<local>}{<name>}",
-    anchor="base",
-    style="label",
-)
-LocalRepoLabelModifier, LocalRepoLabel = MakePlaceHolder(
-    "LocalRepoLabel",
-    r"\LocalRepoLabel{<anchor>}{<location>}{<label>}",
-)
-RemoteRepoLabelModifier, RemoteRepoLabel = MakePlaceHolder(
-    "RemoteRepoLabel",
-    r"\RemoteRepoLabel{<anchor>}{<location>}{<account>}",
-)
-RemoteArrowModifier, RemoteArrow = MakePlaceHolder(
-    "RemoteArrow",
-    r"\RemoteArrow[<side>][<bend>]{<start>}{<end>}",
-    side="left",
-    bend="50",
-)
+CommitModifier, Commit = MakePlaceHolder("Commit", r"<type>/<hash>/{<message>}")
+
+HeadModifier, Head = FindPlaceHolder("Head")
+BranchModifier, Branch = FindPlaceHolder("Branch")
+LocalRepoLabelModifier, LocalRepoLabel = FindPlaceHolder("LocalRepoLabel")
+RemoteRepoLabelModifier, RemoteRepoLabel = FindPlaceHolder("RemoteRepoLabel")
+RemoteArrowModifier, RemoteArrow = FindPlaceHolder("RemoteArrow")
+CommandModifier, Command = FindPlaceHolder("Command")
 
 
 def hi_label(label: PlaceHolder, on: bool):

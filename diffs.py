@@ -13,7 +13,7 @@ from modifiers import (
     TextModifier,
     render_method,
 )
-from steps import IntensiveCoordinates
+from document import IntensiveCoordinates
 from utils import increment_name
 
 
@@ -132,9 +132,6 @@ class Diff(Regex):
         self.lines.list = self.lines.list[:start] + self.lines.list[end + 1 :]
 
 
-DiffLineModifier, DiffLine = MakePlaceHolder(
-    "DiffLine",
-    r"<mod>/{<text>}",
-)
+DiffLineModifier, DiffLine = MakePlaceHolder("DiffLine", r"<mod>/{<text>}")
 
 DiffLines = ListBuilder(DiffLine, ",\n", tail=True)

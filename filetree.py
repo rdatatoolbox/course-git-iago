@@ -4,7 +4,7 @@
 from typing import cast
 
 from modifiers import Regex, TextModifier, render_method
-from steps import IntensiveCoordinates
+from document import IntensiveCoordinates
 from utils import increment_name
 
 

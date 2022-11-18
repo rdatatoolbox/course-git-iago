@@ -1,7 +1,7 @@
 """Modifiers concerned with individual slides and their very concrete content.
 """
 
-from modifiers import MakePlaceHolder, TextModifier
+from modifiers import TextModifier
 
 
 class Step(TextModifier):
@@ -12,25 +12,3 @@ class Step(TextModifier):
     """
 
     pass
-
-
-# Common commands.
-CommandModifier, Command = MakePlaceHolder(
-    "Command",
-    r"\Command[<anchor>]{<loc>}{<text>}",
-    anchor="center",
-)
-HighlightSquareModifier, HighlightSquare = MakePlaceHolder(
-    "HighlightSquare",
-    r"\HighlightSquare[<padding>]{<lower>}{<upper>}",
-    padding="5",
-)
-HighlightShadeModifier, HighlightShade = MakePlaceHolder(
-    "HighlightShade",
-    r"\HighlightShade[<padding>]{<node>}",
-    padding="5",
-)
-IntensiveCoordinatesModifier, IntensiveCoordinates = MakePlaceHolder(
-    "IntensiveCoordinates",
-    r"\IntensiveCoordinates{<node>}{<name>}{<x>,<y>}",
-)

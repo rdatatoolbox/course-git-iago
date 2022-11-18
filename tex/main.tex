@@ -31,7 +31,8 @@
   }
 }
 % Define a point wrt to existing node with relative coordinates.
-\NewDocumentCommand{\IntensiveCoordinates}{ m m m }{
+% {node}{name}{location}
+\newcommand{\IntensiveCoordinates}[3]{
   \begin{scope}[local to=#1]
     \coordinate (#2) at (#3);
   \end{scope}
@@ -70,7 +71,6 @@
 \input{files}
 \input{diff}
 \input{repo}
-\input{command}
 
 \newcommand{\TitleText}{<no-title>}
 \newcommand{\SubTitleText}{<no-subtitle>}

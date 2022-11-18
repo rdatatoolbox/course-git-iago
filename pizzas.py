@@ -3,11 +3,11 @@
 from typing import Tuple, cast
 
 from diffs import DiffList
-from document import Slide
+from document import HighlightSquare, Slide
 from filetree import FileTree
 from modifiers import AnonymousPlaceHolder, Regex, render_method
-from repo import Repo, hi_label
-from steps import Command, HighlightSquare, Step
+from repo import Command, Repo, hi_label
+from steps import Step
 
 
 class PizzasStep(Step):

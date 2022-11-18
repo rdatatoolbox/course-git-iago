@@ -3,11 +3,19 @@
 
 import os
 from pathlib import Path
+import re
 import shutil as shu
-from typing import Any
+from typing import Any, Tuple
 from typing import Callable, List, cast
 
-from modifiers import Constant, TextModifier, render_method
+from modifiers import (
+    Constant,
+    MakePlaceHolder,
+    PlaceHolder,
+    PlaceHolderBuilder,
+    TextModifier,
+    render_method,
+)
 from steps import Step
 
 
@@ -172,3 +180,100 @@ class Slide(TextModifier):
         Return possible interesting data for later use by the other slides.
         """
         pass
+
+
+def FindPlaceHolder(name: str) -> Tuple[type, PlaceHolderBuilder[PlaceHolder]]:
+    r"""Scan *.tex files until the given name is found inside a `\NewDocumentCommand`.
+    Parse it to construct the correct pattern / options to `MakePlaceHolder()`.
+    Use special comments on top of the command to retrieve arguments / fields names.
+    `O{default}` arguments become options with the given default value,
+    while `m` arguments become just positional.
+    In a nutshell, factorize the recurrent, tedious:
+
+        MakePlaceHolder(
+            "Branch",
+            r"\Branch[<color>][<anchor>][<style>]{<hash>}{<offset>}{<local>}{<name>}",
+            color="Blue4",
+            anchor="base",
+            style="label",
+        )
+
+    Into:
+
+        FindPlaceHolder("Branch")
+
+    Because all the information can be just read from latex files.
+
+    """
+
+    # Most generic form with NewDocumentCommand.
+    needle_ndc = re.compile(
+        r"%\s*((?:\[.*?]\s*)*)"  # Optional arguments names.
+        r"((?:{.*?}\s*)*)"  # Positional arguments names.
+        r"\\NewDocumentCommand{\\" + name + "}"  # Command name.
+        r"{\s*((?:O{.*?}\s*)*)"  # Optional argumens values.
+        r"((?:m\s*)*)}"  # Mandatory arguments (no actual information except number).
+    )
+    # Less generic form with newcommand and only positional arguments.
+    needle_nc = re.compile(
+        r"%\s*((?:{.*?}\s*)*)"  # Positional arguments names.
+        r"\\newcommand{\\" + name + "}"  # Command name.
+        r"\[(.*?)]"  # Number of arguments.
+    )
+
+    found = False
+    onames = pnames = ovalues = pnumber = ""
+    for file in Path(".").rglob("*.tex"):
+
+        with open(file, "r") as file:
+            content = file.read()
+
+        if m := needle_ndc.search(content):
+            found = True
+            # Extract all information from the match.
+            onames, pnames, ovalues, pnumber = m.groups()
+            pnumber = len(l := pnumber.strip().split())
+            assert set(l) == {"m"}
+
+        elif m := needle_nc.search(content):
+            found = True
+            pnames, pnumber = m.groups()
+            pnumber = int(pnumber)
+
+        if found:
+
+            # Extract all informations from either match.
+            onames, pnames, ovalues = (
+                [r.rsplit(c, 1)[0] for r in raw.strip().split(o)[1:]]
+                for (raw, (o, c)) in zip(
+                    (onames, pnames, ovalues), ("[]", "{}", ("O{", "}"))
+                )
+            )
+
+            # Check that parameters numbers are consistent with each other.
+            assert pnumber == len(pnames)
+            assert len(onames) == len(ovalues)
+
+            # Ready to construct associated python types.
+            pattern = (
+                "\\"
+                + name
+                + "".join(f"[<{o}>]" for o in onames)
+                + "".join(f"{{<{p}>}}" for p in pnames)
+            )
+            options = {k: v for k, v in zip(onames, ovalues)}
+            return MakePlaceHolder(name, pattern, **options)
+
+    raise ValueError(
+        f"Could not find `\\NewDocumentCommand{{\\{name}}}` "
+        f"or `\\newcommand{{\\{name}}}` in .tex files? "
+        f"At least not associated with the appropriate special comment line."
+    )
+
+
+# Common commands.
+HighlightSquareModifier, HighlightSquare = FindPlaceHolder("HighlightSquare")
+HighlightShadeModifier, HighlightShade = FindPlaceHolder("HighlightShade")
+IntensiveCoordinatesModifier, IntensiveCoordinates = FindPlaceHolder(
+    "IntensiveCoordinates"
+)

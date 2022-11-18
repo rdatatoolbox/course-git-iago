@@ -2,11 +2,11 @@
 """
 
 from diffs import DiffList
-from document import Slide
+from document import IntensiveCoordinates, Slide
 from filetree import FileTree
 from modifiers import Constant, Regex, render_method
-from repo import RemoteArrow, Repo
-from steps import Command, IntensiveCoordinates, Step
+from repo import Command, RemoteArrow, Repo
+from steps import Step
 
 
 class ForkStep(Step):

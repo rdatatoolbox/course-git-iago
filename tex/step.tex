@@ -83,6 +83,8 @@
     \draw[Light5, line width=1, fill=Yellow1] (lower) rectangle (upper);
   \end{pgfonlayer}
 }
+% Highlight with background shade instead.
+% [padding]{node}
 \NewDocumentCommand{\HighlightShade}{ O{5} m }{
   \begin{pgfonlayer}{highlight}%
     \coordinate (offset) at (#1, #1);
