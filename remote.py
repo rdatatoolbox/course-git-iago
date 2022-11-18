@@ -20,13 +20,13 @@ class RemoteStep(Step):
         self.my_repo = Repo(next(it))
         self.remote = Repo(next(it))
         self.their_repo = Repo(next(it))
-        m, t = next(it).split("\n")
-        self.my_command = Command.parse(m)
-        self.their_command = Command.parse(t)
         s, e, a = next(it).split("\n")
         self.start = IntensiveCoordinates.parse(s)
         self.end = IntensiveCoordinates.parse(e)
         self.arrow = RemoteArrow.parse(a)
+        m, t = next(it).split("\n")
+        self.my_command = Command.parse(m)
+        self.their_command = Command.parse(t)
         try:
             while some := next(it):
                 assert not some

@@ -13,8 +13,6 @@
 
 \usepackage{xkeyval}
 \usepackage{etoolbox}
-\usepackage{graphicx}
-  \graphicspath{{./pictures}}
 \usepackage{tikz}%
   \usetikzlibrary{math}
   \usetikzlibrary{positioning}
@@ -41,6 +39,30 @@
 
 \tikzmath{
   \eps = 0.1; % Useful to avoid seemingly pixel-rounding errors.
+}
+
+\usepackage{graphicx}
+\usepackage{xsavebox}
+\graphicspath{{./pictures}}
+
+\foreach \bx/\filename in {
+  GitLogo/git_logo.png,
+  GithubLogo/github_logo.png,
+  GitlabLogo/gitlab_logo.png,
+  RStudioExtension/rstudio_extension.png,
+  ConsoleGit/console_git.png,
+  VSCodeExtension/vscode_extension.png,
+  VariousPizzas/pizzas_various.jpg,
+  Margherita/margherita.png,
+  Regina/regina.jpg,
+  MyMachine/my_machine.png,
+  TheirMachine/their_machine.png,
+  PullRequestButton/pull_request_button.jpg,
+  SyncForkButton/sync_fork_button.png
+}{%
+  \xsavebox{\bx}{\includegraphics[width=1cm]{\filename}}
+  \expandafter\xdef\csname Pic\bx\endcsname##1##2%
+    {\resizebox{##1}{##2}{\xusebox{\bx}}}
 }
 
 \input{palette}
@@ -76,30 +98,30 @@
     }
 
     \node[anchor=north, below=5 of Canvas.north] (git)
-      {\includegraphics[width=\U]{git_logo.png}};
+      {\PicGitLogo{\U}{!}};
 
     \node[anchor=north, below=20 of git] (console)
-      {\includegraphics[height=\U]{console_git.png}};
+      {\PicConsoleGit{!}{\U}};
     \node[below=\boffset of console, scale=\LargeScale]
       {command-line console};
 
     \node[anchor=east, left=30 of console] (vscode)
-      {\includegraphics[height=\U]{vscode_extension.png}};
+      {\PicVSCodeExtension{!}{\U}};
     \node[below=\boffset of vscode, scale=\LargeScale]
       {VSCode extension};
 
     \node[anchor=west, right=30 of console] (rstudio)
-      {\includegraphics[height=\U]{rstudio_extension.png}};
+      {\PicRStudioExtension{!}{\U}};
     \node[below=\boffset of rstudio, scale=\LargeScale]
       {RStudio extension};
 
     \coordinate (tp) at ($(vscode)!.5!(console)$);
     \node[anchor=north, below=65 of tp] (github)
-      {\includegraphics[width=1.5\U]{github_logo.png}};
+      {\PicGithubLogo{1.5\U}{!}};
 
     \coordinate (tp) at ($(console)!.5!(rstudio)$);
     \node[anchor=north] (gitlab) at (github -| tp)
-      {\includegraphics[width=1.5\U]{gitlab_logo.png}};
+      {\PicGitlabLogo{1.5\U}{!}};
 
     \begin{scope}[every path/.style={-Stealth, line width=2, Dark4}]
       \draw (vscode.north) -- (git.west);
@@ -147,7 +169,7 @@
 \renewcommand{\TitleText}{Collaborating}
 \renewcommand{\SubTitleText}{Working with a remote}
 \renewcommand{\PageNumText}{3}
-\renewcommand{\Progress}{3/4}
+\renewcommand{\Progress}{3/4}%
 \Step{
 
   \IntensiveCoordinates{Canvas}{A}{-1, 1}
@@ -162,12 +184,10 @@
   }
 
   \begin{scope}[local to=Canvas]
-    \node[opacity=.2] (github) at (0, .5)
-      {\includegraphics[width=75mm]{github_logo.png}};
-    \foreach \xy/\file in {{-.7,-.6}/my_machine,
-                           { .7,-.6}/their_machine}{%
-      \node[opacity=.2] (github) at (\xy)
-        {\includegraphics[width=75mm]{\file.png}};
+    \node[opacity=.2] (github) at (0, .5) {\PicGithubLogo{10cm}{!}};
+    \foreach \xy/\Pic in {{-.7,-.6}/MyMachine,
+                         { .7,-.6}/TheirMachine}{%
+      \node[opacity=.2] (github) at (\xy) {\csname Pic\Pic\endcsname{75mm}{!}};
     }
   \end{scope}
 
@@ -184,7 +204,7 @@
   \Head[base][label]{58d8fe0}{155:20}{.5,0}
 
 
-  \Repo[base west][hub][double]{-.75, .1}{
+  \Repo[base][hub][double]{.1, .1}{
     I/hash256/{Commit message.},
     H/075f8fc/{Divergent commit.},
     H/f6b005f/{Second branch commit.},
@@ -209,12 +229,13 @@
   \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
   \Head[base][label]{58d8fe0}{155:20}{.5,0}
 
-  \Command[center]{-.5, -.1}{git push}
-  \Command[center]{+.5, -.1}{git fetch}
+  \IntensiveCoordinates{Canvas}{start}{-.8, -.1}
+  \IntensiveCoordinates{Canvas}{end}{-.2, .6}
+  \RemoteArrow[left][40]{start}{end}
 
-  \IntensiveCoordinates{Canvas}{start}{-.5, .5}
-  \IntensiveCoordinates{Canvas}{end}{.4, .5}
-  \RemoteArrow[left][50]{start}{end}
+  \Command[center]{-.7, +.3}{git push}
+  \Command[center]{+.7, +.3}{git fetch}
+
 
 } % ENDSLIDE
 
@@ -235,13 +256,11 @@
 
   \begin{scope}[local to=Canvas]
     \foreach \xy in {{-.4,.5},{.4,.5}}{%
-      \node[opacity=.2] (github) at (\xy)
-        {\includegraphics[width=75mm]{github_logo.png}};
+      \node[opacity=.2] (github) at (\xy) {\PicGithubLogo{10cm}{!}};
     }
-    \foreach \xy/\file in {{-.7,-.6}/my_machine,
-                           { .7,-.6}/their_machine}{%
-      \node[opacity=.2] (github) at (\xy)
-        {\includegraphics[width=75mm]{\file.png}};
+    \foreach \xy/\Pic in {{-.7,-.6}/MyMachine,
+                           { .7,-.6}/TheirMachine}{%
+      \node[opacity=.2] (github) at (\xy) {\csname Pic\Pic\endcsname{75mm}{!}};
     }
   \end{scope}
 
@@ -303,7 +322,8 @@
   \IntensiveCoordinates{Canvas}{end}{.4, .5}
   \RemoteArrow[left][50]{start}{end}
 
-  \node[below=5 of command, draw=Blue4, line width=7]{\includegraphics[height=15mm]{sync_fork_button.png}};
+  \node[below=5 of command, draw=Blue4, line width=7]
+    {\PicSyncForkButton{!}{15mm}};
 
 } % ENDSLIDE
 

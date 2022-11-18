@@ -63,11 +63,8 @@ class PizzasSlide(Slide):
 
         image = step.add_epilog(
             AnonymousPlaceHolder(
-                r"""
-                \node (im) at (Canvas.center)
-                    {\includegraphics[width=15cm]{<filename>}};
-                 """,
-                filename="pizzas_various.jpg",
+                r"\node (im) at (Canvas.center) {\Pic<file>{15cm}{!}};",
+                file="VariousPizzas",
             )
         ).off()
 
@@ -188,7 +185,7 @@ class PizzasSlide(Slide):
         )
         d_margherita = df.append(filename="margherita.md")
         d_margherita.append_text(margherita_text[0])
-        image.on().filename = "margherita.png"
+        image.on().file = "Margherita"
         STEP()
 
         image.off()
@@ -241,7 +238,7 @@ class PizzasSlide(Slide):
         f_regina = ft.append("AppendSibling", connect=True, filename="regina.md")
         d_regina = df.append(filename="regina.md")
         d_regina.append_text(regina_text[0])
-        image.on().filename = "regina.jpg"
+        image.on().file = "Regina"
         STEP()
 
         image.off()
@@ -346,5 +343,5 @@ class PizzasSlide(Slide):
         STEP()
 
         hi_off()
-        image.on().filename = "pizzas_various.jpg"
+        image.on().file = "VariousPizzas"
         STEP()
