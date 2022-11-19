@@ -64,7 +64,10 @@ class Document(TextModifier):
     def compile(
         self,
         filename: str,
-        only_slide: int | str | None = None,  # Counting from 1 or slide name.
+        # Restrict to the given slide name (all steps) or to only 1 step
+        # (counting from 1 and from the first step in the first slide)
+        only_slide: str | int | range | None = None,
+        # Restrict to only 1 step with the give slide name.
         only_step: int | range | None = None,  # Counting from 1.
     ):
         """Render to a file then compile in tex folder and copy result to destination."""
@@ -91,25 +94,34 @@ class Document(TextModifier):
                         break
                 if not found:
                     raise ValueError(f"Found no such slide: {repr(only_slide)}")
-                only_slide = i + 1
-            # Back to 0-based.
-            only_slide = cast(int, only_slide) - 1
-            restrict = self.copy()
-            restrict.slides = [restrict.slides[only_slide]]
-            restrict.non_slides = [
-                Constant(
-                    "".join(c.render() for c in restrict.non_slides[: only_slide + 1])
-                ),
-                Constant(
-                    "".join(c.render() for c in restrict.non_slides[only_slide + 1 :])
-                ),
-            ]
-            if only_step is not None:
-                if type(only_step) is int:
-                    only_step = range(only_step, only_step + 1)
-                only_step = cast(range, only_step)
-                slide = restrict.slides[0]
-                slide.steps = [slide.steps[i] for i in only_step]
+                restrict = self.copy()
+                restrict.slides = [restrict.slides[i]]
+                restrict.non_slides = [
+                    Constant("".join(c.render() for c in restrict.non_slides[: i + 1])),
+                    Constant("".join(c.render() for c in restrict.non_slides[i + 1 :])),
+                ]
+                if only_step is not None:
+                    if type(only_step) is int:
+                        only_step = range(only_step, only_step + 1)
+                    only_step = cast(range, only_step)
+                    slide = restrict.slides[0]
+                    slide.steps = [slide.steps[s - 1] for s in only_step]
+            else:
+                # Look for a specific range of steps, starting count from first slide.
+                selection = (
+                    range(only_slide, only_slide + 1)
+                    if type(only_slide) is int
+                    else cast(range, only_slide)
+                )
+                restrict = self.copy()
+                i_abs = 1
+                for slide in restrict.slides:
+                    steps = slide.steps
+                    slide.steps = []
+                    for step in steps:
+                        if i_abs in selection:
+                            slide.steps.append(step)
+                        i_abs += 1
         else:
             restrict = self
         with open(texfile, "w") as file:

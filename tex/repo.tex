@@ -115,8 +115,17 @@
 }
 
 % Pick a commit and point label to it.
+% If 'base' appears in the ref,
+% it is assumed that horizontal alignment is needed,
+% so the local arrow start is interpreted
+% as an absolute vertical offset from the base,
+% the reference end destination is given the same offset,
+% and the arrow is not shortened.
+% (Useful when HEAD is pointing to a branch.)
+% If local arrow start is 'noarrow', there is no pointer.
+% (Useful on empty repos.)
 % [name][color][anchor][style]
-% {hash}{offset-from-commit}{local-arrow-start}{label-text}
+% {ref}{offset-from-commit}{local-arrow-start}{label-text}
 \NewDocumentCommand{\Label}{ O{label} O{Blue4} O{base} O{label} m m m m }{
 
   \node[scale=\CommitScale, #4=#2, anchor=#3]
@@ -129,12 +138,24 @@
     \draw[Yellow1, line width=4] (lo) rectangle (up);
   }{}
 
-  \begin{pgfonlayer}{background}
-    \begin{scope}[local to=#1]
-      \coordinate (arrow-start) at (#7);
-    \end{scope}
-    \draw[label arrow=#2] (arrow-start) -- (#5);
-  \end{pgfonlayer}
+  \ifstrequal{#7}{noarrow}{}{
+    \begin{pgfonlayer}{background}
+      \IfSubStr{#5}{base}{
+        \IfSubStr{#5}{west}{
+          \coordinate (s) at ($(#1.base east) + (-1, #7)$);
+        }{
+          \coordinate (s) at ($(#1.base west) + (+1, #7)$);
+        }
+        \coordinate[above=#7 of #5] (e);
+        \draw[label arrow=#2, shorten >=0] (s) -- (e);
+      }{
+        \begin{scope}[local to=#1]
+          \coordinate (s) at (#7);
+        \end{scope}
+        \draw[label arrow=#2] (s) -- (#5);
+      }
+    \end{pgfonlayer}
+  }
 
 }
 % Basic branch label.
@@ -145,11 +166,14 @@
   \Label[#7][#1][#2][#3]{#4}{#5}{#6}{#7}
 }
 % Same for HEAD label.
-% [anchor][style]{hash}{offset}{local}
+% [anchor][style]{ref}{offset}{local}
 \NewDocumentCommand{\Head}{ O{base} O{label} m m m }{
   \Label[HEAD][Purple4][#1][#2]{#3}{#4}{#5}{HEAD}
-  % Also highlight current commit.
-  \fill[Yellow1] (#3) circle (.9*\CommitRadius);
+}
+% Highlight current commit.
+% {hash}
+\newcommand{\HighlightCommit}[1]{
+  \fill[Yellow1] (#1) circle (.9*\CommitRadius);
 }
 
 % {anchor}{location}{label}

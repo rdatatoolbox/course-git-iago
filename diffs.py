@@ -1,9 +1,11 @@
 """Craft/edit diffed files.
 """
 
+import re
 from textwrap import dedent
 from typing import cast
 
+from document import IntensiveCoordinates
 from modifiers import (
     Constant,
     ListBuilder,
@@ -13,7 +15,6 @@ from modifiers import (
     TextModifier,
     render_method,
 )
-from document import IntensiveCoordinates
 from utils import increment_name
 
 
@@ -23,13 +24,14 @@ class DiffList(TextModifier):
     and the others are located wrt to it.
     """
 
-    _sep = r"\Diff"
+    _sepkw = "Diff"
+    _sep = re.compile(r"\\" + _sepkw + r"\b")
 
     def __init__(self, input: str):
         """First line is an intensive coordinate supposed to locate the first Diff."""
         xy, rest = input.split("\n", 1)
         self.xy = IntensiveCoordinates.parse(xy)
-        files = rest.split(self._sep)
+        files = self._sep.split(rest)
         self.head = Constant(files.pop(0))
         self.files = [Diff(f) for f in files]
 
@@ -38,7 +40,7 @@ class DiffList(TextModifier):
         return (
             self.xy.render()
             + "\n"
-            + self._sep.join(m.render() for m in [self.head] + self.files)
+            + ("\\" + self._sepkw).join(m.render() for m in [self.head] + self.files)
         )
 
     def append(self, **kwargs) -> "Diff":
@@ -49,7 +51,9 @@ class DiffList(TextModifier):
         kwargs.setdefault("anchor", "north east")
         if not "pos" in kwargs:
             prevname = cast(str, self.files[-1].name)
-            kwargs["pos"] = r"$({}.south east) + (0, -\FileSpacing)$".format(prevname)
+            kwargs["pos"] = r"$({}.south east) + (0, -\DiffFilesSpacing)$".format(
+                prevname
+            )
         if not "name" in kwargs:
             prevname = cast(str, self.files[-1].name if self.files else "D")
             kwargs["name"] = increment_name(prevname)

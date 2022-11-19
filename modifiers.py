@@ -194,16 +194,29 @@ class Regex(TextModifier):
         original = m.string
         c = 0
         i = 0
-        for k, v in self.__dict__.items():
-            if k.startswith("_"):
-                continue
-            s, e = m.span(i + 1)
-            # Copy all non-grouped parts of original string.
-            result += original[c:s]
-            # But skip groups and replace with new value instead.
-            result += v.render() if isinstance(v, TextModifier) else str(v)
-            c = e
-            i += 1
+        try:
+            for k, v in self.__dict__.items():
+                if k.startswith("_"):
+                    continue
+                s, e = m.span(i + 1)
+                # Copy all non-grouped parts of original string.
+                result += original[c:s]
+                # But skip groups and replace with new value instead.
+                result += v.render() if isinstance(v, TextModifier) else str(v)
+                c = e
+                i += 1
+        except:
+            raise ValueError(
+                f"{type(self).__name__}: "
+                f"could not render the following match:\n  {m.string}\n"
+                + "with the following groups:\n  {}".format(
+                    "\n  ".join(
+                        f"{k}: {v}"
+                        for k, v in self.__dict__.items()
+                        if not k.startswith("_")
+                    )
+                )
+            )
         return result + original[c:]
 
     # Reassure pyright with artificial __[gs]etattr__ methods.
@@ -215,7 +228,7 @@ class Regex(TextModifier):
         except KeyError as e:
             raise AttributeError(str(e))
 
-    def __setattr__(self, name: str, value: str | re.Match):
+    def __setattr__(self, name: str, value: str | TextModifier):
         self.__dict__[name] = value
 
 

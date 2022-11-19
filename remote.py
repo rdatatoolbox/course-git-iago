@@ -137,6 +137,6 @@ class RemoteSlide(Slide):
         STEP()
 
         my_command.anchor = "center"
-        my_command.loc = "0, 0"
+        my_command.location = "0, 0"
         my_command.on().text = "git remote add github <url>"
         STEP()

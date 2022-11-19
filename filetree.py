@@ -3,8 +3,8 @@
 
 from typing import cast
 
-from modifiers import Regex, TextModifier, render_method
 from document import IntensiveCoordinates
+from modifiers import Regex, TextModifier, render_method
 from utils import increment_name
 
 

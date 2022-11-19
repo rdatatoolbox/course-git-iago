@@ -5,8 +5,8 @@ from typing import Tuple, cast
 from diffs import DiffList
 from document import HighlightSquare, Slide
 from filetree import FileTree
-from modifiers import AnonymousPlaceHolder, Regex, render_method
-from repo import Command, Repo, hi_label
+from modifiers import AnonymousPlaceHolder, PlaceHolder, render_method
+from repo import Command, HighlightCommit, Repo, hi_label
 from steps import Step
 
 
@@ -54,19 +54,13 @@ class PizzasSlide(Slide):
         cmd.off()
         STEP = lambda: self.add_step(step)
 
-        hi_repo = step.add_epilog(
-            HighlightSquare.new(
-                r"$(repo.south west) + (3*\eps, 3*\eps)$",
-                "repo.east |- main.north",
-            )
-        ).off()
-
         image = step.add_epilog(
             AnonymousPlaceHolder(
                 r"\node (im) at (Canvas.center) {\Pic<file>{15cm}{!}};",
                 file="VariousPizzas",
             )
-        ).off()
+        ).on()
+        STEP()
 
         readme_text = [
             """
@@ -130,7 +124,6 @@ class PizzasSlide(Slide):
         f_readme = ft.append("FirstChild", filename="README.md")
         d_readme = df.append(pos="Canvas.north east", filename="README.md")
         d_readme.append_text(readme_text[0])
-        image.on()
         STEP()
 
         image.off()
@@ -139,6 +132,8 @@ class PizzasSlide(Slide):
         # Git init.
         cmd._rendered = True
         cmd.on().text = "git init"
+        STEP()
+
         ft.erase(f_readme)
         git = ft.append(
             "FirstChild",
@@ -147,6 +142,35 @@ class PizzasSlide(Slide):
             mod="+",
             name="git",
         )
+        f_readme = ft.append("AppendSibling", filename="README.md", connect=True)
+
+        # No commit yet, repo in degenerated state.
+        main = rp.labels.append("$(repo) + (50, 5)$", "0:0", "noarrow", "main").off()
+        head = rp.labels.append("", "", "").off()
+        commit = step.add_epilog(HighlightCommit.new("repo")).off()
+
+        def head_on_main() -> PlaceHolder:
+            head.ref = "main.base west"
+            head.anchor = "base east"
+            head.offset = "180:11"
+            head.local = "2"
+            commit.hash = main.hash
+            return head
+
+        def head_detached(hash: str) -> PlaceHolder:
+            head.ref = hash
+            head.offset = "160:20"
+            head.anchor = "center"
+            head.local = ".5,0"
+            commit.hash = hash
+            return head
+
+        head_on_main()
+        STEP()
+
+        hi_repo = step.add_epilog(
+            HighlightSquare.new("HEAD.south west", "main.north east")
+        ).off()
         hi_gitfolder = git.add_epilog(
             HighlightSquare.new(
                 "git.south west",
@@ -154,23 +178,31 @@ class PizzasSlide(Slide):
                 padding=2,
             )
         ).off()
-        f_readme = ft.append("AppendSibling", filename="README.md", connect=True)
+
+        hi_on = lambda: (hi_gitfolder.on(), hi_repo.on())
+        hi_off = lambda: (hi_gitfolder.off(), hi_repo.off())
+
+        git.mod = "0"
+        hi_on()
+        main.on()
+        head.on()
+        cmd.off()
         STEP()
 
-        cmd.off()
-        git.mod = "0"
+        hi_off()
         STEP()
 
         # First commit.
         cmd.on().text = "git commit"
-        rp.commits.append("I", "d1e8c8c", "First commit, the intent.")
-        head = rp.labels.append("d1e8c8c", "140:20", ".5,0")
-        main = rp.labels.append("Blue4", "d1e8c8c", "40:20", "-.5,0", "main")
-
         STEP()
 
-        hi_on = lambda: (hi_gitfolder.on(), hi_repo.on())
-        hi_off = lambda: (hi_gitfolder.off(), hi_repo.off())
+        rp.commits.append("I", "d1e8c8c", "First commit, the intent.")
+        commit.hash = main.hash = "d1e8c8c"
+        main.offset = "40:20"
+        main.local = "-.5, 0"
+        commit.on()
+        hi_repo.lower = r"$(repo.south west) + (3*\eps, 3*\eps)$"
+        hi_repo.upper = "repo.east |- main.north"
         hi_on()
         STEP()
 
@@ -192,6 +224,8 @@ class PizzasSlide(Slide):
         STEP()
 
         cmd.on().text = "git diff"
+        STEP()
+
         f_margherita.mod = d_margherita.mod = "+"
         d_margherita.set_mod("+", 0, -1)
         STEP()
@@ -200,7 +234,7 @@ class PizzasSlide(Slide):
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 0, -1)
         rp.commits.append("I", "4e29052", "First pizza: Margherita.")
-        head.hash = main.hash = "4e29052"
+        commit.hash = main.hash = "4e29052"
         hi_on()
         STEP()
 
@@ -225,7 +259,7 @@ class PizzasSlide(Slide):
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 0, -1)
         rp.commits.append("I", "45a5b65", "Add note to the Margherita.")
-        head.hash = main.hash = "45a5b65"
+        commit.hash = main.hash = "45a5b65"
         hi_on()
         STEP()
 
@@ -261,7 +295,7 @@ class PizzasSlide(Slide):
         d_readme.mod = d_regina.mod = f_regina.mod = f_readme.mod = "0"
         cmd.on().text = "git commit"
         rp.commits.append("I", "17514f2", "Add Regina. List pizzas in README.")
-        head.hash = main.hash = "17514f2"
+        commit.hash = main.hash = "17514f2"
         hi_on()
         STEP()
 
@@ -276,8 +310,7 @@ class PizzasSlide(Slide):
         hi_label(head, True)
         STEP()
 
-        head.hash = "45a5b65"
-        head.offset = "163:20"
+        head_detached("45a5b65")
         STEP()
 
         f_readme.mod = d_readme.mod = "m"
@@ -304,7 +337,7 @@ class PizzasSlide(Slide):
         df.erase(d_margherita)
         d_readme.delete_lines(0, -1)
         d_readme.append_text(readme_text[0])
-        head.hash = "d1e8c8c"
+        head_detached("d1e8c8c")
         STEP()
 
         hi_label(head, False)
@@ -331,18 +364,13 @@ class PizzasSlide(Slide):
         d_regina = df.append(filename="regina.md")
         d_regina.append_text(regina_text[0])
         d_readme.append_text(readme_text[1])
-        head.hash = "17514f2"
-        head.offset = "140:20"
+        head_on_main()
         STEP()
 
         hi_label(main, False)
         cmd.off()
         STEP()
 
-        hi_on()
-        STEP()
-
-        hi_off()
         image.on().file = "VariousPizzas"
         STEP()
 

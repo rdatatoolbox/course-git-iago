@@ -11,6 +11,7 @@
 \usepackage{mathptmx}
 \usepackage[T1]{fontenc}
 
+\usepackage{xstring}
 \usepackage{xkeyval}
 \usepackage{etoolbox}
 \usepackage{tikz}%
@@ -147,16 +148,15 @@
   \FirstFile[folder, mod=0]{A}{A}{rootfolder}
 
   \IntensiveCoordinates{Canvas}{A}{1, 1}
-  \def\FileSpacing{8}
   \Diff[m][north east][A]{A}{file.ext}{
     +/{One line},
   }
-  \Diff[0][north east][A]{$(A.south east) + (0, -\FileSpacing)$}{other.ext}{
+  \Diff[0][north east][A]{$(A.south east) + (0, -\DiffFilesSpacing)$}{other.ext}{
     -/{Another line.},
   }
 
   \Repo[south west]{Canvas.south west}{
-    I/hash256/{Commit message.},
+     I/hash256/{Commit message.},
   }%
   \Branch[Blue4][base][label]{hash256}{40:20}{-.5,0}{branch}
   \Head[base][label]{hash256}{155:20}{.5,0}

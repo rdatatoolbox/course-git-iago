@@ -1,8 +1,8 @@
 """Craft and edit a simple repo.
 """
 
-from modifiers import Builder, ListBuilder, ListOf, MakePlaceHolder, PlaceHolder, Regex
 from document import FindPlaceHolder
+from modifiers import Builder, ListBuilder, ListOf, MakePlaceHolder, PlaceHolder, Regex
 
 
 class Repo(Regex):
@@ -34,16 +34,19 @@ CommitModifier, Commit = MakePlaceHolder("Commit", r"<type>/<hash>/{<message>}")
 
 HeadModifier, Head = FindPlaceHolder("Head")
 BranchModifier, Branch = FindPlaceHolder("Branch")
-LocalRepoLabelModifier, LocalRepoLabel = FindPlaceHolder("LocalRepoLabel")
-RemoteRepoLabelModifier, RemoteRepoLabel = FindPlaceHolder("RemoteRepoLabel")
-RemoteArrowModifier, RemoteArrow = FindPlaceHolder("RemoteArrow")
-CommandModifier, Command = FindPlaceHolder("Command")
+HighlightCommitModifier, HighlightCommit = FindPlaceHolder("HighlightCommit")
 
 
 def hi_label(label: PlaceHolder, on: bool):
     label.style = "label" + ("-hi" if on else "")
     if on:
         label.on()
+
+
+LocalRepoLabelModifier, LocalRepoLabel = FindPlaceHolder("LocalRepoLabel")
+RemoteRepoLabelModifier, RemoteRepoLabel = FindPlaceHolder("RemoteRepoLabel")
+RemoteArrowModifier, RemoteArrow = FindPlaceHolder("RemoteArrow")
+CommandModifier, Command = FindPlaceHolder("Command")
 
 
 class _LabelBuilder(Builder[PlaceHolder]):
