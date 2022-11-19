@@ -24,10 +24,7 @@ class ForkStep(Step):
         self.my_command = Command.parse(m)
         self.their_command = Command.parse(t)
         self.remote_command = Command.parse(r)
-        s, e, a = next(it).split("\n")
-        self.start = IntensiveCoordinates.parse(s)
-        self.end = IntensiveCoordinates.parse(e)
-        self.arrow = RemoteArrow.parse(a)
+        self.flow = RemoteArrow.parse(next(it))
         self.button = Regex(next(it).strip(), r"\\node.*{(.*?)}", "filename")
         try:
             while some := next(it):
@@ -50,9 +47,7 @@ class ForkStep(Step):
                 self.my_command,
                 self.their_command,
                 self.remote_command,
-                self.start,
-                self.end,
-                self.arrow,
+                self.flow,
                 self.button,
             ]
         )

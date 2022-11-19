@@ -14,7 +14,16 @@ from modifiers import (
     Regex,
     render_method,
 )
-from repo import Command, RemoteArrow, Repo
+from repo import (
+    Command,
+    HighlightCommit,
+    RemoteArrow,
+    RemoteBranch,
+    Repo,
+    checkout_branch,
+    hi_label,
+    remote_to_branch,
+)
 from steps import Step
 
 
@@ -34,13 +43,10 @@ class RemoteStep(Step):
         self.my_repo = Repo(next(it))
         self.remote = Repo(next(it))
         self.their_repo = Repo(next(it))
-        s, e, a = next(it).split("\n")
-        self.start = IntensiveCoordinates.parse(s)
-        self.end = IntensiveCoordinates.parse(e)
-        self.arrow = RemoteArrow.parse(a)
         m, t = next(it).split("\n")
-        self.my_command = Command.parse(m)
-        self.their_command = Command.parse(t)
+        self.my_pointer = RemoteArrow.parse(m)
+        self.their_pointer = RemoteArrow.parse(t)
+        self.flow = RemoteArrow.parse(next(it))
         try:
             while some := next(it):
                 assert not some
@@ -59,11 +65,9 @@ class RemoteStep(Step):
                 self.my_repo,
                 self.remote,
                 self.their_repo,
-                self.my_command,
-                self.their_command,
-                self.start,
-                self.end,
-                self.arrow,
+                self.my_pointer,
+                self.their_pointer,
+                self.flow,
             ]
         )
 
@@ -80,22 +84,14 @@ class RemoteSlide(Slide):
         my_repo = step.my_repo
         remote = step.remote
         their_repo = step.their_repo
-        my_command = step.my_command
-        their_command = step.their_command
-        start = step.start
-        end = step.end
-        _arrow = step.arrow
+        my_pointer = step.my_pointer.off()
+        their_pointer = step.their_pointer.off()
+        flow = step.flow
 
-        def arrow(on: bool) -> PlaceHolder:
-            start.on(on)
-            end.on(on)
-            return _arrow.on(on)
 
         github_logo.off()
         their_machine.off()
-        my_command.off()
-        their_command.off()
-        arrow(False)
+        flow.off()
 
         # Populate situations from the pizza slide.
         def populate_repo(rp: Repo):
@@ -127,8 +123,11 @@ class RemoteSlide(Slide):
         STEP()
 
         populate_repo(my_repo)
+        _, my_main, my_head = my_repo.labels
+        my_commit = step.add_epilog(HighlightCommit("mine-17514f2"))
         STEP()
 
+        # Create Account.
         github_logo.on()
         STEP()
 
@@ -136,7 +135,57 @@ class RemoteSlide(Slide):
         diffs.off()
         STEP()
 
-        my_command.anchor = "center"
-        my_command.location = "0, 0"
-        my_command.on().text = "git remote add github <url>"
+        remote.on()
+        remote_main = remote.labels.append(
+            "$(remote) + (-5, 10)$",
+            "0:0",
+            "noarrow",
+            "main",
+        )
+        remote_head = remote.labels.append("", "", "")
+        remote_commit = step.add_epilog(HighlightCommit.new("remote")).off()
+        checkout_branch(remote_head, remote_main, remote_commit)
         STEP()
+
+        # Create remote.
+        my_command = step.add_epilog(Command("0, 0", "-"))
+        my_command.on().text = "git remote add github <url>"
+        my_command.location = "0, -.25"
+        STEP()
+
+        my_pointer.on().start = "$($(mine-HEAD.east)!.5!(mine-main.west)$) + (6, 10)$"
+        my_pointer.on().end = "remote-HEAD.south west"
+        my_command.off()
+        STEP()
+
+        # First push
+        step.bump_epilog(my_command)
+        my_command.on().text = "git push github main"
+        STEP()
+
+        flow.on().start = "-.8, -.2"
+        flow.end = "remote-HEAD.west"
+        flow.bend = "30"
+        STEP()
+
+        account = remote.labels[0]
+        remote.labels.clear()
+        populate_repo(remote)
+        remote.labels.append(account)
+        remote_commit = step.add_epilog(HighlightCommit("remote-17514f2"))
+        my_pointer.end = "remote.south west"
+        my_remote_main = my_repo.labels.append(RemoteBranch("", "", "", "github/main"))
+        remote_to_branch(my_remote_main, my_main)
+        flow.end = "remote.west"
+        STEP()
+
+        my_command.off()
+        flow.off()
+        STEP()
+
+        hi_label(my_remote_main, True)
+        STEP()
+
+        hi_label(my_remote_main, False)
+        STEP()
+

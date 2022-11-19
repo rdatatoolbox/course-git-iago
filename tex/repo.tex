@@ -21,19 +21,21 @@
                        shorten >=\CommitArrowShorten mm,
                        shorten <=\CommitArrowShorten mm,
                        },
-  label/.style={draw, line width=1.5, #1, fill=Light3,
-                inner sep=\LabelIsep, rounded corners},
+  label/.style={line width=1.5, draw, #1, fill=Light3, scale=\CommitScale,
+                inner sep=\LabelIsep, rounded corners, -Stealth},
   label-hi/.style={label=#1, fill=Yellow1},
-  label arrow/.style={-Stealth, line width=1.5, #1,
-                      shorten >=\LabelArrowShorten mm},
-  repo label/.style={scale=\NormalScale, inner sep=2, draw=Light5, fill=Light2}
+  repo label/.style={scale=\NormalScale, inner sep=2, draw=Light5, fill=Light2},
+  remote pointer/.style={-Stealth, line width=2, Brown2, dashed},
+  remote flow/.style={remote pointer, solid, line width=20},
+  remote label/.style={scale=\NormalScale, above=2, sloped,
+                       draw, solid, inner sep = 2},
 }
 
 % Draw one commit with hash and message, use [offset] to align with 2 branches.
 % [name][hash-offset][messa-offset]{location}{hash}{message}
 \NewDocumentCommand{\Commit}{ O{commit-center} O{0} O{0} m m m }{
 
-  \coordinate (#1) at (#4);
+  \coordinate[alias=\LatestRepo-#1] (#1) at (#4);
   \path[commit] (#1) circle (\CommitRadius);
 
   % Hash.
@@ -52,6 +54,9 @@
 % [anchor][reponame][simple|double]{location}{type/hash/message list}
 \NewDocumentCommand{\Repo}{ O{center} O{repo} O{simple} m m }{
 
+  % Update this global variable so commits, branches etc.
+  % can be aliased with (reponame-name) in addition to (name).
+  \def\LatestRepo{#2}
 
   \IntensiveCoordinates{Canvas}{loc}{#4}
   \node[anchor=#1] (#2) at (loc) {\tikz[remember picture]{
@@ -117,58 +122,66 @@
 % Pick a commit and point label to it.
 % If 'base' appears in the ref,
 % it is assumed that horizontal alignment is needed,
-% so the local arrow start is interpreted
+% so the local arrow 'start' is interpreted
 % as an absolute vertical offset from the base,
 % the reference end destination is given the same offset,
 % and the arrow is not shortened.
-% (Useful when HEAD is pointing to a branch.)
+% (Useful when eg. HEAD is pointing to a branch.)
 % If local arrow start is 'noarrow', there is no pointer.
-% (Useful on empty repos.)
-% [name][color][anchor][style]
-% {ref}{offset-from-commit}{local-arrow-start}{label-text}
-\NewDocumentCommand{\Label}{ O{label} O{Blue4} O{base} O{label} m m m m }{
+% (Useful on empty repos or to stick origin/main to main.)
+% [name][anchor][style]{ref}{offset}{start}{text}
+\NewDocumentCommand{\Label}{ O{unnamed} O{base} O{label} m m m m }{
 
-  \node[scale=\CommitScale, #4=#2, anchor=#3]
-    (#1) at ($(#5) + (#6)$) {\tt #8};
+  \IfSubStr{#4}{base}{\IfSubStr{#4}{west}
+   {\coordinate[left=#5 of #4] (c);}
+   {\coordinate[right=#5 of #4] (c);}}
+   {\coordinate (c) at ($(#4) + (#5)$);}
 
-  \ifstrequal{#4}{label-hi}{
+  \node[#3, anchor=#2, alias=\LatestRepo-#1] (#1) at (c) {\tt #7};
+
+  \IfSubStr{#3}{-hi}{
     \coordinate (pad) at (1, 1);
     \coordinate (lo) at ($(#1.south west) - (pad)$);
     \coordinate (up) at ($(#1.north east) + (pad)$);
     \draw[Yellow1, line width=4] (lo) rectangle (up);
   }{}
 
-  \ifstrequal{#7}{noarrow}{}{
+  \ifstrequal{#6}{noarrow}{}{
     \begin{pgfonlayer}{background}
-      \IfSubStr{#5}{base}{
-        \IfSubStr{#5}{west}{
-          \coordinate (s) at ($(#1.base east) + (-1, #7)$);
+      \IfSubStr{#4}{base}{
+        % Assume we're pointing to another label, horizontally.
+        \IfSubStr{#4}{west}{
+          \coordinate (s) at ($(#1.base east) + (-1, #6)$);
         }{
-          \coordinate (s) at ($(#1.base west) + (+1, #7)$);
+          \coordinate (s) at ($(#1.base west) + (+1, #6)$);
         }
-        \coordinate[above=#7 of #5] (e);
-        \draw[label arrow=#2, shorten >=0] (s) -- (e);
+        \coordinate[above=#6 of #4] (e);
+        \draw[#3, shorten >=0] (s) -- (e);
       }{
+        % Assume we're pointing to a commit.
         \begin{scope}[local to=#1]
-          \coordinate (s) at (#7);
+          \coordinate (s) at (#6);
         \end{scope}
-        \draw[label arrow=#2] (s) -- (#5);
+        \draw[#3, shorten >=\CommitArrowShorten mm] (s) -- (#4);
       }
     \end{pgfonlayer}
   }
 
 }
 % Basic branch label.
-% offset: position wrt commit position
-% local: starting point of the arrow in local coordinates.
-% [color][anchor][style]{hash}{offset}{local}{name}
-\NewDocumentCommand{\Branch}{ O{Blue4} O{base} O{label} m m m m }{
-  \Label[#7][#1][#2][#3]{#4}{#5}{#6}{#7}
+% [anchor][style]{ref}{offset}{start}{name}
+\NewDocumentCommand{\Branch}{ O{base} O{label} m m m m }{
+  \Label[#6][#1][#2=Blue4]{#3}{#4}{#5}{#6}
 }
-% Same for HEAD label.
-% [anchor][style]{ref}{offset}{local}
+% Remote branch label.
+% [anchor][style]{ref}{offset}{start}{name}
+\NewDocumentCommand{\RemoteBranch}{ O{base} O{label} m m m m }{
+  \Label[#6][#1][#2=Brown2]{#3}{#4}{#5}{#6}
+}
+% HEAD label.
+% [anchor][style]{ref}{offset}{start}
 \NewDocumentCommand{\Head}{ O{base} O{label} m m m }{
-  \Label[HEAD][Purple4][#1][#2]{#3}{#4}{#5}{HEAD}
+  \Label[HEAD][#1][#2=Purple4]{#3}{#4}{#5}{HEAD}
 }
 % Highlight current commit.
 % {hash}
@@ -179,7 +192,7 @@
 % {anchor}{location}{label}
 \newcommand{\LocalRepoLabel}[3]{%
   \IntensiveCoordinates{Canvas}{c}{#2}
-  \node[repo label, anchor=#1] at (c) {#3};
+  \node[repo label, anchor=#1] at (c) {\textit{#3}};
 }
 % {anchor}{location}{account}
 \newcommand{\RemoteRepoLabel}[3]{%
@@ -190,10 +203,34 @@
       /Pizzas};
 }
 
-% [side][bend]{start}{end}
-\NewDocumentCommand{\RemoteArrow}{ O{left} O{50} m m }{
+
+% Arrow from one repo to another.
+% If a label is given, style as a remote pointer, otherwise an illustrative flux.
+% If start or end coordinates contain a comma,
+% they are interpreted as global intensive coordinates,
+% unless a dollar sign is also found.
+% [label][bend][side]{start}{end}
+\NewDocumentCommand{\RemoteArrow}{ O{} O{0} O{left} m m }{
+  % Did not manage to loop over this
+  % because of tikz not expanding {$(node)!.5!(node)$} prior to parsing..?
+  \ifboolexpr{test {\IfSubStr{#4}{\$}}
+           or test {\IfSubStr{#4}{!}}
+       or not test {\IfSubStr{#4}{,}}}
+    {\coordinate (s) at (#4);}
+    {\IntensiveCoordinates{Canvas}{s}{#4}}
+  \ifboolexpr{test {\IfSubStr{#5}{\$}}
+           or test {\IfSubStr{#5}{!}}
+       or not test {\IfSubStr{#5}{,}}}
+    {\coordinate (e) at (#5);}
+    {\IntensiveCoordinates{Canvas}{e}{#5}}
+  % .. anyway.
   \begin{scope}[transparency group, opacity=.5]
-      \draw[-Stealth, line width=20, Brown2] (#3) to[bend #1=#2] (#4);
+      \ifstrequal{#1}{}{
+        \draw[remote flow] (s) to[bend #3=#2] (e);
+      }{
+        \draw[remote pointer] (s) to[bend #3=#2]
+          node[remote label] {\tt #1} (e);
+      }
   \end{scope}
 }
 
@@ -201,7 +238,8 @@
 % [anchor]{location}{text}
 \NewDocumentCommand{\Command}{ O{base} m m }{
   \begin{scope}[local to=Canvas]
-    \node[scale=\CommandScale, anchor=#1, inner sep=2, fill=Light4]
+    \node[scale=\CommandScale, anchor=#1,
+          inner sep=2, fill=Light4, draw=Dark3, line width=2.5]
       (command) at (#2) {\tt \$ #3};
   \end{scope}
 }

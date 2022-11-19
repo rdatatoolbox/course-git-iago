@@ -6,7 +6,14 @@ from diffs import DiffList
 from document import HighlightSquare, Slide
 from filetree import FileTree
 from modifiers import AnonymousPlaceHolder, PlaceHolder, render_method
-from repo import Command, HighlightCommit, Repo, hi_label
+from repo import (
+    Command,
+    HighlightCommit,
+    Repo,
+    checkout_branch,
+    checkout_detached,
+    hi_label,
+)
 from steps import Step
 
 
@@ -150,19 +157,11 @@ class PizzasSlide(Slide):
         commit = step.add_epilog(HighlightCommit.new("repo")).off()
 
         def head_on_main() -> PlaceHolder:
-            head.ref = "main.base west"
-            head.anchor = "base east"
-            head.offset = "180:11"
-            head.local = "2"
-            commit.hash = main.hash
+            checkout_branch(head, main, commit)
             return head
 
         def head_detached(hash: str) -> PlaceHolder:
-            head.ref = hash
-            head.offset = "160:20"
-            head.anchor = "center"
-            head.local = ".5,0"
-            commit.hash = hash
+            checkout_detached(head, hash, commit)
             return head
 
         head_on_main()
@@ -183,10 +182,12 @@ class PizzasSlide(Slide):
         hi_off = lambda: (hi_gitfolder.off(), hi_repo.off())
 
         git.mod = "0"
+        cmd.off()
+        STEP()
+
         hi_on()
         main.on()
         head.on()
-        cmd.off()
         STEP()
 
         hi_off()
@@ -197,9 +198,9 @@ class PizzasSlide(Slide):
         STEP()
 
         rp.commits.append("I", "d1e8c8c", "First commit, the intent.")
-        commit.hash = main.hash = "d1e8c8c"
+        commit.hash = main.ref = "d1e8c8c"
         main.offset = "40:20"
-        main.local = "-.5, 0"
+        main.start = "-.5, 0"
         commit.on()
         hi_repo.lower = r"$(repo.south west) + (3*\eps, 3*\eps)$"
         hi_repo.upper = "repo.east |- main.north"
@@ -234,7 +235,7 @@ class PizzasSlide(Slide):
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 0, -1)
         rp.commits.append("I", "4e29052", "First pizza: Margherita.")
-        commit.hash = main.hash = "4e29052"
+        commit.hash = main.ref = "4e29052"
         hi_on()
         STEP()
 
@@ -259,7 +260,7 @@ class PizzasSlide(Slide):
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 0, -1)
         rp.commits.append("I", "45a5b65", "Add note to the Margherita.")
-        commit.hash = main.hash = "45a5b65"
+        commit.hash = main.ref = "45a5b65"
         hi_on()
         STEP()
 
@@ -295,7 +296,7 @@ class PizzasSlide(Slide):
         d_readme.mod = d_regina.mod = f_regina.mod = f_readme.mod = "0"
         cmd.on().text = "git commit"
         rp.commits.append("I", "17514f2", "Add Regina. List pizzas in README.")
-        commit.hash = main.hash = "17514f2"
+        commit.hash = main.ref = "17514f2"
         hi_on()
         STEP()
 

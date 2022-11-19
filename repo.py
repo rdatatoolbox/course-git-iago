@@ -1,6 +1,8 @@
 """Craft and edit a simple repo.
 """
 
+from typing import cast
+
 from document import FindPlaceHolder
 from modifiers import Builder, ListBuilder, ListOf, MakePlaceHolder, PlaceHolder, Regex
 
@@ -34,6 +36,7 @@ CommitModifier, Commit = MakePlaceHolder("Commit", r"<type>/<hash>/{<message>}")
 
 HeadModifier, Head = FindPlaceHolder("Head")
 BranchModifier, Branch = FindPlaceHolder("Branch")
+RemoteBranchModifier, RemoteBranch = FindPlaceHolder("RemoteBranch")
 HighlightCommitModifier, HighlightCommit = FindPlaceHolder("HighlightCommit")
 
 
@@ -41,6 +44,42 @@ def hi_label(label: PlaceHolder, on: bool):
     label.style = "label" + ("-hi" if on else "")
     if on:
         label.on()
+
+
+def checkout_branch(
+    head: PlaceHolder,  # HeadModifier
+    branch: PlaceHolder,  # BranchModifier
+    commit: PlaceHolder,  # HighlightCommitModifier
+) -> PlaceHolder:
+    head.ref = f"{branch.name}.base west"
+    head.anchor = "base east"
+    head.offset = "11"
+    head.start = "2"
+    commit.hash = branch.ref
+    return head
+
+
+def checkout_detached(
+    head: PlaceHolder,  # HeadModifier
+    hash: str,
+    commit: PlaceHolder,  # HighlightCommitModifier
+) -> PlaceHolder:
+    head.ref = hash
+    head.offset = "155:20"
+    head.anchor = "center"
+    head.start = ".5,0"
+    commit.hash = hash
+    return head
+
+
+def remote_to_branch(
+    remote: PlaceHolder,
+    branch: PlaceHolder,
+):
+    remote.ref = cast(str, branch.name) + ".base east"
+    remote.anchor = "base west"
+    remote.offset = "2"
+    remote.start = "noarrow"
 
 
 LocalRepoLabelModifier, LocalRepoLabel = FindPlaceHolder("LocalRepoLabel")
@@ -55,18 +94,11 @@ class _LabelBuilder(Builder[PlaceHolder]):
     """
 
     def parse(self, input: str) -> PlaceHolder:
-        try:
-            return Head.parse(input)
-        except ValueError:
-            pass
-        try:
-            return Branch.parse(input)
-        except ValueError:
-            pass
-        try:
-            return LocalRepoLabel.parse(input)
-        except ValueError:
-            pass
+        for PHB in (Head, Branch, RemoteBranch, LocalRepoLabel):
+            try:
+                return PHB.parse(input)
+            except ValueError:
+                pass
         return RemoteRepoLabel.parse(input)
 
     def new(self, *args) -> PlaceHolder:

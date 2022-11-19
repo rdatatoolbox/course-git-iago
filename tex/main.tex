@@ -158,8 +158,9 @@
   \Repo[south west]{Canvas.south west}{
      I/hash256/{Commit message.},
   }%
-  \Branch[Blue4][base][label]{hash256}{40:20}{-.5,0}{branch}
-  \Head[base][label]{hash256}{155:20}{.5,0}
+  \Branch[base][label]{hash256}{40:20}{-.5,0}{main}
+  \Head[base east][label]{main.base west}{15}{2}
+  \RemoteBranch[base west][label]{main.base east}{1}{noarrow}{github/main}
 
   \Command[base]{0, 0}{git init}
 
@@ -203,13 +204,10 @@
   }%
   \LocalRepoLabel{base east}{Canvas.east}{their machine}
 
-  \IntensiveCoordinates{Canvas}{start}{-.8, -.1}
-  \IntensiveCoordinates{Canvas}{end}{-.2, .6}
-  \RemoteArrow[left][40]{start}{end}
+  \RemoteArrow[github][0][left]{mine.north}{remote.south west}
+  \RemoteArrow[origin][0][left]{theirs.north}{remote.south east}
 
-  \Command[center]{-.7, +.3}{git push}
-  \Command[center]{+.7, +.3}{git fetch}
-
+  \RemoteArrow[][40][left]{-.8, -.1}{-.2, .6}
 
 } % ENDSLIDE
 
@@ -239,62 +237,28 @@
   \end{scope}
 
   \Repo[south west][mine][double]{-1, -1}{
-    I/hash256/{Commit message.},
-    H/075f8fc/{Divergent commit.},
-    H/f6b005f/{Second branch commit.},
-    A/d9c4395/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
   }%
   \LocalRepoLabel{base west}{-1, -.15}{my machine}
-  \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
-  \Head[base][label]{58d8fe0}{155:20}{.5,0}
 
 
   \Repo[base west][hub][double]{-.75, .1}{
-    I/hash256/{Commit message.},
-    H/075f8fc/{Divergent commit.},
-    H/f6b005f/{Second branch commit.},
-    A/d9c4395/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
   }%
   \RemoteRepoLabel{north}{-.40, 1}{MyAccount}
-  \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
-  \Head[base][label]{58d8fe0}{155:20}{.5,0}
 
 
   \Repo[base east][fork][double]{.75, .1}{
-    I/hash256/{Commit message.},
-    H/075f8fc/{Divergent commit.},
-    H/f6b005f/{Second branch commit.},
-    A/d9c4395/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
   }%
   \RemoteRepoLabel{north}{.40, 1}{TheirAccount}
-  \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
-  \Head[base][label]{58d8fe0}{155:20}{.5,0}
 
   \Repo[base][theirs][double]{.65, -1}{
-    I/hash256/{Commit message.},
-    H/075f8fc/{Divergent commit.},
-    H/f6b005f/{Second branch commit.},
-    A/d9c4395/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
-    I/58d8fe0/{Merge commit.},
   }%
   \LocalRepoLabel{base east}{1, -.15}{their machine}
-  \Branch[Blue4][base][label]{58d8fe0}{25:20}{-.5,0}{main}
-  \Head[base][label]{58d8fe0}{155:20}{.5,0}
 
   \Command[center]{-.5, -.1}{git push}
   \Command[center]{+.5, -.1}{git fetch}
   \Command[center]{-.05, +.5}{git fetch}
 
-  \IntensiveCoordinates{Canvas}{start}{-.5, .5}
-  \IntensiveCoordinates{Canvas}{end}{.4, .5}
-  \RemoteArrow[left][50]{start}{end}
+  \RemoteArrow[][50][left]{-.5, .5}{.4, .5}
 
   \node[below=5 of command, draw=Blue4, line width=7]
     {\PicSyncForkButton{!}{15mm}};

@@ -46,6 +46,14 @@ class TextModifier(object):
             self._epilog = [m]
         return m
 
+    def bump_epilog(self, m: TM) -> TM:
+        """Make this element rendered last, so it's layed over the others."""
+        try:
+            self._epilog.remove(m)
+        except ValueError or AttributeError:
+            pass
+        return self.add_epilog(m)
+
     _tab = " "
     _short = False  # Override in children for shorter display.
 
@@ -113,6 +121,8 @@ def render_method(f: Callable) -> Callable:
 class Builder(Generic[TM]):
     """Define interface for objects supposed to create particular TextModifiers."""
 
+    built_type = TextModifier
+
     def parse(self, _: str) -> TM:
         """Construct from parsed input string."""
         raise NotImplementedError(
@@ -142,6 +152,8 @@ class Constant(TextModifier):
 
 class _ConstantBuilder(Builder[Constant]):
     """Degenerated singleton producing constant text modifiers."""
+
+    built_type = Constant
 
     def parse(self, input: str) -> Constant:
         return Constant(input)
@@ -211,7 +223,7 @@ class Regex(TextModifier):
                 f"could not render the following match:\n  {m.string}\n"
                 + "with the following groups:\n  {}".format(
                     "\n  ".join(
-                        f"{k}: {v}"
+                        f"{k}: {type(self).__name__}"
                         for k, v in self.__dict__.items()
                         if not k.startswith("_")
                     )
@@ -365,6 +377,13 @@ class ListOf(Generic[TM], TextModifier):
         self.tail = tail
 
     def append(self, *args, **kwargs) -> TM:
+        # Append direct children if needed..
+        if len(args) == 1 and not kwargs and isinstance(tm := args[0], TextModifier):
+            assert isinstance(tm, self.builder.built_type)
+            tm = cast(TM, tm)
+            self.list.append(tm)
+            return tm
+        # .. or create them.
         new = self.builder.new(*args, **kwargs)
         self.list.append(new)
         return new
@@ -388,6 +407,9 @@ class ListOf(Generic[TM], TextModifier):
 
 
 class ListBuilder(Builder[ListOf[TM]]):
+
+    built_type = ListOf  # ListOf[TM]
+
     def __init__(
         self,
         builder: Builder[TM],
