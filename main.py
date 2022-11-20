@@ -7,7 +7,6 @@ from typing import Tuple, cast
 
 from clients import ClientsSlide
 from document import Document
-from fork import ForkSlide
 from pizzas import PizzasSlide
 from remote import RemoteSlide
 
@@ -18,12 +17,11 @@ with open(main_tex, "r") as file:
 doc = Document(content)
 
 # Extract all slides individually.
-(clients, pizzas, remote, fork) = cast(
+(clients, pizzas, remote) = cast(
     Tuple[
         ClientsSlide,
         PizzasSlide,
         RemoteSlide,
-        ForkSlide,
     ],
     doc.slides,
 )
@@ -32,6 +30,15 @@ doc = Document(content)
 clients.animate()
 rp, ft, df = pizzas.animate()
 remote.animate(rp, ft, df)
-fork.animate()
 
-doc.compile("res.pdf", "Remote", 17, -1)
+# Setup page numbers and progress.
+total = len(doc.slides)
+for i, slide in enumerate(doc.slides):
+    pagenum = str(i + 1)
+    slide.header.page = pagenum
+    slide.header.progress = f"{pagenum}/{total}"
+
+# doc.generate_tex("Remote", 19, -1)
+doc.generate_tex(68, -1)
+
+doc.compile("res.pdf")

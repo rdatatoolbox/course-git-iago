@@ -5,11 +5,11 @@ import os
 from pathlib import Path
 import re
 import shutil as shu
+from textwrap import dedent
 from typing import Any, Tuple
-from typing import Callable, List, cast
+from typing import Callable, List, cast, Self
 
 from modifiers import (
-    Constant,
     MakePlaceHolder,
     PlaceHolder,
     PlaceHolderBuilder,
@@ -49,7 +49,7 @@ class Document(TextModifier):
                     f"Could not match name {repr(name)} with a subclass of `Slide`."
                 )
             assert SlideType
-            self.slides.append(SlideType(name, s))
+            self.slides.append(SlideType(name, s, self))
         self.tail = end
 
     @render_method
@@ -60,33 +60,43 @@ class Document(TextModifier):
         result += self.tail
         return result
 
-    def compile(
+    @property
+    def build_folder(self) -> Path:
+        build = Path("tex")
+        if not os.path.exists(build):
+            raise RuntimeError(f"Could not find {build} folder.")
+        return build
+
+    @property
+    def genbasename(self) -> str:
+        return "generated_steps"
+
+    @property
+    def texfile(self) -> Path:
+        return Path(self.build_folder, self.genbasename + ".tex")
+
+    @property
+    def pdffile(self) -> Path:
+        return Path(self.build_folder, self.genbasename + ".pdf")
+
+    def generate_tex(
         self,
-        filename: str,
-        # Restrict to the given slides, steps:
-        #   i : only step i (absolute, 1-starting)
-        #   i, j : only steps i to j (included, absolute)
-        #   name : only this slide (all steps)
-        #   name, i : only this step in the slide (relative)
-        #   name, i, j: only steps i to j in the slide (included, relative)
-        # i and j start to 1, -1 meaning 'end'.
         slidename: str | int | None = None,
         start: int | None = None,
         stop: int | None = None,
     ):
-        """Render to a file then compile in tex folder and copy result to destination."""
-        output = Path(filename)
+        """Render to the generated file, possibly restricting to only a few steps.
 
-        build = Path("tex")
-        if not os.path.exists(build):
-            raise RuntimeError(f"Could not find {build} folder.")
+            i : only step i (absolute, 1-starting)
+            i, j : only steps i to j (included, absolute)
+            name : only this slide (all steps)
+            name, i : only this step in the slide (relative)
+            name, i, j: only steps i to j in the slide (included, relative)
 
-        current_folder = os.getcwd()
-        os.chdir(build)
-        genname = "generated_steps"
-        texfile = Path(genname + ".tex")
+        Indices i and j start counting from 1 and -1 means <end>.
+        """
 
-        print(f"Render to {texfile}..")
+        print(f"Select slides and steps..")
         # Construct a list of rendered slides/steps to help restricting later.
         which_rendered: List[Tuple[str, int]] = []
         if slidename is None:
@@ -151,21 +161,14 @@ class Document(TextModifier):
                         which_rendered.append((slide.name, i_abs + 1))
                         slide.steps.append(step)
                     i_abs += 1
-        with open(texfile, "w") as file:
+
+        print(f"Render to {self.texfile}..")
+        with open(self.texfile, "w") as file:
             file.write(restrict.render())
-
-        print(f"Compile {texfile}..")
-        # Compile three times so `remember pictures` eventually works.
-        for _ in range(3):
-            os.system(f"lualatex {str(texfile)}")
-        os.chdir(current_folder)
-
-        print(f"Copy to {output}..")
-        shu.copy(Path(build, genname + ".pdf"), output)
 
         print("All the following slides/steps have been rendered:")
         current_slide = ""
-        step = previous_step = 0  # To horten e.g. 1 2 3 5 6 into 1:3 5:6
+        step = previous_step = 0  # To shorten e.g. 1 2 3 5 6 into 1:3 5:6
         res = ""
         for slide, step in which_rendered:
             if not current_slide or slide != current_slide:
@@ -185,7 +188,37 @@ class Document(TextModifier):
             res += str(previous_step)
         print(res + "\n")
 
+    def compile(self, filename: str):
+        """Assuming all steps have been generated to the correct file,
+        compile with latex then copy to desired location.
+        """
+        output = Path(filename)
+
+        print(f"Compiling {self.texfile}..")
+        current_folder = os.getcwd()
+        os.chdir(self.build_folder)
+        # Compile three times so `remember pictures` eventually works.
+        for _ in range(3):
+            os.system(f"lualatex {self.genbasename}.tex")
+        os.chdir(current_folder)
+
+        print(f"Copy to {output}..")
+        shu.copy(self.pdffile, output)
+
         print("done.")
+
+
+SlideHeaderModifier, SlideHeader = MakePlaceHolder(
+    "SlideHeader",
+    dedent(
+        r"""
+        \renewcommand{\TitleText}{<title>}
+        \renewcommand{\SubTitleText}{<subtitle>}
+        \renewcommand{\PageNumText}{<page>}
+        \renewcommand{\Progress}{<progress>}<tail>
+        """
+    ).strip(),
+)
 
 
 class Slide(TextModifier):
@@ -194,14 +227,19 @@ class Slide(TextModifier):
     The section name determines which parser to use for the body.
     Like Step, keep a meta-list of subclasses to be matched against document data
     for finding the correct type to construct.
+
+    The slide keeps a cross-reference to the containing document,
+    so that it's possible to transform current step into a new slide
+    during the "animate" function, a process called 'split'.
     """
 
-    def __init__(self, name: str, input: str):
+    def __init__(self, name: str, input: str, document: Document):
+        self._document = document
         self.name = name
         bodies = input.split(r"\Step{")
         header = bodies.pop(0).strip()
         bodies = [b.rsplit("}", 1)[0].strip() for b in bodies]
-        self.header = Constant(header)
+        self.header = SlideHeader.parse(header)
         # Match name against Step type names to find the correct type.
         found = False
         StepType = None
@@ -219,7 +257,7 @@ class Slide(TextModifier):
     def render(self) -> str:
         return " {}\n{}\n{} ".format(
             self.name,
-            self.header.raw,
+            self.header.render(),
             "\n".join("\\Step{{\n{}  \n}}".format(s.render()) for s in self.steps),
         )
 
@@ -241,6 +279,29 @@ class Slide(TextModifier):
         Return possible interesting data for later use by the other slides.
         """
         pass
+
+    def split(
+        self,
+        name: str,
+        title: str | None = None,
+        subtitle: str | None = None,
+        step: Step | None = None,
+    ) -> Self:
+        """Split self into a new slide with possibly new title(s),
+        and correctly insert it into the document.
+        The newly created slide only contains a copy of the given step.
+        """
+        # Find ourselves within the document.
+        slides = self._document.slides
+        i = slides.index(self)
+        # Insert a copy with only one step right after self.
+        fork = self.copy()
+        fork.steps = [step.copy()] if step else []
+        fork.name = name
+        fork.header.title = title if title else self.header.title
+        fork.header.subtitle = subtitle if subtitle else self.header.subtitle
+        slides.insert(i + 1, fork)
+        return fork
 
 
 def FindPlaceHolder(name: str) -> Tuple[type, PlaceHolderBuilder[PlaceHolder]]:

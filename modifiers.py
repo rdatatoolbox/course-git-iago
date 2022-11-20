@@ -191,8 +191,8 @@ class Regex(TextModifier):
         pattern = cast(re.Pattern, pattern)
         if not (m := pattern.match(input)):
             raise ValueError(
-                f"The given pattern:\n  {pattern.pattern}\n"
-                f"does not match input:\n  {input}\n"
+                f"The given pattern:\n{pattern.pattern}\n"
+                f"does not match input:\n{input}\n"
                 f"in Regex type {type(self).__name__}."
             )
         self._match = m  # Members with no trailing '_' are group values.
@@ -297,6 +297,7 @@ class PlaceHolderBuilder(Builder[PH]):
         model = cast(str, py_escape(head))
         placeholders: List[str] = []
         types: Dict[str, type] = {}
+        re.compile("a\nb").match("a\nb")
         for c in chunks:
             ph, literal = c.split(">", 1)
             regex += r"(.*?)"

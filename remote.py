@@ -1,4 +1,4 @@
-"""Slide to work with a remote, 3-ways.
+"""Slide(s) to work with a remote, 3-ways.
 """
 
 from typing import cast
@@ -65,8 +65,17 @@ class RemoteStep(Step):
 
 class RemoteSlide(Slide):
     def animate(self, pizzas_repo: Repo, pizzas_ft: FileTree, pizzas_df: DiffList):
+
+        # Use this dynamical step as a workspace for edition,
+        # regularly copied into actually recorded steps.
         step = cast(RemoteStep, self.pop_step())
-        STEP = lambda: self.add_step(step)
+
+        # Keep a reference to the current slide, possibly changed on SPLIT.
+        slide = [self]
+        STEP = lambda: slide[0].add_step(step)
+
+        def SPLIT(*args):
+            slide[0] = slide[0].split(*args, step=step)
 
         my_files = step.myfiles
         their_files = step.theirfiles
@@ -120,7 +129,7 @@ class RemoteSlide(Slide):
         # Create remote.
         my_command = step.add_epilog(Command("0, 0", "-"))
         my_command.on().text = "git remote add github <url>"
-        my_command.location = "0, -.25"
+        my_command.location = "0, -.20"
         STEP()
 
         my_pointer.on().start = "$($(mine-HEAD.east)!.5!(mine-main.west)$) + (6, 10)$"
@@ -131,6 +140,7 @@ class RemoteSlide(Slide):
         # First push
         step.bump_epilog(my_command)
         my_command.on().text = "git push github main"
+        my_command.location = "0, -.25"
         STEP()
 
         flow.on().start = "-.8, -.2"
@@ -195,6 +205,11 @@ class RemoteSlide(Slide):
 
         flow.on()
         remote.add_commit(new_commit)
+        my_repo.highlight(True, "main")
+        remote.highlight(True, "main")
+        STEP()
+
+        my_repo.highlight(False, "main")
         my_repo.remote_to_branch("github/main")
         hi_remote_main(True)
         STEP()
@@ -204,3 +219,8 @@ class RemoteSlide(Slide):
         hi_remote_main(False)
         STEP()
 
+        pic_their.on()
+        SPLIT("Collaborate", None, "Working with another person")
+
+        their_repo.on()
+        STEP()

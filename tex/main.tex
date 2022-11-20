@@ -167,7 +167,7 @@
 \renewcommand{\TitleText}{Collaborating}
 \renewcommand{\SubTitleText}{Working with a remote}
 \renewcommand{\PageNumText}{3}
-\renewcommand{\Progress}{3/4}%
+\renewcommand{\Progress}{3/4}
 \Step{
 
   \IntensiveCoordinates{Canvas}{A}{-1, 1}
@@ -202,54 +202,6 @@
   \RemoteArrow[origin][0][left]{theirs.north}{remote.south east}
 
   \RemoteArrow[][40][left]{-.8, -.1}{-.2, .6}
-
-} % ENDSLIDE
-
-% SLIDE Fork
-\renewcommand{\TitleText}{Collaborating}
-\renewcommand{\SubTitleText}{Working with a fork}
-\renewcommand{\PageNumText}{4}
-\renewcommand{\Progress}{4/4}
-\Step{
-
-  \IntensiveCoordinates{Canvas}{A}{-1, 1}
-  \FirstFile[folder, mod=0]{A}{A}{root}
-
-  \IntensiveCoordinates{Canvas}{c}{1, .85}
-  \Diff[m][north east][A]{c}{file.ext}{
-    +/{One line},
-  }
-
-  \begin{scope}[local to=Canvas]
-    \foreach \xy in {{-.4,.5},{.4,.5}}{%
-      \node[opacity=.2] (github) at (\xy) {\PicGithubLogo{10cm}{!}};
-    }
-    \foreach \xy/\Pic in {{-.7,-.6}/MyMachine,
-                           { .7,-.6}/TheirMachine}{%
-      \node[opacity=.2] (github) at (\xy) {\csname Pic\Pic\endcsname{75mm}{!}};
-    }
-  \end{scope}
-
-  \Repo[south west][mine][double]{-1, -1}{
-  }
-
-  \Repo[base west][hub][double]{-.75, .1}{
-  }
-
-  \Repo[base east][fork][double]{.75, .1}{
-  }
-
-  \Repo[base][theirs][double]{.65, -1}{
-  }
-
-  \Command[center]{-.5, -.1}{git push}
-  \Command[center]{+.5, -.1}{git fetch}
-  \Command[center]{-.05, +.5}{git fetch}
-
-  \RemoteArrow[][50][left]{-.5, .5}{.4, .5}
-
-  \node[below=5 of command, draw=Blue4, line width=7]
-    {\PicSyncForkButton{!}{15mm}};
 
 } % ENDSLIDE
 
