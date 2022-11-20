@@ -58,6 +58,7 @@
   Margherita/margherita.png,
   Regina/regina.jpg,
   Diavola/diavola.jpg,
+  Capricciosa/capricciosa.png,
   MyMachine/my_machine.png,
   TheirMachine/their_machine.png,
   PullRequestButton/pull_request_button.jpg,
@@ -145,10 +146,10 @@
 \renewcommand{\Progress}{2/4}
 \Step{
 
-  \IntensiveCoordinates{Canvas}{A}{-1, 1}
+  \AutomaticCoordinates{A}{-1, 1}
   \FirstFile[folder, mod=0]{A}{A}{rootfolder}
 
-  \IntensiveCoordinates{Canvas}{A}{1, 1}
+  \AutomaticCoordinates{A}{1, 1}
   \Diff[m][north east][A]{A}{file.ext}{
     +/{One line},
   }
@@ -170,13 +171,13 @@
 \renewcommand{\Progress}{3/4}
 \Step{
 
-  \IntensiveCoordinates{Canvas}{A}{-1, 1}
+  \AutomaticCoordinates{A}{-1, 1}
   \FirstFile[folder, mod=0]{A}{A}{root}
 
-  \IntensiveCoordinates{Canvas}{B}{.7, 1}
-  \FirstFile[folder, mod=0]{B}{B}{root}
+  \AutomaticCoordinates{A}{.7, 1}
+  \FirstFile[folder, mod=0]{A}{A}{root}
 
-  \IntensiveCoordinates{Canvas}{C}{1, .85}
+  \AutomaticCoordinates{C}{1, .85}
   \Diff[m][north east][A]{c}{file.ext}{
     +/{One line},
   }
@@ -184,18 +185,18 @@
   \begin{scope}[local to=Canvas]\begin{pgfonlayer}{background}
     \node[opacity=.2] (github) at (0, .5) {\PicGithubLogo{10cm}{!}};
     \node[opacity=.2] (mymachine) at (-.7, -.6) {\PicMyMachine{75mm}{!}};
-    \node[opacity=.2] (mymachine) at (+.7, -.6) {\PicTheirMachine{75mm}{!}};
+    \node[opacity=.2] (theirmachine) at (+.7, -.6) {\PicTheirMachine{75mm}{!}};
   \end{pgfonlayer}\end{scope}
 
   \Repo[south west][mine][double]{-1, -1}{
   }
 
 
-  \Repo[base][remote][double]{.1, .1}{
+  \Repo[base][remote][double]{.1, .08}{
   }
 
 
-  \Repo[base][theirs][double]{.65, -1}{
+  \Repo[base][theirs][double]{.55, -1}{
   }
 
 } % ENDSLIDE

@@ -5,7 +5,7 @@ import re
 from textwrap import dedent
 from typing import cast
 
-from document import IntensiveCoordinates
+from document import AutomaticCoordinates
 from modifiers import (
     Constant,
     ListBuilder,
@@ -30,7 +30,7 @@ class DiffList(TextModifier):
     def __init__(self, input: str):
         """First line is an intensive coordinate supposed to locate the first Diff."""
         xy, rest = input.split("\n", 1)
-        self.xy = IntensiveCoordinates.parse(xy)
+        self.xy = AutomaticCoordinates.parse(xy)
         files = self._sep.split(rest)
         self.head = Constant(files.pop(0))
         self.files = [Diff(f) for f in files]

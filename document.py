@@ -399,3 +399,6 @@ HighlightShadeModifier, HighlightShade = FindPlaceHolder("HighlightShade")
 IntensiveCoordinatesModifier, IntensiveCoordinates = FindPlaceHolder(
     "IntensiveCoordinates"
 )
+AutomaticCoordinatesModifier, AutomaticCoordinates = FindPlaceHolder(
+    "AutomaticCoordinates"
+)

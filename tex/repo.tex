@@ -47,12 +47,14 @@
   \path[commit] (#1) circle (\CommitRadius);
 
   % Hash.
-  \node[scale=\CommitScale, anchor=base east, hash] (#5-hash)
+  \node[scale=\CommitScale, anchor=base east, hash,
+        alias=\LatestRepo-#5-hash] (#5-hash)
     at ($(#1) - (\CommitRadius + \CommitMargins + #2, -\CommitBaseHeight)$)
     {\tt #5};
 
   % Message.
-  \node[scale=\CommitScale, anchor=base west, Dark4] (#5-message)
+  \node[scale=\CommitScale, anchor=base west, Dark4,
+        alias=\LatestRepo-#5-message] (#5-message)
     at ($(#1) + (\CommitRadius + \CommitMargins - #2 + #3, \CommitBaseHeight)$)
     {\tt #6};
 

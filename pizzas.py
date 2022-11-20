@@ -120,7 +120,7 @@ class PizzasSlide(Slide):
 
         # Root folder.
         _ = files.append(
-            "FirstFile", pos="Canvas.north west", filename="pizzas", type="folder"
+            "FirstFile", pos=files.xy.name, filename="pizzas", type="folder"
         )
         f_readme = files.append("FirstChild", filename="README.md")
         d_readme = diffs.append(pos="Canvas.north east", filename="README.md")

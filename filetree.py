@@ -3,7 +3,7 @@
 
 from typing import cast
 
-from document import IntensiveCoordinates
+from document import AutomaticCoordinates
 from modifiers import Regex, TextModifier, render_method
 from utils import increment_name
 
@@ -19,13 +19,22 @@ class FileTree(TextModifier):
         The chain only contains 1 element in the stub.
         """
         xy, first_file = input.split("\n")
-        self.xy = IntensiveCoordinates.parse(xy)
-        # Refer to them as list to easily reconnect the chain.
-        self.list = [FileTreeLine(first_file)]
+        self.xy = xy = AutomaticCoordinates.parse(xy)
+        # Refer to them as a list to easily reconnect the chain.
+        first_file = FileTreeLine(first_file)
+        first_file.pos = xy.name
+        self.list = [first_file]
 
     @render_method
     def render(self) -> str:
         return "\n".join(m.render() for m in [self.xy] + self.list)
+
+    def populate(self, filetree: "FileTree") -> "FileTree":
+        """Import/copy all files from another value."""
+        self.clear()
+        for file in filetree.list:
+            self.list.append(file.copy())
+        return self
 
     def append(self, command: str, **kwargs) -> "FileTreeLine":
         # Default connect to previous one and use the same name +1.
@@ -55,7 +64,7 @@ class FileTree(TextModifier):
             if f is file:
                 break
         if i == len(l) - 1:
-            # When erasing last one, previous needto become the last.
+            # When erasing last one, previous need to become the last.
             l.pop()
             if len(l) <= 1:
                 return
