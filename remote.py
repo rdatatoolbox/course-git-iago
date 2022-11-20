@@ -34,10 +34,6 @@ class RemoteStep(Step):
         self.my_repo = Repo(next(it), "50, 5")
         self.remote = Repo(next(it), "-5, +7")
         self.their_repo = Repo(next(it), "-50, 5")
-        m, t = next(it).split("\n")
-        self.my_pointer = RemoteArrow.parse(m)
-        self.their_pointer = RemoteArrow.parse(t)
-        self.flow = RemoteArrow.parse(next(it))
         try:
             while some := next(it):
                 assert not some
@@ -56,9 +52,6 @@ class RemoteStep(Step):
                 self.my_repo,
                 self.remote,
                 self.their_repo,
-                self.my_pointer,
-                self.their_pointer,
-                self.flow,
             ]
         )
 
@@ -84,14 +77,11 @@ class RemoteSlide(Slide):
         my_repo = step.my_repo
         remote = step.remote.off()
         their_repo = step.their_repo.off()
-        my_pointer = step.my_pointer.off()
-        their_pointer = step.their_pointer.off()
-        flow = step.flow.off()
 
         my_label = step.add_epilog(
             LocalRepoLabel("base west", "Canvas.west", "my machine")
         )
-        url = step.add_epilog(RemoteRepoLabel("north", "0, 1", "MyAccount")).off()
+        url = step.add_epilog(RemoteRepoLabel("north", "0, 1", "MyAccount", "")).off()
         their_label = step.add_epilog(
             LocalRepoLabel("base east", "Canvas.east", "their machine")
         ).off()
@@ -120,13 +110,17 @@ class RemoteSlide(Slide):
         STEP()
 
         diffs.off()
+        url.highlight = "account"
         url.on()
         STEP()
 
         remote.on()
+        url.name = "Pizzas"
+        url.highlight = "name"
         STEP()
 
         # Create remote.
+        url.highlight = ""
         command = step.add_epilog(Command("0, 0", "-"))
         command.on().text = "git remote add github <url>"
         command.location = "0, -.20"
@@ -134,9 +128,18 @@ class RemoteSlide(Slide):
         command.end = ".3"
         STEP()
 
-        my_pointer.on().start = "$($(mine-HEAD.east)!.5!(mine-main.west)$) + (6, 10)$"
-        my_pointer.on().end = "remote-HEAD.south west"
+        my_pointer = step.add_epilog(
+            RemoteArrow(
+                "$($(mine-HEAD.east)!.5!(mine-main.west)$) + (6, 10)$",
+                "remote-HEAD.south west",
+                name="github",
+                highlight="-hi",
+            )
+        )
         command.off()
+        STEP()
+
+        my_pointer.highlight = ""
         STEP()
 
         # First push
@@ -145,9 +148,9 @@ class RemoteSlide(Slide):
         command.location = "0, -.25"
         STEP()
 
-        flow.on().start = "-.8, -.2"
-        flow.end = "remote-HEAD.west"
-        flow.bend = "30"
+        flow = step.add_epilog(RemoteArrow("-.8, -.2", "remote-HEAD.west", bend="30"))
+        remote.highlight(True, "main")
+        my_repo.highlight(True, "main")
         STEP()
 
         remote.populate(pizzas_repo)
@@ -158,16 +161,18 @@ class RemoteSlide(Slide):
 
         command.off()
         flow.off()
+        remote.highlight(False, "main")
+        my_repo.highlight(False, "main")
         STEP()
 
-        def hi_remote_main(on: bool):
-            remote.highlight(on, "main")
-            my_repo.highlight(on, "github/main")
-
-        hi_remote_main(True)
+        remote.highlight(True, "main")
+        my_repo.highlight(True, "github/main")
+        my_pointer.highlight = "-hi"
         STEP()
 
-        hi_remote_main(False)
+        remote.highlight(False, "main")
+        my_repo.highlight(False, "github/main")
+        my_pointer.highlight = ""
         STEP()
 
         # Local commit: Diavola.
@@ -193,10 +198,12 @@ class RemoteSlide(Slide):
         command.off()
         STEP()
 
-        hi_remote_main(True)
+        remote.highlight(True, "main")
+        my_repo.highlight(True, "github/main")
         STEP()
 
-        hi_remote_main(False)
+        remote.highlight(False, "main")
+        my_repo.highlight(False, "github/main")
         STEP()
 
         # Pushing new commit to remote.
@@ -210,14 +217,15 @@ class RemoteSlide(Slide):
         remote.highlight(True, "main")
         STEP()
 
-        my_repo.highlight(False, "main")
         my_repo.remote_to_branch("github/main")
-        hi_remote_main(True)
+        my_repo.highlight(False, "main")
+        my_repo.highlight(True, "github/main")
         STEP()
 
         flow.off()
         command.off()
-        hi_remote_main(False)
+        my_repo.highlight(False, "github/main")
+        remote.highlight(False, "main")
         STEP()
 
         pic_their.on()

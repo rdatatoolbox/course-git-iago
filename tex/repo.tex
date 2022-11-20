@@ -33,6 +33,7 @@
   remote flow/.style={remote pointer, solid, line width=20},
   remote arrow label/.style={scale=\NormalScale, above=2, sloped,
                        draw, solid, inner sep = 2},
+  remote arrow label-hi/.style={remote arrow label, fill=Yellow1},
   %
   command text/.style={scale=\CommandScale, Dark4},
   command box/.style={draw=Dark3, fill=Light4, line width=2.5},
@@ -201,29 +202,31 @@
   \IntensiveCoordinates{Canvas}{c}{#2}
   \node[repo label, anchor=#1] at (c) {\textit{#3}};
 }
-% {anchor}{location}{account}
-\newcommand{\RemoteRepoLabel}[3]{%
-  \IntensiveCoordinates{Canvas}{c}{#2}
-  \node[remote label, anchor=#1] at (c)
-    {\tt https://github.com/%
-      \tikz[baseline={(n.base)},inner sep=.5]{\node[fill=Yellow1](n){#3};}%
-      /Pizzas};
+\newcommand{\UrlHighlight}[1]{%
+  \tikz[baseline={(n.base)},inner sep=.5]{\node[fill=Yellow1](n){#1};}%
 }
+% [highlight]{anchor}{location}{account}{name}
+\NewDocumentCommand{\RemoteRepoLabel}{ O{} m m m m }{{%
+  \def\account{\IfSubStr{#1}{account}{\UrlHighlight{#4}}{#4}}
+  \def\name   {\IfSubStr{#1}{name}{\UrlHighlight{#5}}{#5}}
+  \AutomaticCoordinates{c}{#3}
+  \node[remote label, anchor=#2] at (c) {\tt https://github.com/\account/\name};
+}}
 
 
 % Arrow from one repo to another.
-% [label][bend][side]{start}{end}
-\NewDocumentCommand{\RemoteArrow}{ O{} O{0} O{left} m m }{
-  \AutomaticCoordinates{s}{#4}
-  \AutomaticCoordinates{e}{#5}
-  \begin{scope}[transparency group, opacity=.5]
-      \ifstrequal{#1}{}{
-        \draw[remote flow] (s) to[bend #3=#2] (e);
-      }{
-        \draw[remote pointer] (s) to[bend #3=#2]
-          node[remote arrow label] {\tt #1} (e);
-      }
-  \end{scope}
+% [name][bend][side][highlight]{start}{end}
+\NewDocumentCommand{\RemoteArrow}{ O{} O{0} O{left} O{} m m }{
+  \AutomaticCoordinates{s}{#5}
+  \AutomaticCoordinates{e}{#6}
+  \ifstrequal{#1}{}{
+    \begin{scope}[transparency group, opacity=.5]
+      \draw[remote flow] (s) to[bend #3=#2] (e);
+    \end{scope}
+  }{
+    \draw[remote pointer] (s) to[bend #3=#2]
+      node[remote arrow label#4] {\tt #1} (e);
+  }
 }
 
 % Display the command used.
