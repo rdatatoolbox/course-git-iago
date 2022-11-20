@@ -68,7 +68,7 @@ class Document(TextModifier):
         # (counting from 1 and from the first step in the first slide)
         only_slide: str | int | range | None = None,
         # Restrict to only 1 step with the give slide name.
-        only_step: int | range | None = None,  # Counting from 1.
+        only_step: int | range | None = None,  # Counting from 1, -1 meaning end.
     ):
         """Render to a file then compile in tex folder and copy result to destination."""
         output = Path(filename)
@@ -83,6 +83,8 @@ class Document(TextModifier):
         texfile = Path(genname + ".tex")
 
         print(f"Render to {texfile}..")
+        # Construct a list of rendered slides/steps to help restricting later.
+        which_rendered: List[Tuple[str, int]] = []
         if only_slide is not None:
             if type(only_slide) is str:
                 # Look for a slide containing the given name.
@@ -101,11 +103,17 @@ class Document(TextModifier):
                     Constant("".join(c.render() for c in restrict.non_slides[i + 1 :])),
                 ]
                 if only_step is not None:
+                    slide = restrict.slides[0]
                     if type(only_step) is int:
                         only_step = range(only_step, only_step + 1)
                     only_step = cast(range, only_step)
-                    slide = restrict.slides[0]
-                    slide.steps = [slide.steps[s - 1] for s in only_step]
+                    if only_step.stop == -1:
+                        only_step = range(only_step.start, len(slide.steps) + 1)
+                    steps = slide.steps
+                    slide.steps = []
+                    for s in only_step:
+                        which_rendered.append((slide.name, s))
+                        slide.steps.append(steps[s - 1])
             else:
                 # Look for a specific range of steps, starting count from first slide.
                 selection = (
@@ -120,6 +128,7 @@ class Document(TextModifier):
                     slide.steps = []
                     for step in steps:
                         if i_abs in selection:
+                            which_rendered.append((slide.name, i_abs))
                             slide.steps.append(step)
                         i_abs += 1
         else:
@@ -135,6 +144,16 @@ class Document(TextModifier):
 
         print(f"Copy to {output}..")
         shu.copy(Path(build, genname + ".pdf"), output)
+
+        print("All the following slides/steps have been rendered:")
+        current = ""
+        for slide, step in which_rendered:
+            if not current or slide != current:
+                print(f"\n  {slide}: {step}", end="")
+                current = slide
+            else:
+                print(f" {step}", end="")
+        print('\n')
 
         print("done.")
 

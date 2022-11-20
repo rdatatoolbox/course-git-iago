@@ -57,6 +57,7 @@
   VariousPizzas/pizzas_various.jpg,
   Margherita/margherita.png,
   Regina/regina.jpg,
+  Diavola/diavola.jpg,
   MyMachine/my_machine.png,
   TheirMachine/their_machine.png,
   PullRequestButton/pull_request_button.jpg,
@@ -155,12 +156,8 @@
     -/{Another line.},
   }
 
-  \Repo[south west]{Canvas.south west}{
-     I/hash256/{Commit message.},
-  }%
-  \Branch[base][label]{hash256}{40:20}{-.5,0}{main}
-  \Head[base east][label]{main.base west}{15}{2}
-  \RemoteBranch[base west][label]{main.base east}{1}{noarrow}{github/main}
+  \Repo[south west][repo][simple]{Canvas.south west}{
+  }
 
   \Command[base]{0, 0}{git init}
 
@@ -179,30 +176,27 @@
   \IntensiveCoordinates{Canvas}{B}{.7, 1}
   \FirstFile[folder, mod=0]{B}{B}{root}
 
-  \IntensiveCoordinates{Canvas}{c}{1, .85}
+  \IntensiveCoordinates{Canvas}{C}{1, .85}
   \Diff[m][north east][A]{c}{file.ext}{
     +/{One line},
   }
 
-  \begin{scope}[local to=Canvas]
+  \begin{scope}[local to=Canvas]\begin{pgfonlayer}{background}
     \node[opacity=.2] (github) at (0, .5) {\PicGithubLogo{10cm}{!}};
     \node[opacity=.2] (mymachine) at (-.7, -.6) {\PicMyMachine{75mm}{!}};
     \node[opacity=.2] (mymachine) at (+.7, -.6) {\PicTheirMachine{75mm}{!}};
-  \end{scope}
+  \end{pgfonlayer}\end{scope}
 
   \Repo[south west][mine][double]{-1, -1}{
-  }%
-  \LocalRepoLabel{base west}{Canvas.west}{my machine}
+  }
 
 
   \Repo[base][remote][double]{.1, .1}{
-  }%
-  \RemoteRepoLabel{north}{.0, 1}{MyAccount}
+  }
 
 
   \Repo[base][theirs][double]{.65, -1}{
-  }%
-  \LocalRepoLabel{base east}{Canvas.east}{their machine}
+  }
 
   \RemoteArrow[github][0][left]{mine.north}{remote.south west}
   \RemoteArrow[origin][0][left]{theirs.north}{remote.south east}
@@ -237,22 +231,16 @@
   \end{scope}
 
   \Repo[south west][mine][double]{-1, -1}{
-  }%
-  \LocalRepoLabel{base west}{-1, -.15}{my machine}
-
+  }
 
   \Repo[base west][hub][double]{-.75, .1}{
-  }%
-  \RemoteRepoLabel{north}{-.40, 1}{MyAccount}
-
+  }
 
   \Repo[base east][fork][double]{.75, .1}{
-  }%
-  \RemoteRepoLabel{north}{.40, 1}{TheirAccount}
+  }
 
   \Repo[base][theirs][double]{.65, -1}{
-  }%
-  \LocalRepoLabel{base east}{1, -.15}{their machine}
+  }
 
   \Command[center]{-.5, -.1}{git push}
   \Command[center]{+.5, -.1}{git fetch}

@@ -5,15 +5,8 @@ from typing import Tuple, cast
 from diffs import DiffList
 from document import HighlightSquare, Slide
 from filetree import FileTree
-from modifiers import AnonymousPlaceHolder, PlaceHolder, render_method
-from repo import (
-    Command,
-    HighlightCommit,
-    Repo,
-    checkout_branch,
-    checkout_detached,
-    hi_label,
-)
+from modifiers import AnonymousPlaceHolder, render_method
+from repo import Command, Repo
 from steps import Step
 
 
@@ -25,7 +18,7 @@ class PizzasStep(Step):
         it = iter(chunks)
         self.filetree = FileTree(next(it))
         self.diffs = DiffList(next(it))
-        self.repo = Repo(next(it))
+        self.repo = Repo(next(it), "50, 5")
         self.command = Command.parse(next(it))
         try:
             while some := next(it):
@@ -51,19 +44,20 @@ class PizzasSlide(Slide):
 
     def animate(self) -> Tuple[Repo, FileTree, DiffList]:
         step = cast(PizzasStep, self.pop_step())
-        ft = step.filetree
-        df = step.diffs
-        rp = step.repo
-        cmd = step.command
-        ft.clear()
-        df.clear()
-        rp.clear()
-        cmd.off()
+        files = step.filetree
+        diffs = step.diffs
+        repo = step.repo
+        command = step.command
+        files.clear()
+        diffs.clear()
+        command.off()
+        repo.off()
         STEP = lambda: self.add_step(step)
 
         image = step.add_epilog(
             AnonymousPlaceHolder(
                 r"\node (im) at (Canvas.center) {\Pic<file>{15cm}{!}};",
+                "new",
                 file="VariousPizzas",
             )
         ).on()
@@ -125,11 +119,11 @@ class PizzasSlide(Slide):
         ]
 
         # Root folder.
-        _ = ft.append(
+        _ = files.append(
             "FirstFile", pos="Canvas.north west", filename="pizzas", type="folder"
         )
-        f_readme = ft.append("FirstChild", filename="README.md")
-        d_readme = df.append(pos="Canvas.north east", filename="README.md")
+        f_readme = files.append("FirstChild", filename="README.md")
+        d_readme = diffs.append(pos="Canvas.north east", filename="README.md")
         d_readme.append_text(readme_text[0])
         STEP()
 
@@ -137,39 +131,21 @@ class PizzasSlide(Slide):
         STEP()
 
         # Git init.
-        cmd._rendered = True
-        cmd.on().text = "git init"
+        command._rendered = True
+        command.on().text = "git init"
         STEP()
 
-        ft.erase(f_readme)
-        git = ft.append(
+        files.erase(f_readme)
+        git = files.append(
             "FirstChild",
             type="folder",
             filename=".git",
             mod="+",
             name="git",
         )
-        f_readme = ft.append("AppendSibling", filename="README.md", connect=True)
-
-        # No commit yet, repo in degenerated state.
-        main = rp.labels.append("$(repo) + (50, 5)$", "0:0", "noarrow", "main").off()
-        head = rp.labels.append("", "", "").off()
-        commit = step.add_epilog(HighlightCommit.new("repo")).off()
-
-        def head_on_main() -> PlaceHolder:
-            checkout_branch(head, main, commit)
-            return head
-
-        def head_detached(hash: str) -> PlaceHolder:
-            checkout_detached(head, hash, commit)
-            return head
-
-        head_on_main()
+        f_readme = files.append("AppendSibling", filename="README.md", connect=True)
         STEP()
 
-        hi_repo = step.add_epilog(
-            HighlightSquare.new("HEAD.south west", "main.north east")
-        ).off()
         hi_gitfolder = git.add_epilog(
             HighlightSquare.new(
                 "git.south west",
@@ -178,45 +154,38 @@ class PizzasSlide(Slide):
             )
         ).off()
 
-        hi_on = lambda: (hi_gitfolder.on(), hi_repo.on())
-        hi_off = lambda: (hi_gitfolder.off(), hi_repo.off())
+        hi_on = lambda: (hi_gitfolder.on(), repo.highlight(True))
+        hi_off = lambda: (hi_gitfolder.off(), repo.highlight(False))
 
         git.mod = "0"
-        cmd.off()
+        command.off()
         STEP()
 
         hi_on()
-        main.on()
-        head.on()
+        repo.on()
         STEP()
 
         hi_off()
         STEP()
 
         # First commit.
-        cmd.on().text = "git commit"
+        command.on().text = "git commit"
         STEP()
 
-        rp.commits.append("I", "d1e8c8c", "First commit, the intent.")
-        commit.hash = main.ref = "d1e8c8c"
-        main.offset = "40:20"
-        main.start = "-.5, 0"
-        commit.on()
-        hi_repo.lower = r"$(repo.south west) + (3*\eps, 3*\eps)$"
-        hi_repo.upper = "repo.east |- main.north"
+        repo.add_commit("I", "d1e8c8c", "First commit, the intent.")
         hi_on()
         STEP()
 
         hi_off()
-        cmd.off()
+        command.off()
         STEP()
 
         # Adding Margherita
-        cmd.off()
-        f_margherita = ft.append(
+        command.off()
+        f_margherita = files.append(
             "AppendSibling", connect=True, filename="margherita.md"
         )
-        d_margherita = df.append(filename="margherita.md")
+        d_margherita = diffs.append(filename="margherita.md")
         d_margherita.append_text(margherita_text[0])
         image.on().file = "Margherita"
         STEP()
@@ -224,22 +193,21 @@ class PizzasSlide(Slide):
         image.off()
         STEP()
 
-        cmd.on().text = "git diff"
+        command.on().text = "git diff"
         STEP()
 
         f_margherita.mod = d_margherita.mod = "+"
         d_margherita.set_mod("+", 0, -1)
         STEP()
 
-        cmd.on().text = "git commit"
+        command.on().text = "git commit"
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 0, -1)
-        rp.commits.append("I", "4e29052", "First pizza: Margherita.")
-        commit.hash = main.ref = "4e29052"
+        repo.add_commit("I", "4e29052", "First pizza: Margherita.")
         hi_on()
         STEP()
 
-        cmd.off()
+        command.off()
         hi_off()
         STEP()
 
@@ -253,25 +221,24 @@ class PizzasSlide(Slide):
 
         f_margherita.mod = d_margherita.mod = "m"
         d_margherita.set_mod("+", 10, -1)
-        cmd.on().text = "git diff"
+        command.on().text = "git diff"
         STEP()
 
-        cmd.on().text = "git commit"
+        command.on().text = "git commit"
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 0, -1)
-        rp.commits.append("I", "45a5b65", "Add note to the Margherita.")
-        commit.hash = main.ref = "45a5b65"
+        repo.add_commit("I", "45a5b65", "Add note to the Margherita.")
         hi_on()
         STEP()
 
-        cmd.off()
+        command.off()
         hi_off()
         STEP()
 
         # Adding Regina.
         d_readme.append_text(readme_text[1])
-        f_regina = ft.append("AppendSibling", connect=True, filename="regina.md")
-        d_regina = df.append(filename="regina.md")
+        f_regina = files.append("AppendSibling", connect=True, filename="regina.md")
+        d_regina = diffs.append(filename="regina.md")
         d_regina.append_text(regina_text[0])
         image.on().file = "Regina"
         STEP()
@@ -283,10 +250,10 @@ class PizzasSlide(Slide):
         d_regina.mod = f_regina.mod = "+"
         d_regina.set_mod("+", 0, -1)
         d_readme.set_mod("+", 1, -1)
-        cmd.on().text = "git diff"
+        command.on().text = "git diff"
         STEP()
 
-        cmd.on().text = "git status"
+        command.on().text = "git status"
         d_readme.mod = "0"
         d_regina.mod = "0"
         d_readme.set_mod("0", 0, -1)
@@ -294,24 +261,23 @@ class PizzasSlide(Slide):
         STEP()
 
         d_readme.mod = d_regina.mod = f_regina.mod = f_readme.mod = "0"
-        cmd.on().text = "git commit"
-        rp.commits.append("I", "17514f2", "Add Regina. List pizzas in README.")
-        commit.hash = main.ref = "17514f2"
+        command.on().text = "git commit"
+        repo.add_commit("I", "17514f2", "Add Regina. List pizzas in README.")
         hi_on()
         STEP()
 
-        cmd.off()
+        command.off()
         hi_off()
         STEP()
 
         # Rewinding !
-        cmd.on().text = "git checkout 45a5b65"
+        command.on().text = "git checkout 45a5b65"
         STEP()
 
-        hi_label(head, True)
+        repo.highlight(True, "HEAD")
         STEP()
 
-        head_detached("45a5b65")
+        repo.checkout_detached("45a5b65")
         STEP()
 
         f_readme.mod = d_readme.mod = "m"
@@ -322,57 +288,57 @@ class PizzasSlide(Slide):
 
         d_readme.delete_lines(1, -1)
         f_readme.mod = d_readme.mod = "0"
-        ft.erase(f_regina)
-        df.erase(d_regina)
+        files.erase(f_regina)
+        diffs.erase(d_regina)
         STEP()
 
-        cmd.off()
-        hi_label(head, False)
+        command.off()
+        repo.highlight(False, "HEAD")
         STEP()
 
-        cmd.on().text = "git checkout d1e8c8c"
-        hi_label(head, True)
+        command.on().text = "git checkout d1e8c8c"
+        repo.highlight(True, "HEAD")
         STEP()
 
-        ft.erase(f_margherita)
-        df.erase(d_margherita)
+        files.erase(f_margherita)
+        diffs.erase(d_margherita)
         d_readme.delete_lines(0, -1)
         d_readme.append_text(readme_text[0])
-        head_detached("d1e8c8c")
+        repo.checkout_detached("d1e8c8c")
         STEP()
 
-        hi_label(head, False)
-        cmd.off()
+        repo.highlight(False, "HEAD")
+        command.off()
         STEP()
 
         hi_on()
         STEP()
         hi_off()
 
-        cmd.on().text = "git checkout 17514f2"
+        command.on().text = "git checkout 17514f2"
         STEP()
 
-        cmd.on().text = "git checkout main"
-        hi_label(main, True)
+        command.on().text = "git checkout main"
+        repo.highlight(True, "main")
         STEP()
 
-        f_margherita = ft.append(
+        f_margherita = files.append(
             "AppendSibling", connect=True, filename="margherita.md"
         )
-        d_margherita = df.append(filename="margherita.md")
+        d_margherita = diffs.append(filename="margherita.md")
         d_margherita.append_text(margherita_text[0] + margherita_text[1])
-        f_regina = ft.append("AppendSibling", connect=True, filename="regina.md")
-        d_regina = df.append(filename="regina.md")
+        f_regina = files.append("AppendSibling", connect=True, filename="regina.md")
+        d_regina = diffs.append(filename="regina.md")
         d_regina.append_text(regina_text[0])
         d_readme.append_text(readme_text[1])
-        head_on_main()
+        repo.checkout_branch("main")
         STEP()
 
-        hi_label(main, False)
-        cmd.off()
+        repo.highlight(False, "main")
+        command.off()
         STEP()
 
         image.on().file = "VariousPizzas"
         STEP()
 
-        return rp, ft, df
+        return repo, files, diffs

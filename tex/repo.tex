@@ -24,11 +24,15 @@
   label/.style={line width=1.5, draw, #1, fill=Light3, scale=\CommitScale,
                 inner sep=\LabelIsep, rounded corners, -Stealth},
   label-hi/.style={label=#1, fill=Yellow1},
-  repo label/.style={scale=\NormalScale, inner sep=2, draw=Light5, fill=Light2},
+  %
+  repo label/.style={scale=\NormalScale, inner sep=2, draw, Dark3, fill=Light2},
+  remote label/.style={repo label, Blue4, fill=Light2},
+  %
   remote pointer/.style={-Stealth, line width=2, Brown2, dashed},
   remote flow/.style={remote pointer, solid, line width=20},
-  remote label/.style={scale=\NormalScale, above=2, sloped,
+  remote arrow label/.style={scale=\NormalScale, above=2, sloped,
                        draw, solid, inner sep = 2},
+  %
 }
 
 % Draw one commit with hash and message, use [offset] to align with 2 branches.
@@ -183,8 +187,8 @@
 \NewDocumentCommand{\Head}{ O{base} O{label} m m m }{
   \Label[HEAD][#1][#2=Purple4]{#3}{#4}{#5}{HEAD}
 }
-% Highlight current commit.
-% {hash}
+% Highlight current commit (ref must be a hash).
+% {ref}
 \newcommand{\HighlightCommit}[1]{
   \fill[Yellow1] (#1) circle (.9*\CommitRadius);
 }
@@ -197,7 +201,7 @@
 % {anchor}{location}{account}
 \newcommand{\RemoteRepoLabel}[3]{%
   \IntensiveCoordinates{Canvas}{c}{#2}
-  \node[Blue4, repo label, anchor=#1] at (c)
+  \node[remote label, anchor=#1] at (c)
     {\tt https://github.com/%
       \tikz[baseline={(n.base)},inner sep=.5]{\node[fill=Yellow1](n){#3};}%
       /Pizzas};
@@ -229,7 +233,7 @@
         \draw[remote flow] (s) to[bend #3=#2] (e);
       }{
         \draw[remote pointer] (s) to[bend #3=#2]
-          node[remote label] {\tt #1} (e);
+          node[remote arrow label] {\tt #1} (e);
       }
   \end{scope}
 }

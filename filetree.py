@@ -68,6 +68,13 @@ class FileTree(TextModifier):
     def clear(self):
         self.list.clear()
 
+    def __getitem__(self, name: str) -> "FileTreeLine":
+        """Search and retrieve file by name."""
+        for file in self.list:
+            if file.filename == name:
+                return file
+        raise KeyError(f"No such file in file tree: {repr(name)}.")
+
 
 class FileTreeLine(Regex):
     """Parse special line displaying one file in the tree folder."""

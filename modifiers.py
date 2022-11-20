@@ -46,13 +46,16 @@ class TextModifier(object):
             self._epilog = [m]
         return m
 
-    def bump_epilog(self, m: TM) -> TM:
-        """Make this element rendered last, so it's layed over the others."""
+    def remove_from_epilog(self, m: TM) -> TM:
         try:
             self._epilog.remove(m)
-        except ValueError or AttributeError:
-            pass
-        return self.add_epilog(m)
+        except AttributeError:
+            self._epilog = []
+        return m
+
+    def bump_epilog(self, m: TM) -> TM:
+        """Make this element rendered last, so it's layed over the others."""
+        return self.add_epilog(self.remove_from_epilog(m))
 
     _tab = " "
     _short = False  # Override in children for shorter display.
@@ -223,7 +226,7 @@ class Regex(TextModifier):
                 f"could not render the following match:\n  {m.string}\n"
                 + "with the following groups:\n  {}".format(
                     "\n  ".join(
-                        f"{k}: {type(self).__name__}"
+                        f"{k}: {type(v).__name__}"
                         for k, v in self.__dict__.items()
                         if not k.startswith("_")
                     )
@@ -249,7 +252,12 @@ class PlaceHolder(Regex):
     with simplified API and constructible from simple patterns with special <>.
     """
 
-    pass
+    # Members can only be plain strings.
+    def __getattr__(self, *args, **kwargs) -> str:
+        return cast(str, super().__getattr__(*args, **kwargs))
+
+    def __setattr__(self, name: str, value: str):
+        super().__setattr__(name, value)
 
 
 PH = TypeVar("PH", bound=PlaceHolder)
@@ -349,12 +357,20 @@ def MakePlaceHolder(
     return SubPH, SubPHBuilder
 
 
-def AnonymousPlaceHolder(pattern, **kwargs) -> PlaceHolder:
+def AnonymousPlaceHolder(pattern, _do: str, *args, **kwargs) -> PlaceHolder:
     """Useful for one-liners,
     PlaceHolder objects that will only be parsed/created in one place.
     """
     _, SubPHBuilder = MakePlaceHolder("Anonymous", pattern, _positionals="")
-    return SubPHBuilder.new(**kwargs)
+    if _do == "new":
+        return SubPHBuilder.new(**kwargs)
+    if _do == "parse":
+        assert len(args) == 1 and not kwargs
+        input = args[0]
+        return SubPHBuilder.parse(input)
+    raise ValueError(
+        f"Not sure what to `_do` with the anonymous placeholder ({repr(_do)})"
+    )
 
 
 class ListOf(Generic[TM], TextModifier):
@@ -404,6 +420,9 @@ class ListOf(Generic[TM], TextModifier):
         return self.separator.join(
             m.render() for m in [self.head] + self.list + [self.tail] if m
         )
+
+    def __len__(self) -> int:
+        return len(self.list)
 
 
 class ListBuilder(Builder[ListOf[TM]]):

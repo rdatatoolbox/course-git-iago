@@ -2,7 +2,7 @@
 """
 
 from diffs import DiffList
-from document import IntensiveCoordinates, Slide
+from document import Slide
 from filetree import FileTree
 from modifiers import Constant, Regex, render_method
 from repo import Command, RemoteArrow, Repo
@@ -16,10 +16,10 @@ class ForkStep(Step):
         self.files = FileTree(next(it))
         self.diffs = DiffList(next(it))
         self.images = Constant(next(it))
-        self.my_repo = Repo(next(it))
-        self.remote = Repo(next(it))
-        self.fork = Repo(next(it))
-        self.their_repo = Repo(next(it))
+        self.my_repo = Repo(next(it), "50, 5")
+        self.remote = Repo(next(it), "-10, -15")
+        self.fork = Repo(next(it), "10, -15")
+        self.their_repo = Repo(next(it), "-50, 5")
         m, t, r = next(it).split("\n")
         self.my_command = Command.parse(m)
         self.their_command = Command.parse(t)

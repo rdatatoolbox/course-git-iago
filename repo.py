@@ -1,35 +1,182 @@
 """Craft and edit a simple repo.
 """
 
-from typing import cast
+from document import FindPlaceHolder, HighlightSquare
+from modifiers import (
+    AnonymousPlaceHolder,
+    Builder,
+    ListBuilder,
+    MakePlaceHolder,
+    PlaceHolder,
+    TextModifier,
+    render_method,
+)
 
-from document import FindPlaceHolder
-from modifiers import Builder, ListBuilder, ListOf, MakePlaceHolder, PlaceHolder, Regex
 
-
-class Repo(Regex):
+class Repo(TextModifier):
     """One chain of commits, arranged from the bottom up.
     Be careful that the first one needs be anchored,
     and the others are located wrt to it.
     Also, use labels to point to commits like `HEAD` and `main`.
     """
 
-    commits: ListOf[PlaceHolder]
-    labels: ListOf[PlaceHolder]
+    def __init__(self, input: str, offset: str):
+        intro, commits = input.split("{\n", 1)
+        self.intro = AnonymousPlaceHolder(
+            r"\Repo[<anchor>][<name>][<type>]{<loc>}", "parse", intro
+        )
+        reponame = self.intro.name
+        commits = commits.rsplit('}', 1)[0]
+        self.commits = Commits.parse(commits)
+        self.head = Head.new("", "", "")
+        self.branch: PlaceHolder | None = Branch.new(
+            f"$({reponame}) + ({offset})$", "0:0", "noarrow", "main"
+        )
+        self.branches = [self.branch]
+        self.current: PlaceHolder = HighlightCommit(reponame).off()
+        self.hi_square = HighlightSquare.new("HEAD.south west", "main.north east").off()
+        self.checkout_branch("main")
 
-    def __init__(self, input: str):
-        super().__init__(
-            input.strip(),
-            r"\\Repo\[(.*?)\]{(.*?)}{\n(.*?)}%\n(.*)",
-            "anchor pos commits labels",
-            commits=Commits,
-            labels=Labels,
+    @render_method
+    def render(self) -> str:
+        return (
+            self.intro.render()
+            + "{\n"
+            + self.commits.render()
+            + "}\n"
+            + "\n"
+            + "\n".join(
+                m.render()
+                for m in self.branches + [self.head, self.current, self.hi_square]
+            )
         )
 
-    def clear(self):
-        """Remove all commits and labels."""
-        self.commits.clear()
-        self.labels.clear()
+    @property
+    def latest_hash(self) -> str | None:
+        return self.commits.list[-1].hash if self.commits.list else None
+
+    def add_commit(
+        self,
+        *args,
+        **kwargs,
+    ) -> PlaceHolder:  # Commit
+        if len(args) == 1 and not kwargs:
+            commit = args[0]
+            commit = self.commits.append(commit)
+        else:
+            commit = self.commits.append(*args, **kwargs)
+        hash = commit.hash
+        self.current.ref = hash
+        if branch := self.branch:
+            old_ref = branch.ref
+            self.move_branch(branch.name, hash)
+            # Associated remote branches stay here.
+            for b in self.branches:
+                if b.name.endswith("/" + branch.name) and branch.name in b.ref:
+                    self.move_branch(b.name, old_ref)
+                    break
+        if len(self.commits) == 1:
+            # First commit! Highlight it.
+            self.current.on()
+            # Update square.
+            self.hi_square.lower = r"$(repo.south west) + (3*\eps, 3*\eps)$"
+            self.hi_square.upper = "repo.east |- main.north"
+        return commit
+
+    def move_branch(self, name: str, hash: str) -> "Repo":
+        branch = self[name]
+        branch.anchor = "base west"
+        branch.ref = hash
+        if hash == self.latest_hash:
+            branch.offset = "55:13"
+        else:
+            branch.offset = "29:13"
+        branch.start = "-.5, 0"
+        return self
+
+    def __getitem__(self, name: str) -> PlaceHolder:
+        """Retrieve any kind of content within the repo."""
+        res = None
+        # Special names
+        if name == "HEAD":
+            res = self.head
+        elif name == "current":
+            res = self.current
+        else:
+            for b in self.branches:
+                if b.name == name:
+                    res = b
+                    break
+        if not res:
+            raise KeyError(f"Could not find reference {repr(name)} in repo.")
+        return res
+
+    def checkout_branch(self, name: str) -> "Repo":
+        head = self.head
+        branch = self[name]
+        head.ref = f"{branch.name}.base west"
+        head.anchor = "base east"
+        head.offset = "11"
+        head.start = "2"
+        self.current.ref = branch.ref
+        return self
+
+    def checkout_detached(
+        self,
+        hash: str,
+    ) -> "Repo":
+        self.branch = None
+        head = self.head
+        head.ref = hash
+        head.offset = "156:20"
+        head.anchor = "center"
+        head.start = ".5,0"
+        self.current.ref = hash
+        return self
+
+    def add_remote_branch(
+        self,
+        remote_branch: str,
+        ref: str | None = None,
+    ) -> PlaceHolder:  # RemoteBranch
+        remote, branch = remote_branch.split("/")
+        if ref is None:
+            ref = branch
+            rbranch = RemoteBranch.new(f"", "", "", f"{remote}/{branch}")
+            self.branches.append(rbranch)
+            self.remote_to_branch(remote_branch)
+            return rbranch
+        raise NotImplementedError(
+            f"No remote branch for non-defaut ref yet {repr(ref)}, "
+            "Need to distinguish branch case from raw hash case."
+        )
+
+    def remote_to_branch(self, name: str) -> "Repo":
+        """Update remote to branch location."""
+        remote = self[name]
+        branch = self[name.split("/")[1]]
+        remote.ref = branch.name + ".base east"
+        remote.anchor = "base west"
+        remote.offset = "2"
+        remote.start = "noarrow"
+        return self
+
+    def highlight(self, on: bool, name: str | None = None) -> "Repo":
+        """Highlight the given label, or the whole repo if none is given."""
+        if not name:
+            self.hi_square.on(on)
+            return self
+        label = self[name]
+        label.style = "label" + ("-hi" if on else "")
+        if on:
+            label.on()
+        return self
+
+    def populate(self, repo: "Repo") -> "Repo":
+        """Import all commits from another repo."""
+        for commit in repo.commits:
+            self.add_commit(commit.copy())
+        return self
 
 
 CommitModifier, Commit = MakePlaceHolder("Commit", r"<type>/<hash>/{<message>}")
@@ -38,48 +185,6 @@ HeadModifier, Head = FindPlaceHolder("Head")
 BranchModifier, Branch = FindPlaceHolder("Branch")
 RemoteBranchModifier, RemoteBranch = FindPlaceHolder("RemoteBranch")
 HighlightCommitModifier, HighlightCommit = FindPlaceHolder("HighlightCommit")
-
-
-def hi_label(label: PlaceHolder, on: bool):
-    label.style = "label" + ("-hi" if on else "")
-    if on:
-        label.on()
-
-
-def checkout_branch(
-    head: PlaceHolder,  # HeadModifier
-    branch: PlaceHolder,  # BranchModifier
-    commit: PlaceHolder,  # HighlightCommitModifier
-) -> PlaceHolder:
-    head.ref = f"{branch.name}.base west"
-    head.anchor = "base east"
-    head.offset = "11"
-    head.start = "2"
-    commit.hash = branch.ref
-    return head
-
-
-def checkout_detached(
-    head: PlaceHolder,  # HeadModifier
-    hash: str,
-    commit: PlaceHolder,  # HighlightCommitModifier
-) -> PlaceHolder:
-    head.ref = hash
-    head.offset = "155:20"
-    head.anchor = "center"
-    head.start = ".5,0"
-    commit.hash = hash
-    return head
-
-
-def remote_to_branch(
-    remote: PlaceHolder,
-    branch: PlaceHolder,
-):
-    remote.ref = cast(str, branch.name) + ".base east"
-    remote.anchor = "base west"
-    remote.offset = "2"
-    remote.start = "noarrow"
 
 
 LocalRepoLabelModifier, LocalRepoLabel = FindPlaceHolder("LocalRepoLabel")
@@ -114,4 +219,3 @@ class _LabelBuilder(Builder[PlaceHolder]):
 LabelBuilder = _LabelBuilder()
 
 Commits = ListBuilder(Commit, ",\n", tail=True)
-Labels = ListBuilder(LabelBuilder, "\n")

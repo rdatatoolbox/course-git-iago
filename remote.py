@@ -4,26 +4,17 @@
 from typing import cast
 
 from diffs import DiffList
-from document import IntensiveCoordinates, Slide
+from document import Slide
 from filetree import FileTree
 from modifiers import (
+    Constant,
     ConstantBuilder,
     ListBuilder,
     ListOf,
-    PlaceHolder,
     Regex,
     render_method,
 )
-from repo import (
-    Command,
-    HighlightCommit,
-    RemoteArrow,
-    RemoteBranch,
-    Repo,
-    checkout_branch,
-    hi_label,
-    remote_to_branch,
-)
+from repo import Command, LocalRepoLabel, RemoteArrow, RemoteRepoLabel, Repo
 from steps import Step
 
 
@@ -40,9 +31,9 @@ class RemoteStep(Step):
         self.images = Regex(
             next(it), r"\s*\\begin.*?\n(.*)\\end.*", "list", list=Images
         )
-        self.my_repo = Repo(next(it))
-        self.remote = Repo(next(it))
-        self.their_repo = Repo(next(it))
+        self.my_repo = Repo(next(it), "50, 5")
+        self.remote = Repo(next(it), "-5, +7")
+        self.their_repo = Repo(next(it), "-50, 5")
         m, t = next(it).split("\n")
         self.my_pointer = RemoteArrow.parse(m)
         self.their_pointer = RemoteArrow.parse(t)
@@ -80,32 +71,24 @@ class RemoteSlide(Slide):
         my_files = step.myfiles
         their_files = step.theirfiles
         diffs = step.diffs
-        github_logo, my_machine, their_machine = cast(ListOf, step.images.list)
-        my_repo = step.my_repo
-        remote = step.remote
-        their_repo = step.their_repo
+        pic_github, pic_my, pic_their = cast(ListOf, step.images.list)
+        my_repo = step.my_repo.off()
+        remote = step.remote.off()
+        their_repo = step.their_repo.off()
         my_pointer = step.my_pointer.off()
         their_pointer = step.their_pointer.off()
-        flow = step.flow
+        flow = step.flow.off()
 
+        my_label = step.add_epilog(
+            LocalRepoLabel("base west", "Canvas.west", "my machine")
+        )
+        url = step.add_epilog(RemoteRepoLabel("north", "0, 1", "MyAccount")).off()
+        their_label = step.add_epilog(
+            LocalRepoLabel("base east", "Canvas.east", "their machine")
+        ).off()
 
-        github_logo.off()
-        their_machine.off()
-        flow.off()
-
-        # Populate situations from the pizza slide.
-        def populate_repo(rp: Repo):
-            rp.commits.clear()
-            for commit in pizzas_repo.commits:
-                rp.commits.list.append(commit.copy())
-            for label in pizzas_repo.labels:
-                rp.labels.list.append(label.copy())
-
-        my_repo.commits.clear()
-        populate_repo(their_repo)
-        remote.commits.clear()
-        their_repo.off()
-        remote.off()
+        pic_github.off()
+        pic_their.off()
 
         def populate_folder(ft: FileTree):
             ft.clear()
@@ -122,29 +105,19 @@ class RemoteSlide(Slide):
 
         STEP()
 
-        populate_repo(my_repo)
-        _, my_main, my_head = my_repo.labels
-        my_commit = step.add_epilog(HighlightCommit("mine-17514f2"))
+        my_repo.populate(pizzas_repo)
+        my_repo.on()
         STEP()
 
         # Create Account.
-        github_logo.on()
+        pic_github.on()
         STEP()
 
-        remote.on()
         diffs.off()
+        url.on()
         STEP()
 
         remote.on()
-        remote_main = remote.labels.append(
-            "$(remote) + (-5, 10)$",
-            "0:0",
-            "noarrow",
-            "main",
-        )
-        remote_head = remote.labels.append("", "", "")
-        remote_commit = step.add_epilog(HighlightCommit.new("remote")).off()
-        checkout_branch(remote_head, remote_main, remote_commit)
         STEP()
 
         # Create remote.
@@ -168,24 +141,72 @@ class RemoteSlide(Slide):
         flow.bend = "30"
         STEP()
 
-        account = remote.labels[0]
-        remote.labels.clear()
-        populate_repo(remote)
-        remote.labels.append(account)
-        remote_commit = step.add_epilog(HighlightCommit("remote-17514f2"))
+        remote.populate(pizzas_repo)
         my_pointer.end = "remote.south west"
-        my_remote_main = my_repo.labels.append(RemoteBranch("", "", "", "github/main"))
-        remote_to_branch(my_remote_main, my_main)
         flow.end = "remote.west"
+        my_repo.add_remote_branch("github/main")
         STEP()
 
         my_command.off()
         flow.off()
         STEP()
 
-        hi_label(my_remote_main, True)
+        def hi_remote_main(on: bool):
+            remote.highlight(on, "main")
+            my_repo.highlight(on, "github/main")
+
+        hi_remote_main(True)
         STEP()
 
-        hi_label(my_remote_main, False)
+        hi_remote_main(False)
         STEP()
 
+        # Local commit: Diavola.
+        diavola = step.add_epilog(
+            Constant(
+                r"\node (diavola) at ($(Canvas.center)!.5!(Canvas.south east)$)"
+                r"      {\PicDiavola{!}{10cm}};"
+            )
+        )
+        my_diavola = my_files.append(
+            "AppendSibling", connect=True, filename="diavola.md", mod="+"
+        )
+        (my_readme := my_files["README.md"]).mod = "m"
+        STEP()
+
+        step.remove_from_epilog(diavola)
+        my_command.on().text = "git commit"
+        STEP()
+
+        my_readme.mod = "0"
+        my_diavola.mod = "0"
+        new_commit = my_repo.add_commit("I", "aa0299e", "Add Diavola.")
+        STEP()
+
+        my_command.off()
+        STEP()
+
+        hi_remote_main(True)
+        STEP()
+
+        hi_remote_main(False)
+        STEP()
+
+        # Pushing new commit to remote.
+        my_command.on().text = "git push github main"
+        STEP()
+
+        flow.on()
+        remote.add_commit(new_commit)
+        my_repo.remote_to_branch("github/main")
+        STEP()
+
+        flow.off()
+        my_command.off()
+        STEP()
+
+        hi_remote_main(True)
+        STEP()
+
+        hi_remote_main(False)
+        STEP()
