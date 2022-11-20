@@ -127,20 +127,22 @@ class RemoteSlide(Slide):
         STEP()
 
         # Create remote.
-        my_command = step.add_epilog(Command("0, 0", "-"))
-        my_command.on().text = "git remote add github <url>"
-        my_command.location = "0, -.20"
+        command = step.add_epilog(Command("0, 0", "-"))
+        command.on().text = "git remote add github <url>"
+        command.location = "0, -.20"
+        command.start = "$(command)!.35!(Canvas.south west)$"
+        command.end = ".3"
         STEP()
 
         my_pointer.on().start = "$($(mine-HEAD.east)!.5!(mine-main.west)$) + (6, 10)$"
         my_pointer.on().end = "remote-HEAD.south west"
-        my_command.off()
+        command.off()
         STEP()
 
         # First push
-        step.bump_epilog(my_command)
-        my_command.on().text = "git push github main"
-        my_command.location = "0, -.25"
+        step.bump_epilog(command)
+        command.on().text = "git push github main"
+        command.location = "0, -.25"
         STEP()
 
         flow.on().start = "-.8, -.2"
@@ -154,7 +156,7 @@ class RemoteSlide(Slide):
         my_repo.add_remote_branch("github/main")
         STEP()
 
-        my_command.off()
+        command.off()
         flow.off()
         STEP()
 
@@ -182,15 +184,13 @@ class RemoteSlide(Slide):
         STEP()
 
         step.remove_from_epilog(diavola)
-        my_command.on().text = "git commit"
+        command.on().text = "git commit"
         STEP()
 
         my_readme.mod = "0"
         my_diavola.mod = "0"
         new_commit = my_repo.add_commit("I", "aa0299e", "Add Diavola.")
-        STEP()
-
-        my_command.off()
+        command.off()
         STEP()
 
         hi_remote_main(True)
@@ -200,7 +200,8 @@ class RemoteSlide(Slide):
         STEP()
 
         # Pushing new commit to remote.
-        my_command.on().text = "git push github main"
+        command.on().text = "git push github main"
+        command.location = "0, -.20"
         STEP()
 
         flow.on()
@@ -215,7 +216,7 @@ class RemoteSlide(Slide):
         STEP()
 
         flow.off()
-        my_command.off()
+        command.off()
         hi_remote_main(False)
         STEP()
 

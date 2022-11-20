@@ -22,6 +22,7 @@ class TextModifier(object):
 
     _rendered = True  # Lower on instances so they render to nothing.
     _epilog: List["TextModifier"]  # Set to append after rendering.
+    _epilog_sep = "\n"
 
     def render(self) -> str:
         raise NotImplementedError(f"Cannot render text for {type(self).__name__}.")
@@ -113,7 +114,7 @@ def render_method(f: Callable) -> Callable:
             return ""
         result = f(self, *args, **kwargs)
         try:
-            result += "".join(m.render() for m in self._epilog)
+            result += self._epilog_sep.join(m.render() for m in self._epilog)
         except AttributeError:
             pass
         return result

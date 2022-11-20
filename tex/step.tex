@@ -93,3 +93,19 @@
     \shade[inner color=Yellow1] (lower) rectangle (upper);
   \end{pgfonlayer}
 }
+
+% Automatic coordinates are interpreted as intensive to Canvas,
+% unless they contain no comma (node name) or are a calculation with '$'.
+% If they contain '=', they are interpreted as relative specifications
+% like 'below=5 of node'
+% {name}{location}
+\newcommand{\AutomaticCoordinates}[2]{
+  \IfSubStr{#2}{=}{
+    \coordinate[#2] (#1);
+  }{\ifboolexpr{test {\IfSubStr{#2}{$}} % Breaks syntax coloring -_-"
+       or not test {\IfSubStr{#2}{,}}}
+    {\coordinate (#1) at (#2);}
+    {\IntensiveCoordinates{Canvas}{#1}{#2}}
+  }
+}
+

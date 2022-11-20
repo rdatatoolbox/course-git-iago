@@ -12,6 +12,7 @@
   \CommitArrowShorten = \CommitRadius + 2;
   \LabelArrowShorten = \CommitRadius + 2;
   \CommandScale = 4;
+  \CommandPad = 2;
 }
 \tikzset{
   commit/.style={line width=2.0, fill=Orange3, draw=Dark3},
@@ -33,6 +34,8 @@
   remote arrow label/.style={scale=\NormalScale, above=2, sloped,
                        draw, solid, inner sep = 2},
   %
+  command text/.style={scale=\CommandScale, Dark4},
+  command box/.style={draw=Dark3, fill=Light4, line width=2.5},
 }
 
 % Draw one commit with hash and message, use [offset] to align with 2 branches.
@@ -209,25 +212,10 @@
 
 
 % Arrow from one repo to another.
-% If a label is given, style as a remote pointer, otherwise an illustrative flux.
-% If start or end coordinates contain a comma,
-% they are interpreted as global intensive coordinates,
-% unless a dollar sign is also found.
 % [label][bend][side]{start}{end}
 \NewDocumentCommand{\RemoteArrow}{ O{} O{0} O{left} m m }{
-  % Did not manage to loop over this
-  % because of tikz not expanding {$(node)!.5!(node)$} prior to parsing..?
-  \ifboolexpr{test {\IfSubStr{#4}{\$}}
-           or test {\IfSubStr{#4}{!}}
-       or not test {\IfSubStr{#4}{,}}}
-    {\coordinate (s) at (#4);}
-    {\IntensiveCoordinates{Canvas}{s}{#4}}
-  \ifboolexpr{test {\IfSubStr{#5}{\$}}
-           or test {\IfSubStr{#5}{!}}
-       or not test {\IfSubStr{#5}{,}}}
-    {\coordinate (e) at (#5);}
-    {\IntensiveCoordinates{Canvas}{e}{#5}}
-  % .. anyway.
+  \AutomaticCoordinates{s}{#4}
+  \AutomaticCoordinates{e}{#5}
   \begin{scope}[transparency group, opacity=.5]
       \ifstrequal{#1}{}{
         \draw[remote flow] (s) to[bend #3=#2] (e);
@@ -239,11 +227,40 @@
 }
 
 % Display the command used.
-% [anchor]{location}{text}
-\NewDocumentCommand{\Command}{ O{base} m m }{
-  \begin{scope}[local to=Canvas]
-    \node[scale=\CommandScale, anchor=#1,
-          inner sep=2, fill=Light4, draw=Dark3, line width=2.5]
-      (command) at (#2) {\tt \$ #3};
-  \end{scope}
+% If 'start' is given, make it like a cartoon bubble,
+% pointing to intensive horizontal coordinate 'end'.
+% [anchor][start][end][aperture]{location}{text}
+\NewDocumentCommand{\Command}{ O{base} O{} O{.5} O{5} m m }{
+  \AutomaticCoordinates{c}{#5}
+  \node[command text, anchor=#1] (command) at (c) {\tt \$ #6};
+  \coordinate (pad) at (\CommandPad, \CommandPad);
+  \coordinate (low) at ($(command.south west) - (pad)$);
+  \coordinate (up) at ($(command.north east) + (pad)$);
+  \begin{pgfonlayer}{background}
+    \ifstrequal{#2}{}{
+      \path[command box] (low) rectangle (up);
+    }{
+      \AutomaticCoordinates{s}{#2}
+      \coordinate (e) at ($(command.west)!#3!(command.east)$);
+      \tikzmath{
+        coordinate \comm, \start;
+        \comm = (c);
+        \start = (s);
+        \IsStartHigher = \starty > \commy;
+      }
+      \ifdefstring{\IsStartHigher}{1}{\def\corner{up}}{\def\corner{low}}
+      \coordinate (p) at (e |- \corner);
+      \coordinate[left=.5*#4 of p] (e1);
+      \coordinate[right=.5*#4 of p] (e2);
+      \ifdefstring{\IsStartHigher}{1}{
+        \path[command box]
+          (s) -- (e1) -- (low |- up) --
+          (low) -- (low -| up) -- (up) -- (e2) -- cycle;
+      }{
+        \path[command box]
+          (s) -- (e1) -- (low) --
+          (low |- up) -- (up) -- (up |- low) -- (e2) -- cycle;
+      }
+    }
+  \end{pgfonlayer}
 }
