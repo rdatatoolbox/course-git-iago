@@ -89,9 +89,10 @@ class Repo(TextModifier):
         branch.ref = hash
         if hash == self.latest_hash:
             branch.offset = "55:13"
+            branch.start = "-.5, 0"
         else:
-            branch.offset = "29:13"
-        branch.start = "-.5, 0"
+            branch.offset = "31:13"
+            branch.start = "-.9, 0"
         return self
 
     def __getitem__(self, name: str) -> PlaceHolder:

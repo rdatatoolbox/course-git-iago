@@ -72,7 +72,7 @@ class RemoteSlide(Slide):
         their_files = step.theirfiles
         diffs = step.diffs
         pic_github, pic_my, pic_their = cast(ListOf, step.images.list)
-        my_repo = step.my_repo.off()
+        my_repo = step.my_repo
         remote = step.remote.off()
         their_repo = step.their_repo.off()
         my_pointer = step.my_pointer.off()
@@ -103,10 +103,7 @@ class RemoteSlide(Slide):
         for pizza_diff in pizzas_df.files:
             diffs.files.append(pizza_diff.copy())
 
-        STEP()
-
         my_repo.populate(pizzas_repo)
-        my_repo.on()
         STEP()
 
         # Create Account.
@@ -199,14 +196,11 @@ class RemoteSlide(Slide):
         flow.on()
         remote.add_commit(new_commit)
         my_repo.remote_to_branch("github/main")
+        hi_remote_main(True)
         STEP()
 
         flow.off()
         my_command.off()
-        STEP()
-
-        hi_remote_main(True)
-        STEP()
-
         hi_remote_main(False)
         STEP()
+

@@ -34,4 +34,4 @@ rp, ft, df = pizzas.animate()
 remote.animate(rp, ft, df)
 fork.animate()
 
-doc.compile("res.pdf", "Remote", range(23, -1))
+doc.compile("res.pdf", "Remote", 17, -1)

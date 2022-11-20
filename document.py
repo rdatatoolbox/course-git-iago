@@ -29,12 +29,12 @@ class Document(TextModifier):
     _endmark = "% ENDSLIDE"
 
     def __init__(self, input: str):
-        self.non_slides: List[Constant] = []
         self.slides: List[Slide] = []
         chunks = input.split(self._startmark)
-        self.non_slides.append(Constant(chunks.pop(0)))
+        self.head = chunks.pop(0)
+        end = ""
         for c in chunks:
-            s, ns = c.rsplit(self._endmark, 1)
+            s, end = c.rsplit(self._endmark, 1)
             name, s = s.split("\n", 1)
             name = name.strip()
             # Match name against Slide type names to find the correct type.
@@ -48,27 +48,31 @@ class Document(TextModifier):
                 raise RuntimeError(
                     f"Could not match name {repr(name)} with a subclass of `Slide`."
                 )
-            self.slides.append(cast(Slide, cast(Callable, SlideType)(name, s)))
-            self.non_slides.append(Constant(ns))
+            assert SlideType
+            self.slides.append(SlideType(name, s))
+        self.tail = end
 
     @render_method
     def render(self) -> str:
-        ns = iter(self.non_slides)
-        s = iter(self.slides)
-        result = next(ns).render()
-        for (slide, non_slide) in zip(s, ns):
-            result += self._startmark + slide.render() + self._endmark
-            result += non_slide.render()
+        result = self.head
+        for slide in self.slides:
+            result += self._startmark + slide.render() + self._endmark + "\n\n"
+        result += self.tail
         return result
 
     def compile(
         self,
         filename: str,
-        # Restrict to the given slide name (all steps) or to only 1 step
-        # (counting from 1 and from the first step in the first slide)
-        only_slide: str | int | range | None = None,
-        # Restrict to only 1 step with the give slide name.
-        only_step: int | range | None = None,  # Counting from 1, -1 meaning end.
+        # Restrict to the given slides, steps:
+        #   i : only step i (absolute, 1-starting)
+        #   i, j : only steps i to j (included, absolute)
+        #   name : only this slide (all steps)
+        #   name, i : only this step in the slide (relative)
+        #   name, i, j: only steps i to j in the slide (included, relative)
+        # i and j start to 1, -1 meaning 'end'.
+        slidename: str | int | None = None,
+        start: int | None = None,
+        stop: int | None = None,
     ):
         """Render to a file then compile in tex folder and copy result to destination."""
         output = Path(filename)
@@ -77,7 +81,7 @@ class Document(TextModifier):
         if not os.path.exists(build):
             raise RuntimeError(f"Could not find {build} folder.")
 
-        current = os.getcwd()
+        current_folder = os.getcwd()
         os.chdir(build)
         genname = "generated_steps"
         texfile = Path(genname + ".tex")
@@ -85,54 +89,68 @@ class Document(TextModifier):
         print(f"Render to {texfile}..")
         # Construct a list of rendered slides/steps to help restricting later.
         which_rendered: List[Tuple[str, int]] = []
-        if only_slide is not None:
-            if type(only_slide) is str:
-                # Look for a slide containing the given name.
-                found = False
-                i = 0
-                for i, slide in enumerate(self.slides):
-                    if only_slide in type(slide).__name__:
-                        found = True
-                        break
-                if not found:
-                    raise ValueError(f"Found no such slide: {repr(only_slide)}")
-                restrict = self.copy()
-                restrict.slides = [restrict.slides[i]]
-                restrict.non_slides = [
-                    Constant("".join(c.render() for c in restrict.non_slides[: i + 1])),
-                    Constant("".join(c.render() for c in restrict.non_slides[i + 1 :])),
-                ]
-                if only_step is not None:
-                    slide = restrict.slides[0]
-                    if type(only_step) is int:
-                        only_step = range(only_step, only_step + 1)
-                    only_step = cast(range, only_step)
-                    if only_step.stop == -1:
-                        only_step = range(only_step.start, len(slide.steps) + 1)
-                    steps = slide.steps
-                    slide.steps = []
-                    for s in only_step:
-                        which_rendered.append((slide.name, s))
-                        slide.steps.append(steps[s - 1])
-            else:
-                # Look for a specific range of steps, starting count from first slide.
-                selection = (
-                    range(only_slide, only_slide + 1)
-                    if type(only_slide) is int
-                    else cast(range, only_slide)
-                )
-                restrict = self.copy()
-                i_abs = 1
-                for slide in restrict.slides:
-                    steps = slide.steps
-                    slide.steps = []
-                    for step in steps:
-                        if i_abs in selection:
-                            which_rendered.append((slide.name, i_abs))
-                            slide.steps.append(step)
-                        i_abs += 1
-        else:
+        if slidename is None:
             restrict = self
+            # In the no-restriction case, render as abs indices to ease targetting.
+            i_abs = 0
+            for slide in restrict.slides:
+                for _ in range(len(slide.steps)):
+                    i_abs += 1
+                    which_rendered.append((slide.name, i_abs))
+        elif type(slidename) is str:
+            # Look for a slide containing the given name.
+            found = False
+            last_step = 0
+            for last_step, slide in enumerate(self.slides):
+                if slidename in slide.name:
+                    found = True
+                    break
+            if not found:
+                raise ValueError(f"Found no such slide: {repr(slidename)}")
+            restrict = self.copy()
+            restrict.slides = [slide := restrict.slides[last_step]]
+            if start is None:
+                # All steps rendered.
+                selection = range(len(slide.steps))
+            elif stop is None:
+                # One step rendered.
+                selection = range(start - 1, start)
+            elif stop == -1:
+                # Render from target step to the end.
+                selection = range(start - 1, len(slide.steps))
+            else:
+                # Render given (inclusive) range.
+                selection = range(start - 1, stop)
+            steps = slide.steps
+            slide.steps = []
+            for s in selection:
+                slide.steps.append(steps[s])
+                which_rendered.append((slide.name, s + 1))
+        else:
+            sstart = cast(int, slidename)
+            restrict = self.copy()
+            # Look for a specific range of steps, starting count from first slide.
+            if (sstop := start) is None:
+                # Only one desired.
+                selection = range(sstart - 1, sstart)
+            elif sstop == -1:
+                # Render for current to the end.
+                selection = range(
+                    sstart - 1,
+                    sum(len(slide.steps) for slide in restrict.slides),
+                )
+            else:
+                # Render to the desired absolute index.
+                selection = range(sstart - 1, sstop)
+            i_abs = 0
+            for slide in restrict.slides:
+                steps = slide.steps
+                slide.steps = []
+                for step in steps:
+                    if i_abs in selection:
+                        which_rendered.append((slide.name, i_abs + 1))
+                        slide.steps.append(step)
+                    i_abs += 1
         with open(texfile, "w") as file:
             file.write(restrict.render())
 
@@ -140,20 +158,32 @@ class Document(TextModifier):
         # Compile three times so `remember pictures` eventually works.
         for _ in range(3):
             os.system(f"lualatex {str(texfile)}")
-        os.chdir(current)
+        os.chdir(current_folder)
 
         print(f"Copy to {output}..")
         shu.copy(Path(build, genname + ".pdf"), output)
 
         print("All the following slides/steps have been rendered:")
-        current = ""
+        current_slide = ""
+        step = previous_step = 0  # To horten e.g. 1 2 3 5 6 into 1:3 5:6
+        res = ""
         for slide, step in which_rendered:
-            if not current or slide != current:
-                print(f"\n  {slide}: {step}", end="")
-                current = slide
+            if not current_slide or slide != current_slide:
+                if current_slide and res.endswith("-"):
+                    res += str(previous_step)
+                res += f"\n  {slide}: {step}"
+                current_slide = slide
+                previous_step = step
             else:
-                print(f" {step}", end="")
-        print('\n')
+                if step == cast(int, previous_step) + 1:
+                    if not res.endswith("-"):
+                        res += "-"
+                    previous_step = step
+                else:
+                    res += f"{previous_step} {step}"
+        if res.endswith("-"):
+            res += str(previous_step)
+        print(res + "\n")
 
         print("done.")
 
