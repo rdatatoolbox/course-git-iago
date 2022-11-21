@@ -18,7 +18,7 @@ class PizzasStep(Step):
         it = iter(chunks)
         self.filetree = FileTree(next(it))
         self.diffs = DiffList(next(it))
-        self.repo = Repo(next(it), "50, 5")
+        self.repo = Repo(next(it))
         self.command = Command.parse(next(it))
         try:
             while some := next(it):
@@ -138,13 +138,7 @@ class PizzasSlide(Slide):
         f_readme = files.append("README.md")
         STEP()
 
-        hi_gitfolder = step.add_epilog(
-            HighlightSquare.new(
-                "git-icon.south west",
-                "git-filename.east |- git-icon.north",
-                padding=2,
-            )
-        ).off()
+        hi_gitfolder = files.highlight('git').off()
 
         hi_on = lambda: (hi_gitfolder.on(), repo.highlight(True))
         hi_off = lambda: (hi_gitfolder.off(), repo.highlight(False))

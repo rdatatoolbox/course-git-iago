@@ -38,6 +38,6 @@ for i, slide in enumerate(doc.slides):
     slide.header.page = pagenum
     slide.header.progress = f"{pagenum}/{total}"
 
-doc.generate_tex("Collaborate", 12, -1)
+doc.generate_tex()
 
 doc.compile("res.pdf")

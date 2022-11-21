@@ -3,6 +3,7 @@
 
 from typing import cast
 
+from document import HighlightSquare
 from modifiers import (
     AnonymousPlaceHolder,
     ListBuilder,
@@ -27,6 +28,10 @@ class FileTree(TextModifier):
         files = files.rsplit("}", 1)[0]
         self.list = FileTreeLines.parse(files)
         self._sub = False  # Raise when in subfolder.
+
+    @property
+    def name(self):
+        return self.intro.name
 
     @render_method
     def render(self) -> str:
@@ -136,13 +141,23 @@ class FileTree(TextModifier):
         assert self.list.list
         for i, file in enumerate(self.list):
             file.mod = mod
-            if "connect" in file.type or 'stepin' in file.type:
+            if "connect" in file.type or "stepin" in file.type:
                 if mod == "0":
                     if i < len(self.list) - 1:
                         self.remove_from_type(file, "last")
                 else:
                     self.add_to_type(file, "last")
         return self
+
+    def highlight(self, name) -> PlaceHolder:  # HighlightSquare
+        """Highlight one file in particular."""
+        return self.add_epilog(
+            HighlightSquare.new(
+                f"{name}-icon.south west",
+                f"{name}-filename.east |- {name}-icon.north",
+                padding=2,
+            )
+        )
 
 
 FileTreeLineModifier, FileTreeLine = MakePlaceHolder(

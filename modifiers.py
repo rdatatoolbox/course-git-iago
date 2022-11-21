@@ -21,8 +21,13 @@ class TextModifier(object):
     """
 
     _rendered = True  # Lower on instances so they render to nothing.
-    _epilog: List["TextModifier"]  # Set to append after rendering.
+    # Set to append befor/after rendering.
+    _prolog: List["TextModifier"]
+    _prolog_sep = "\n"
+    _epilog: List["TextModifier"]
     _epilog_sep = "\n"
+    # Set onto a specific layer.
+    _layer: str | None = None
 
     # This additional, UNPARSED parameter
     # wraps rendering within a tikz transparency group if inferior to 1.
@@ -45,11 +50,25 @@ class TextModifier(object):
         self._rendered = on
         return self
 
+    def add_prolog(self, m: TM) -> TM:
+        try:
+            self._prolog.append(m)
+        except AttributeError:
+            self._prolog = [m]
+        return m
+
     def add_epilog(self, m: TM) -> TM:
         try:
             self._epilog.append(m)
         except AttributeError:
             self._epilog = [m]
+        return m
+
+    def remove_from_prolog(self, m: TM) -> TM:
+        try:
+            self._prolog.remove(m)
+        except AttributeError:
+            self._prolog = []
         return m
 
     def remove_from_epilog(self, m: TM) -> TM:
@@ -111,30 +130,44 @@ class TextModifier(object):
         return self.display(0)
 
 
-def render_method(f: Callable) -> Callable:
+def render_method(render: Callable) -> Callable:
     """Decorate render functions so they take
         _rendered
+        _prolog
         _epilog
         _opacity
+        _layer
     into account.
     """
 
-    def render(self, *args, **kwargs) -> str:
+    def decorated_render(self, *args, **kwargs) -> str:
         result = ""
         if not self._rendered:
             return result
+
+        if hasattr(self, "_prolog"):
+            result += self._prolog_sep.join(m.render() for m in self._prolog)
+
+        if l := self._layer:
+            result += r"\begin{pgfonlayer}{" + l + "}"
+
         if (o := self._opacity) < 1:
             result += r"\begin{scope}[transparency group, opacity=" + str(o) + "]\n"
-        result += f(self, *args, **kwargs)
-        try:
-            result += self._epilog_sep.join(m.render() for m in self._epilog)
-        except AttributeError:
-            pass
+
+        result += render(self, *args, **kwargs)
+
         if o < 1:
             result += r"\end{scope}" + "\n"
+
+        if self._layer:
+            result += r"\end{pgfonlayer}"
+
+        if hasattr(self, "_epilog"):
+            result += self._epilog_sep.join(m.render() for m in self._epilog)
+
         return result
 
-    return render
+    return decorated_render
 
 
 class Builder(Generic[TM]):

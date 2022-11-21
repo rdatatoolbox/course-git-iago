@@ -197,6 +197,10 @@ class Document(TextModifier):
         print(f"Compiling {self.texfile}..")
         current_folder = os.getcwd()
         os.chdir(self.build_folder)
+        # Cleanup any previous build.
+        for file in Path(".").rglob(self.genbasename + "*"):
+            if not str(file).endswith(".tex"):
+                file.unlink()
         # Compile three times so `remember pictures` eventually works.
         for _ in range(3):
             os.system(f"lualatex {self.genbasename}.tex")
@@ -395,6 +399,9 @@ def FindPlaceHolder(name: str) -> Tuple[type, PlaceHolderBuilder[PlaceHolder]]:
 
 # Common commands.
 HighlightSquareModifier, HighlightSquare = FindPlaceHolder("HighlightSquare")
+HighlightSquareRingModifier, HighlightSquareRing = FindPlaceHolder(
+    "HighlightSquareRing"
+)
 HighlightShadeModifier, HighlightShade = FindPlaceHolder("HighlightShade")
 IntensiveCoordinatesModifier, IntensiveCoordinates = FindPlaceHolder(
     "IntensiveCoordinates"

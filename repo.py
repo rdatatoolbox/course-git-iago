@@ -1,7 +1,9 @@
 """Craft and edit a simple repo.
 """
 
-from document import FindPlaceHolder, HighlightSquare
+from typing import List
+
+from document import FindPlaceHolder, HighlightSquare, HighlightSquareRing
 from modifiers import (
     AnonymousPlaceHolder,
     Builder,
@@ -17,49 +19,223 @@ class Repo(TextModifier):
     """One chain of commits, arranged from the bottom up.
     Be careful that the first one needs be anchored,
     and the others are located wrt to it.
-    Also, use labels to point to commits like `HEAD` and `main`.
+    Also, use labels to point to commits like `HEAD`, `main` and `remote/main`.
+    The logical state of the repo here is only concern with topology:
+        - the commits chain
+        - for every commit, the list of pointers on it.
+        - the status of HEAD (attached to a branch, detached)
+        - ..
+    Only when rendering is the above information translated into exact positionning etc.
     """
 
-    def __init__(self, input: str, offset: str):
+    def __init__(self, input: str):
         """Assume it's parsed *empty*."""
         intro, rest = input.split("{}", 1)
         self.intro = AnonymousPlaceHolder(
-            r"\Repo[<anchor>][<name>][<type>][<opacity>]{<loc>}", "parse", intro
+            r"\Repo[<anchor>][<name>][<type>][<opacity>]{<location>}", "parse", intro
         )
         assert rest == "{}"
-        reponame = self.intro.name
+
+        # A list of pointers to every commit (same size). All owned except for HEAD.
         self.commits = Commits.new()
+        self.labels: List[List[PlaceHolder]] = []  # No HEAD in there if attached.
+
+        # The currently checked out commit (none in initial state).
         self.head = Head.new("", "", "")
-        self.branch: PlaceHolder | None = Branch.new(
-            f"$({reponame}) + ({offset})$", "0:0", "noarrow", "main"
-        )
-        self.branches = [self.branch]
-        self.current: PlaceHolder = HighlightCommit(reponame).off()
-        self.hi_square = HighlightSquare.new("HEAD.south west", "main.north east").off()
-        self.checkout_branch("main")
+        self.current: PlaceHolder = HighlightCommit("").off()
+
+        # The currently checked out branch, if any. There must be one if repo is empty.
+        self.branch: PlaceHolder | None = Branch.new(f"", "0:0", "noarrow", "main")
+
+        self.checkout_branch(self.branch.name)
+
+        # Highlighting, the kind which must happen after *the* strict \Repo command.
+        self.hi_square = HighlightSquare.new("", "").off()  # Filled on render.
+        self.hi_rings: List[PlaceHolder] = []  # HighlightSquareRing
+
+    @property
+    def name(self):
+        return self.intro.name
+
+    @property
+    def detached(self):
+        return self.branch is None
 
     @render_method
     def render(self) -> str:
+
+        self.pre_render()
+
         return (
             self.intro.render()
             + "{\n"
             + self.commits.render()
-            + "\n"
             + "}{\n"
             + "\n".join(
                 m.render()
-                for m in self.branches + [self.head, self.current, self.hi_square]
+                for m in ([self.branch] if self.branch else [])
+                + [l for labs in self.labels for l in labs]
+                + ([] if self.detached else [self.head])
+                + [self.current]
             )
             + "}\n"
+            + "\n".join(m.render() for m in [self.hi_square] + self.hi_rings)
         )
 
-    @property
-    def latest_hash(self) -> str | None:
-        return self.commits.list[-1].hash if self.commits.list else None
+    def pre_render(self):
+        """Fill out every positionning etc. information based on the state,
+        before rendering.
+        """
+
+        head = self.head
+
+        def head_left_to_branch(branch: PlaceHolder, last_commit=False):
+            head.ref = branch.name + ".base west"
+            head.anchor = "base east"
+            head.offset = "11" if last_commit else "21"
+            head.start = "2"
+
+        # Work out all rendering details based on current repo status.
+        if not self.commits.list:
+            # Empty repo, cheat with the only branch here.
+            assert (branch := self.branch)
+            branch.ref = self.name
+            head_left_to_branch(self.branch)
+
+        # Now, position every label correctly
+        # depending on how many they are on every commit
+        # and whether it's the last commit.
+        for (i_commit, (commit, labels)) in enumerate(zip(self.commits, self.labels)):
+            last_commit = i_commit == len(self.labels) - 1
+            if not labels:
+                continue
+
+            # The currently checked out branch should be positionned first.
+            if self.branch in labels:
+                labels.remove(self.branch)
+                labels.insert(0, self.branch)
+
+            def point_to_commit(branch: PlaceHolder):
+                branch.ref = commit.hash
+                branch.anchor = "south west"
+                if last_commit:
+                    branch.offset = "55:13"
+                    branch.start = "-.5, 0"
+                else:
+                    # Fine-tweak here because adjustement actually depends on content.
+                    branch.offset = "20:13" if branch.name == "main" else "17:11"
+                    branch.start = "-.9, 0"
+
+            previous_name = "<uninit>"
+            for (i_label, label) in enumerate(labels):
+                if self.branch is (branch := label):
+                    # The checked out branch is positioned first.
+                    assert i_label == 0
+                    point_to_commit(branch)
+                    previous_name = branch.name
+                    # Locate HEAD next to it.
+                    if last_commit:
+                        head_left_to_branch(branch, last_commit)
+                    else:
+                        # (to the right of it otherwise it would cross the line)
+                        head.ref = branch.name + ".base east"
+                        head.anchor = "base west"
+                        head.offset = "5"
+                        head.start = "2"
+                        previous_name = "HEAD"
+                elif self.head is label:
+                    # This is a detached HEAD state, leave it to the left with an arrow.
+                    head.offset = "156:20"
+                    head.anchor = "center"
+                    head.start = ".5,0"
+                    previous_name = "HEAD"
+                else:
+                    # Other, regular branches just stack right.
+                    branch = label
+                    if previous_name == "<uninit>":
+                        point_to_commit(branch)
+                    else:
+                        branch.ref = previous_name + ".base east"
+                        branch.anchor = "base west"
+                        branch.offset = "2"
+                        branch.start = "noarrow"
+                    previous_name = branch.name
+
+        # Highlight.
+        if not self.commits.list:
+            self.hi_square.lower = "HEAD.south west"
+            self.hi_square.upper = "main.north east"
+            self.hi_square.padding = "2"
+            self.current.off()
+        else:
+            self.hi_square.lower = rf"$({self.name}.south west) + (3*\eps, 3*\eps)$"
+            self.hi_square.upper = rf"{self.name}.east |- main.north"
+            self.hi_square.padding = "5"
+            self.current.on().hash = self.branch.ref if self.branch else self.head.ref
+
+    def move_branch(self, name: str, hash: str) -> "Repo":
+        # Essentially relocating it to the correct list of labels.
+        branch = self[name]
+        for (commit, labels) in zip(self.commits, self.labels):
+            if commit.hash == hash:
+                if branch not in labels:
+                    labels.append(branch)
+            else:
+                try:
+                    labels.remove(branch)
+                except ValueError:
+                    pass
+        return self
+
+    def checkout_detached(self, hash: str) -> "Repo":
+        self.branch = None
+        # Add HEAD to the labels.
+        head = self.head
+        for (commit, labels) in zip(self.commits, self.labels):
+            if commit.hash == hash:
+                if not head in labels:
+                    labels.append(head)
+            else:
+                try:
+                    labels.remove(head)
+                except ValueError:
+                    pass
+        head.ref = hash
+        return self
+
+    def checkout_branch(self, name: str) -> "Repo":
+        # Boils down to just removing "HEAD" from the labels.
+        branch = self[name]
+        self.branch = branch
+        for labels in self.labels:
+            try:
+                labels.remove(self.head)
+            except ValueError:
+                pass
+        self.head.ref = branch.name
+        return self
+
+    def remote_to_branch(self, name: str) -> "Repo":
+        # Relocate remote.
+        remote = self[name]
+        branch = self[name.split("/")[1]]
+        for labels in self.labels:
+            if branch in labels:
+                if not remote in labels:
+                    labels.append(remote)
+            else:
+                try:
+                    labels.remove(remote)
+                except ValueError:
+                    pass
+        return self
 
     def add_commit(
         self,
         *args,
+        # Specify the branch is supposed to move along, defaulting to self.branch.
+        # Use empty string to not move any branch.
+        _branch: str | None = None,
         **kwargs,
     ) -> PlaceHolder:  # Commit
         if len(args) == 1 and not kwargs:
@@ -68,101 +244,67 @@ class Repo(TextModifier):
         else:
             commit = self.commits.append(*args, **kwargs)
         hash = commit.hash
-        self.current.ref = hash
-        if branch := self.branch:
-            old_ref = branch.ref
-            self.move_branch(branch.name, hash)
-            # Associated remote branches stay here.
-            for b in self.branches:
-                if b.name.endswith("/" + branch.name) and branch.name in b.ref:
-                    self.move_branch(b.name, old_ref)
-                    break
-        if len(self.commits) == 1:
-            # First commit! Highlight it.
-            self.current.on()
-            # Update square.
-            self.hi_square.lower = r"$(repo.south west) + (3*\eps, 3*\eps)$"
-            self.hi_square.upper = "repo.east |- main.north"
-        return commit
 
-    def move_branch(self, name: str, hash: str) -> "Repo":
-        branch = self[name]
-        branch.anchor = "base west"
-        branch.ref = hash
-        if hash == self.latest_hash:
-            branch.offset = "55:13"
-            branch.start = "-.5, 0"
+        self.labels.append([])
+
+        # Interpret the branch to be moved along.
+        if _branch is None:
+            branch = self.branch
+        elif not _branch:
+            branch = None
         else:
-            branch.offset = "31:13"
-            branch.start = "-.9, 0"
-        return self
+            branch = self[_branch]
+
+        if branch:
+            self.move_branch(branch.name, hash)
+
+        return commit
 
     def __getitem__(self, name: str) -> PlaceHolder:
         """Retrieve any kind of content within the repo."""
-        res = None
         # Special names
         if name == "HEAD":
-            res = self.head
-        elif name == "current":
-            res = self.current
-        else:
-            for b in self.branches:
-                if b.name == name:
-                    res = b
-                    break
-        if not res:
-            raise KeyError(f"Could not find reference {repr(name)} in repo.")
-        return res
-
-    def checkout_branch(self, name: str) -> "Repo":
-        head = self.head
-        branch = self[name]
-        head.ref = f"{branch.name}.base west"
-        head.anchor = "base east"
-        head.offset = "11"
-        head.start = "2"
-        self.current.ref = branch.ref
-        return self
-
-    def checkout_detached(
-        self,
-        hash: str,
-    ) -> "Repo":
-        self.branch = None
-        head = self.head
-        head.ref = hash
-        head.offset = "156:20"
-        head.anchor = "center"
-        head.start = ".5,0"
-        self.current.ref = hash
-        return self
+            return self.head
+        if self.branch and name == self.branch.name:
+            return self.branch
+        if name == "current":
+            return self.current
+        for (commit, labels) in zip(self.commits, self.labels):
+            if commit.hash == name:
+                return commit
+            for label in labels:
+                if type(label) is HeadModifier:
+                    continue
+                if label.name == name:
+                    return label
+        raise KeyError(f"Could not find reference {repr(name)} in repo.")
 
     def add_remote_branch(
         self,
         remote_branch: str,
-        ref: str | None = None,
+        hash: str | None = None,  # Default to current such local branch.
     ) -> PlaceHolder:  # RemoteBranch
-        remote, branch = remote_branch.split("/")
-        if ref is None:
-            ref = branch
-            rbranch = RemoteBranch.new(f"", "", "", f"{remote}/{branch}")
-            self.branches.append(rbranch)
-            self.remote_to_branch(remote_branch)
-            return rbranch
-        raise NotImplementedError(
-            f"No remote branch for non-defaut ref yet {repr(ref)}, "
-            "Need to distinguish branch case from raw hash case."
+        assert not any(
+            l.name == remote_branch for labels in self.labels for l in labels
         )
-
-    def remote_to_branch(self, name: str) -> "Repo":
-        """Update remote to branch location."""
-        remote = self[name]
-        branch = self[name.split("/")[1]]
-        remote.ref = branch.name + ".base east"
-        remote.anchor = "base west"
-        remote.offset = "2"
-        remote.start = "noarrow"
-        return self
+        rbranch = RemoteBranch.new(f"", "", "", remote_branch)
+        if hash is None:
+            # Find local branch with this name and append there.
+            _, branchname = remote_branch.split("/")
+            local = self[branchname]
+            for labels in self.labels:
+                if local in labels:
+                    labels.append(rbranch)
+                    return rbranch
+        # Otherwise find commit with this ref:
+        for (commit, labels) in zip(self.commits, self.labels):
+            if commit.hash == hash:
+                labels.append(rbranch)
+                return rbranch
+        raise ValueError(
+            f"Could not find hash commit {repr(hash)} "
+            f"to set remote branch {repr(remote_branch)} on."
+        )
 
     def highlight(self, on: bool, name: str | None = None) -> "Repo":
         """Highlight the given label, or the whole repo if none is given."""
@@ -171,14 +313,27 @@ class Repo(TextModifier):
             return self
         label = self[name]
         label.style = "label" + ("-hi" if on else "")
+        # Update ring labels.
         if on:
-            label.on()
+            self.hi_rings.append(HighlightSquareRing.new(name))
+        else:
+            for ring in self.hi_rings:
+                if ring.node == name:
+                    self.hi_rings.remove(ring)
+                    break
+
         return self
 
     def populate(self, repo: "Repo") -> "Repo":
         """Import all commits from another repo."""
         for commit in repo.commits:
             self.add_commit(commit.copy())
+        return self
+
+    def clear(self) -> "Repo":
+        assert self.branch  # Otherwise there would be no branch left.
+        self.commits.clear()
+        self.labels.clear()
         return self
 
 

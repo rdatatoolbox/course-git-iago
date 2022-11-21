@@ -78,12 +78,13 @@
       \H = \BranchesSpacing;
       \Hoff = 0;
     }
+    \coordinate (#2) at (0, 0);
     % All messages need to be offset by 1 unit if the repo is double
     % so they remain aligned.
     \ifstrequal{#3}{double}{\tikzmath{ \Hoff = \H; }}{}
     \foreach \type/\hash/\message [count=\i] in {#6} {\ifcsempty{hash}{}{
       \ifnumcomp{\i}{=}{1}{
-        \Commit[\hash][0][\Hoff]{0, 0}{\hash}{\message}
+        \Commit[\hash][0][\Hoff]{#2}{\hash}{\message}
         % Keep track of last commit on the straight/parallel chain..
         \coordinate (straight) at (\hash);
         \coordinate (parallel) at (\hash); % (but they start merged)
@@ -154,13 +155,6 @@
 
   \node[#3, anchor=#2, alias=\LatestRepo-#1, name path=rec] (#1) at (c) {\tt #7};
 
-  \IfSubStr{#3}{-hi}{
-    \coordinate (pad) at (1, 1);
-    \coordinate (lo) at ($(#1.south west) - (pad)$);
-    \coordinate (up) at ($(#1.north east) + (pad)$);
-    \draw[Yellow1, line width=4] (lo) rectangle (up);
-  }{}
-
   \ifstrequal{#6}{noarrow}{}{
       \IfSubStr{#4}{base}{
         % Assume we're pointing to another label, horizontally.
@@ -199,8 +193,8 @@
 \NewDocumentCommand{\Head}{ O{base} O{label} m m m }{
   \Label[HEAD][#1][#2=Purple4]{#3}{#4}{#5}{HEAD}
 }
-% Highlight current commit (ref must be a hash).
-% {ref}
+% Highlight current commit.
+% {hash}
 \newcommand{\HighlightCommit}[1]{
   \fill[Yellow1] (#1) circle (.9*\CommitRadius);
 }

@@ -4,7 +4,7 @@
 from typing import cast
 
 from diffs import DiffList
-from document import Slide
+from document import HighlightSquare, Slide
 from filetree import FileTree
 from modifiers import (
     AnonymousPlaceHolder,
@@ -31,9 +31,9 @@ class RemoteStep(Step):
         self.images = Regex(
             next(it), r"\s*\\begin.*?\n(.*)\\end.*", "list", list=Images
         )
-        self.my_repo = Repo(next(it), "50, 5")
-        self.remote = Repo(next(it), "-5, +7")
-        self.their_repo = Repo(next(it), "-50, 5")
+        self.my_repo = Repo(next(it))
+        self.remote = Repo(next(it))
+        self.their_repo = Repo(next(it))
         try:
             while some := next(it):
                 assert not some
@@ -83,7 +83,8 @@ class RemoteSlide(Slide):
         remote = step.remote.off()
         their_repo = step.their_repo.off()
 
-        url = step.add_epilog(RemoteRepoLabel("north", "0, 1", "MyAccount", "")).off()
+        url = step.add_prolog(RemoteRepoLabel("north", "0, 1", "MyAccount", "")).off()
+        url._layer = "highlight" # Not not cover them.
 
         pic_github.off()
         pic_their.off()
@@ -107,6 +108,7 @@ class RemoteSlide(Slide):
         STEP()
 
         remote.on()
+        remote.intro.location = ".0, .15"
         url.name = "Pizzas"
         url.highlight = "name"
         STEP()
@@ -139,10 +141,12 @@ class RemoteSlide(Slide):
                 highlight="-hi",
             )
         )
+        hi_git = my_files.highlight('git')
         command.off()
         STEP()
 
         my_pointer.highlight = ""
+        hi_git.off()
         STEP()
 
         # First push
@@ -152,7 +156,7 @@ class RemoteSlide(Slide):
         STEP()
 
         my_flow = step.add_epilog(
-            RemoteArrow("-.8, -.2", "remote-HEAD.west", bend="30")
+            RemoteArrow("-.8, -.15", "left=5 of remote-HEAD.west", bend="30")
         )
         remote.highlight(True, "main")
         my_repo.highlight(True, "main")
@@ -160,8 +164,9 @@ class RemoteSlide(Slide):
 
         remote.populate(pizzas_repo)
         my_pointer.end = "remote.south west"
-        my_flow.end = "remote.west"
+        my_flow.end = "left=5 of remote.west"
         my_repo.add_remote_branch("github/main")
+        remote.intro.location = ".1, .08"
         STEP()
 
         command.off()
@@ -173,11 +178,13 @@ class RemoteSlide(Slide):
         remote.highlight(True, "main")
         my_repo.highlight(True, "github/main")
         my_pointer.highlight = "-hi"
+        hi_git.on()
         STEP()
 
         remote.highlight(False, "main")
         my_repo.highlight(False, "github/main")
         my_pointer.highlight = ""
+        hi_git.off()
         STEP()
 
         # Local commit: Diavola.
@@ -239,15 +246,15 @@ class RemoteSlide(Slide):
         def my_opacity(o: float):
             my_repo.intro.opacity = str(o)
             my_pointer._opacity = o
-            my_files._opacity = o / 2
+            my_files._opacity = o / 2 if o < 1 else o
 
         def their_opacity(o: float):
             their_repo.intro.opacity = str(o)
             their_pointer._opacity = o
-            their_files._opacity = o / 2
+            their_files._opacity = o / 2 if o < 1 else o
 
         pic_their.on()
-        my_opacity(0.5)
+        my_opacity(0.4)
         SPLIT("Collaborate", None, "Working with another person")
 
         # Cloning on their side.
@@ -282,16 +289,18 @@ class RemoteSlide(Slide):
 
         their_pointer.highlight = "-hi"
         their_repo.highlight(True, "origin/main")
+        hi_their_git = their_files.highlight('git')
         STEP()
 
         their_pointer.highlight = ""
+        hi_their_git.off()
         their_repo.highlight(False, "origin/main")
         STEP()
 
         # New commit on their side: Capricciosa!
         step.bump_epilog(pic_pizza).on().pizza = "Capricciosa"
         pic_pizza.position = "-.5, -.5"
-        their_diavola = their_files.append("capricciosa.md", mod="+")
+        their_capricciosa = their_files.append("capricciosa.md", mod="+")
         (their_readme := their_files["readme"]).mod = "m"
         STEP()
 
@@ -299,7 +308,7 @@ class RemoteSlide(Slide):
         pic_pizza.off()
         command.location = "0, -.10"
         command.start = "left=2 of HEAD.south west"
-        their_readme.mod = their_diavola.mod = "0"
+        their_readme.mod = their_capricciosa.mod = "0"
         new_commit = their_repo.add_commit("I", "636694f", "Add Capricciosa.")
         STEP()
 
@@ -308,13 +317,15 @@ class RemoteSlide(Slide):
 
         command.on().text = "git push origin main"
         command.end = ".5"
+        their_pointer.highlight = "-hi"
         STEP()
 
+        their_pointer.highlight = ""
         f = their_flow.on()
         f.start, f.end = f.end, f.start
         f.side = "right"
         f.bend = "30"
-        remote.add_commit(new_commit)
+        remote.add_commit(new_commit.copy())
         their_pointer.start = "above=5 of origin/main.north east"
         their_repo.highlight(True, "main")
         remote.highlight(True, "main")
@@ -327,7 +338,51 @@ class RemoteSlide(Slide):
         their_flow.off()
         STEP()
 
-        # Pulling commits back to our side.
+        # Fetch commit.
         my_opacity(1)
-        their_opacity(0.5)
+        their_opacity(0.4)
+        STEP()
+
+        command.on().text = "git fetch github"
+        command_side("left")
+        my_pointer.highlight = "-hi"
+        STEP()
+
+        my_pointer.highlight = ""
+        f = my_flow.on()
+        f.start = f.end
+        f.end = "-.8, -.1"
+        f.side = "right"
+        f.bend = "30"
+        my_repo.add_commit(new_commit.copy(), _branch="github/main")
+        my_repo.highlight(True, "github/main")
+        remote.highlight(True, "main")
+        my_pointer.start = "-.6, -.1"
+        STEP()
+
+        my_repo.highlight(False, "github/main")
+        remote.highlight(False, "main")
+        command.off()
+        my_flow.off()
+        STEP()
+
+        command.on().text = "git merge github/main"
+        my_repo.highlight(True, "main")
+        STEP()
+
+        my_repo.move_branch("main", new_commit.hash)
+        my_repo.checkout_branch("main")
+        my_repo.remote_to_branch("github/main")
+        my_readme.mod = "m"
+        (my_capricciosa := my_files.append(their_capricciosa.copy())).mod = "+"
+        hi_readme = my_files.highlight('readme')
+        hi_capricciosa = my_files.highlight('capricciosa')
+        STEP()
+
+        command.off()
+        hi_readme.off()
+        hi_capricciosa.off()
+        my_readme.mod = "0"
+        my_capricciosa.mod = "0"
+        my_repo.highlight(False, 'main')
         STEP()

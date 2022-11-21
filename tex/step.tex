@@ -77,19 +77,31 @@
 % [padding]{lower}{upper}
 \NewDocumentCommand{\HighlightSquare}{ O{5} m m }{
   \begin{pgfonlayer}{highlight}%
-    \coordinate (offset) at (#1, #1);
-    \coordinate (lower) at ($(#2) - (offset)$);
-    \coordinate (upper) at ($(#3) + (offset)$);
+    \coordinate (pad) at (#1, #1);
+    \coordinate (lower) at ($(#2) - (pad)$);
+    \coordinate (upper) at ($(#3) + (pad)$);
     \draw[Light5, line width=1, fill=Yellow1] (lower) rectangle (upper);
   \end{pgfonlayer}
 }
+
+% Hollow bounding box, useful for branches labels.
+% [padding]{node}
+\NewDocumentCommand{\HighlightSquareRing}{ O{1} m }{
+  \begin{pgfonlayer}{main}%
+    \coordinate (pad) at (#1, #1);
+    \coordinate (lo) at ($(#2.south west) - (pad)$);
+    \coordinate (up) at ($(#2.north east) + (pad)$);
+    \draw[Yellow1, line width=4] (lo) rectangle (up);
+  \end{pgfonlayer}
+}
+
 % Highlight with background shade instead.
 % [padding]{node}
 \NewDocumentCommand{\HighlightShade}{ O{5} m }{
   \begin{pgfonlayer}{highlight}%
-    \coordinate (offset) at (#1, #1);
-    \coordinate (lower) at ($(#2.south west) - (offset)$);
-    \coordinate (upper) at ($(#2.north east) + (offset)$);
+    \coordinate (pad) at (#1, #1);
+    \coordinate (lower) at ($(#2.south west) - (pad)$);
+    \coordinate (upper) at ($(#2.north east) + (pad)$);
     \shade[inner color=Yellow1] (lower) rectangle (upper);
   \end{pgfonlayer}
 }
