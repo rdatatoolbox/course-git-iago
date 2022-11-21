@@ -119,10 +119,8 @@ class PizzasSlide(Slide):
         ]
 
         # Root folder.
-        _ = files.append(
-            "FirstFile", pos=files.xy.name, filename="pizzas", type="folder"
-        )
-        f_readme = files.append("FirstChild", filename="README.md")
+        _ = files.append("pizzas", "folder")
+        f_readme = files.append("README.md", "stepin")
         d_readme = diffs.append(pos="Canvas.north east", filename="README.md")
         d_readme.append_text(readme_text[0])
         STEP()
@@ -135,21 +133,15 @@ class PizzasSlide(Slide):
         command.on().text = "git init"
         STEP()
 
-        files.erase(f_readme)
-        git = files.append(
-            "FirstChild",
-            type="folder",
-            filename=".git",
-            mod="+",
-            name="git",
-        )
-        f_readme = files.append("AppendSibling", filename="README.md", connect=True)
+        files.remove(f_readme)
+        git = files.append(".git", "folder stepin", "+")
+        f_readme = files.append("README.md")
         STEP()
 
-        hi_gitfolder = git.add_epilog(
+        hi_gitfolder = step.add_epilog(
             HighlightSquare.new(
-                "git.south west",
-                "file-label.east |- git.north",
+                "git-icon.south west",
+                "git-filename.east |- git-icon.north",
                 padding=2,
             )
         ).off()
@@ -182,9 +174,7 @@ class PizzasSlide(Slide):
 
         # Adding Margherita
         command.off()
-        f_margherita = files.append(
-            "AppendSibling", connect=True, filename="margherita.md"
-        )
+        f_margherita = files.append("margherita.md")
         d_margherita = diffs.append(filename="margherita.md")
         d_margherita.append_text(margherita_text[0])
         image.on().file = "Margherita"
@@ -237,7 +227,7 @@ class PizzasSlide(Slide):
 
         # Adding Regina.
         d_readme.append_text(readme_text[1])
-        f_regina = files.append("AppendSibling", connect=True, filename="regina.md")
+        f_regina = files.append("regina.md")
         d_regina = diffs.append(filename="regina.md")
         d_regina.append_text(regina_text[0])
         image.on().file = "Regina"
@@ -288,7 +278,7 @@ class PizzasSlide(Slide):
 
         d_readme.delete_lines(1, -1)
         f_readme.mod = d_readme.mod = "0"
-        files.erase(f_regina)
+        files.remove(f_regina)
         diffs.erase(d_regina)
         STEP()
 
@@ -300,7 +290,7 @@ class PizzasSlide(Slide):
         repo.highlight(True, "HEAD")
         STEP()
 
-        files.erase(f_margherita)
+        files.remove(f_margherita)
         diffs.erase(d_margherita)
         d_readme.delete_lines(0, -1)
         d_readme.append_text(readme_text[0])
@@ -322,12 +312,10 @@ class PizzasSlide(Slide):
         repo.highlight(True, "main")
         STEP()
 
-        f_margherita = files.append(
-            "AppendSibling", connect=True, filename="margherita.md"
-        )
+        f_margherita = files.append("margherita.md")
         d_margherita = diffs.append(filename="margherita.md")
         d_margherita.append_text(margherita_text[0] + margherita_text[1])
-        f_regina = files.append("AppendSibling", connect=True, filename="regina.md")
+        f_regina = files.append("regina.md")
         d_regina = diffs.append(filename="regina.md")
         d_regina.append_text(regina_text[0])
         d_readme.append_text(readme_text[1])

@@ -3,108 +3,150 @@
 
 from typing import cast
 
-from document import AutomaticCoordinates
-from modifiers import Regex, TextModifier, render_method
-from utils import increment_name
+from modifiers import (
+    AnonymousPlaceHolder,
+    ListBuilder,
+    MakePlaceHolder,
+    PlaceHolder,
+    TextModifier,
+    render_method,
+)
 
 
 class FileTree(TextModifier):
-    """Within the file tree.
-    Be careful that when hiding one file line,
-    the chain of relative positionning needs to be reconnected.
+    """One chain of files, arranged top-down.
+    Be careful that the last one within every folder must be marked with 'last'.
+    Keep it simple as subsubfolders and 'step out' are not exactly used/implemented yet.
     """
 
     def __init__(self, input: str):
-        """First line is an intensive coordinate supposed to locate the second line.
-        The chain only contains 1 element in the stub.
-        """
-        xy, first_file = input.split("\n")
-        self.xy = xy = AutomaticCoordinates.parse(xy)
-        # Refer to them as a list to easily reconnect the chain.
-        first_file = FileTreeLine(first_file)
-        first_file.pos = xy.name
-        self.list = [first_file]
+        intro, files = input.split("{\n", 1)
+        self.intro = AnonymousPlaceHolder(
+            r"\FileTree[<anchor>][<name>]{<location>}", "parse", intro
+        )
+        files = files.rsplit("}", 1)[0]
+        self.list = FileTreeLines.parse(files)
+        self._sub = False  # Raise when in subfolder.
 
     @render_method
     def render(self) -> str:
-        return "\n".join(m.render() for m in [self.xy] + self.list)
+        return self.intro.render() + "{\n" + self.list.render() + "}\n"
+
+    def clear(self):
+        self.list.clear()
+        self._sub = False
 
     def populate(self, filetree: "FileTree") -> "FileTree":
         """Import/copy all files from another value."""
         self.clear()
         for file in filetree.list:
             self.list.append(file.copy())
+        self._sub = filetree._sub
         return self
 
-    def append(self, command: str, **kwargs) -> "FileTreeLine":
-        # Default connect to previous one and use the same name +1.
-        # Start default names with "F".
-        # But the first one needs an explicit position.
-        if not "pos" in kwargs:
-            kwargs["pos"] = self.list[-1].name
-        if not "name" in kwargs:
-            prevname = cast(str, self.list[-1].name if self.list else "F")
-            kwargs["name"] = increment_name(prevname)
-        file = FileTreeLine.new(command, **kwargs)
-        for option in "type mod".split():
-            if option in kwargs:
-                setattr(file, option, kwargs[option])
-        for option in "connect last".split():
-            if option in kwargs:
-                file.set_keyword_option(option, kwargs[option])
-        self.list.append(file)
-        return file
+    def append(
+        self,
+        filename: str | PlaceHolder,  # FileTreeLine
+        # Use only 'file' or 'folder',
+        # with possible 'in' additional keyword
+        # for the first file stepping in a subfolder chain.
+        keywords: str = "file",
+        mod: str = "0",
+        # Name for the file node, otherwise defaults to uncapitalized filename base.
+        name: str | None = None,
+    ) -> PlaceHolder:  # FileTreeLine
 
-    def erase(self, file: "FileTreeLine"):
-        """Remove from the chain, taking care of preserving the chain structure."""
-        i = 0
-        l = self.list
-        assert l  # or it's erasing from empty list
-        for i, f in enumerate(l):
-            if f is file:
-                break
-        if i == len(l) - 1:
-            # When erasing last one, previous need to become the last.
-            l.pop()
-            if len(l) <= 1:
-                return
-            l[-1].set_keyword_option("last", True)
-            return
-        # When erasing not the last one, reconnect.
-        l.pop(i)
-        l[i].pos = cast(str, file.pos)
+        if type(filename) is str:
+            # Construct an actual file and pass again recursively to the same function.
+            words = set(keywords.split())
+            allow_list = set("file folder stepin".split())
+            if invalid := words - allow_list:
+                raise ValueError(
+                    f"Invalid keyword in file type: {repr(next(iter(invalid)))}."
+                )
+            if "file" in words and "folder" in words:
+                raise ValueError("Cannot be both 'file' and 'folder' type.")
+            if not ("file" in words or "folder" in words):
+                words.add("file")
 
-    def clear(self):
-        self.list.clear()
+            if name is None:
+                if "." in filename:
+                    name, ext = (s.lower().strip() for s in filename.rsplit(".", 1))
+                    if not name:  # Useful for special names like '.git'.
+                        name = ext
+                else:
+                    name = filename.lower().strip()
+                # Avoid tikz special chars and duplicates.
+                assert "." not in name
+                assert not any(f.name == name for f in self.list)
+            file = FileTreeLine.new(" ".join(words), mod, name, filename)
+            return self.append(file)
 
-    def __getitem__(self, name: str) -> "FileTreeLine":
-        """Search and retrieve file by name."""
+        file = cast(PlaceHolder, filename)  # FileTreeLine
+        words = set(file.type.split())
+        if "stepin" in words:
+            self._sub = True
+            words -= {"connect"}
+            words.add("last")
+        elif self._sub:
+            self.remove_from_type(self.list[-1], "last")
+            words.add("connect")
+            words.add("last")
+        else:
+            words -= {"connect"}
+            words -= {"last"}
+        file.type = " ".join(words)
+        return self.list.append(file)
+
+    @staticmethod
+    def remove_from_type(file: PlaceHolder, keyword: str):
+        file.type = " ".join(set(file.type.split()) - {keyword})
+
+    @staticmethod
+    def add_to_type(file: PlaceHolder, keyword: str):
+        kws = set(file.type.split())
+        kws.add(keyword)
+        file.type = " ".join(kws)
+
+    def remove(self, file: PlaceHolder):
+        """Remove from the chain, taking care of preserving the 'last' keyword."""
+        i = self.list.list.index(file)
+        removed = self.list.list.pop(i)
+        was_last = len(self.list) == i
+        if "stepin" in removed.type:
+            assert was_last
+            self._sub = False
+        elif was_last:
+            new_last = self.list[-1]
+            if self._sub and not "stepin" in new_last.type:
+                self.add_to_type(new_last, "last")
+
+    def __getitem__(self, name: str) -> PlaceHolder:  # FileTreeLine
+        """Search and retrieve file by name (*not* filename)."""
         for file in self.list:
-            if file.filename == name:
+            if file.name == name:
                 return file
         raise KeyError(f"No such file in file tree: {repr(name)}.")
 
-
-class FileTreeLine(Regex):
-    """Parse special line displaying one file in the tree folder."""
-
-    _short = True
-
-    def __init__(self, input: str):
-        super().__init__(
-            input.strip(),
-            r"\\(.*?)\[(.*?),.*?mod=(.).*?(|, connect)(|, last)\]{(.*?)}{(.*?)}{(.*?)}",
-            "cmd type mod connect last pos name filename",
-        )
-
-    @staticmethod
-    def new(command, **kwargs) -> "FileTreeLine":
-        """Create a new line with given parameters.
-        Cannot set options via this interface, though.
+    def all_mod(self, mod: str) -> "FileTree":
+        """Set all content to the same mode,
+        temporary setting all items to 'last'.
+        Reset with mod='0'.
         """
-        model = r"\{cmd}[file, mod=0]{{{pos}}}{{{name}}}{{{filename}}}"
-        return FileTreeLine(model.format(cmd=command, **kwargs))
+        assert self.list.list
+        for i, file in enumerate(self.list):
+            file.mod = mod
+            if "connect" in file.type or 'stepin' in file.type:
+                if mod == "0":
+                    if i < len(self.list) - 1:
+                        self.remove_from_type(file, "last")
+                else:
+                    self.add_to_type(file, "last")
+        return self
 
-    def set_keyword_option(self, option: str, on: bool):
-        """Lame options because of the comma, fix with this interface."""
-        setattr(self, option, f", {option}" if on else "")
+
+FileTreeLineModifier, FileTreeLine = MakePlaceHolder(
+    "FileTreeLine",
+    r"<type>/<mod>/<name>/<filename>",
+)
+FileTreeLines = ListBuilder(FileTreeLine, ",\n", tail=True)

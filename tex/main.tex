@@ -23,7 +23,6 @@
   x=1mm,
   y=1mm,
   inner sep=0,
-  file tree line/.style={line width=1.5, line cap=round},
   % https://tex.stackexchange.com/a/447931/72679
   local to/.style={
       shift={(#1.center)},
@@ -146,8 +145,9 @@
 \renewcommand{\Progress}{2/4}
 \Step{
 
-  \AutomaticCoordinates{A}{-1, 1}
-  \FirstFile[folder, mod=0]{A}{A}{rootfolder}
+  \FileTree[north west][files]{-1, 1}{
+    folder/+/root/rootfolder,
+  }
 
   \AutomaticCoordinates{A}{1, 1}
   \Diff[m][north east][A]{A}{file.ext}{
@@ -171,14 +171,16 @@
 \renewcommand{\Progress}{3/4}
 \Step{
 
-  \AutomaticCoordinates{A}{-1, 1}
-  \FirstFile[folder, mod=0]{A}{A}{root}
+  \FileTree[north west][myfiles]{-1, 1}{
+    folder/+/root/rootfolder,
+  }
 
-  \AutomaticCoordinates{A}{.7, 1}
-  \FirstFile[folder, mod=0]{A}{A}{root}
+  \FileTree[north west][theirfiles]{-1, 1}{
+    folder/+/root/rootfolder,
+  }
 
-  \AutomaticCoordinates{C}{1, .85}
-  \Diff[m][north east][A]{c}{file.ext}{
+  \AutomaticCoordinates{A}{1, .85}
+  \Diff[m][north east][A]{A}{file.ext}{
     +/{One line},
   }
 

@@ -65,11 +65,11 @@
 \NewDocumentCommand{\Repo}{ O{center} O{repo} O{simple} m m }{
 
   % Update this global variable so commits, branches etc.
-  % can be aliased with (reponame-name) in addition to (name).
+  % can be aliased with (reponame-nodename) in addition to just (nodename).
   \def\LatestRepo{#2}
 
-  \IntensiveCoordinates{Canvas}{loc}{#4}
-  \node[anchor=#1] (#2) at (loc) {\tikz[remember picture]{
+  \AutomaticCoordinates{repoloc}{#4}
+  \node[anchor=#1] (#2) at (repoloc) {\tikz[remember picture]{
     \def\merged{1} % Lower when there are two chains.
     % Vertical/Horizontal commit spacing.
     \tikzmath{

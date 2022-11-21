@@ -198,10 +198,8 @@ class RemoteSlide(Slide):
                 height="10cm",
             )
         )
-        my_diavola = my_files.append(
-            "AppendSibling", connect=True, filename="diavola.md", mod="+"
-        )
-        (my_readme := my_files["README.md"]).mod = "m"
+        my_diavola = my_files.append("diavola.md", mod="+")
+        (my_readme := my_files["readme"]).mod = "m"
         STEP()
 
         pic_pizza.off()
@@ -265,20 +263,16 @@ class RemoteSlide(Slide):
         )
         their_repo.on().populate(remote)
         their_files.on()
-        their_files.xy.location = ".56, 1"
+        their_files.intro.location = ".56, 1"
         their_files.populate(my_files)
         command.start = "above=10 of HEAD.west"
-        for file in their_files.list:
-            file.mod = "+"
-        # TODO: unecessary fix once FileTree is refreshed.
-        their_files["README.md"].set_keyword_option("last", False)
+        their_files.all_mod('+')
         their_repo.add_remote_branch("origin/main")
         STEP()
 
         their_flow.off()
         command.off()
-        for file in their_files.list:
-            file.mod = "0"
+        their_files.all_mod('0')
         STEP()
 
         their_pointer.highlight = "-hi"
@@ -292,10 +286,8 @@ class RemoteSlide(Slide):
         # New commit on their side: Capricciosa!
         step.bump_epilog(pic_pizza).on().pizza = "Capricciosa"
         pic_pizza.position = "-.5, -.5"
-        their_diavola = their_files.append(
-            "AppendSibling", connect=True, filename="capricciosa.md", mod="+"
-        )
-        (their_readme := their_files["README.md"]).mod = "m"
+        their_diavola = their_files.append("capricciosa.md", mod="+")
+        (their_readme := their_files["readme"]).mod = "m"
         STEP()
 
         command.on().text = "git commit"
