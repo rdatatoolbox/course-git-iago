@@ -24,6 +24,11 @@ class TextModifier(object):
     _epilog: List["TextModifier"]  # Set to append after rendering.
     _epilog_sep = "\n"
 
+    # This additional, UNPARSED parameter
+    # wraps rendering within a tikz transparency group if inferior to 1.
+    # Otherwise silent.
+    _opacity = 1.0  # Only used in rendering, retro-parsing *may* fail if <1.
+
     def render(self) -> str:
         raise NotImplementedError(f"Cannot render text for {type(self).__name__}.")
 
@@ -107,16 +112,26 @@ class TextModifier(object):
 
 
 def render_method(f: Callable) -> Callable:
-    """Decorate render functions so they take `_rendered` and `_epilog` into account."""
+    """Decorate render functions so they take
+        _rendered
+        _epilog
+        _opacity
+    into account.
+    """
 
     def render(self, *args, **kwargs) -> str:
+        result = ""
         if not self._rendered:
-            return ""
-        result = f(self, *args, **kwargs)
+            return result
+        if (o := self._opacity) < 1:
+            result += r"\begin{scope}[transparency group, opacity=" + str(o) + "]\n"
+        result += f(self, *args, **kwargs)
         try:
             result += self._epilog_sep.join(m.render() for m in self._epilog)
         except AttributeError:
             pass
+        if o < 1:
+            result += r"\end{scope}" + "\n"
         return result
 
     return render
@@ -452,10 +467,12 @@ class ListBuilder(Builder[ListOf[TM]]):
 
     def new(
         self,
-        list: List[TM] = [],
+        list: List[TM] | None = None,
         head: Constant | None = None,
         tail: Constant | None = None,
     ) -> ListOf[TM]:
+        if list is None:
+            list = []
         return ListOf[TM](list, self.builder, self.separator, head, tail)
 
     def __repr__(self):

@@ -61,15 +61,16 @@
 }
 
 % Chain commits together.
-% [anchor][reponame][simple|double]{location}{type/hash/message list}
-\NewDocumentCommand{\Repo}{ O{center} O{repo} O{simple} m m }{
+% [anchor][reponame][simple|double][opacity]{location}{type/hash/message list}{labels}
+\NewDocumentCommand{\Repo}{ O{center} O{repo} O{simple} O{1} m m +m }{
 
   % Update this global variable so commits, branches etc.
   % can be aliased with (reponame-nodename) in addition to just (nodename).
   \def\LatestRepo{#2}
 
-  \AutomaticCoordinates{repoloc}{#4}
-  \node[anchor=#1] (#2) at (repoloc) {\tikz[remember picture]{
+  \AutomaticCoordinates{repoloc}{#5}
+  \node[anchor=#1] (#2) at (repoloc) {\tikz[remember picture,
+                                            transparency group, opacity=#4]{
     \def\merged{1} % Lower when there are two chains.
     % Vertical/Horizontal commit spacing.
     \tikzmath{
@@ -80,7 +81,7 @@
     % All messages need to be offset by 1 unit if the repo is double
     % so they remain aligned.
     \ifstrequal{#3}{double}{\tikzmath{ \Hoff = \H; }}{}
-    \foreach \type/\hash/\message [count=\i] in {#5} {\ifcsempty{hash}{}{
+    \foreach \type/\hash/\message [count=\i] in {#6} {\ifcsempty{hash}{}{
       \ifnumcomp{\i}{=}{1}{
         \Commit[\hash][0][\Hoff]{0, 0}{\hash}{\message}
         % Keep track of last commit on the straight/parallel chain..
@@ -125,7 +126,11 @@
         }{}
     }
     \coordinate (last) at (\hash);
-  }}}};
+  }}
+  % Labels go here, within the embed tikz picture,
+  % so they are calculated in the global repo dimensions.
+  #7
+  }};
 
 }
 
@@ -147,7 +152,7 @@
    {\coordinate[right=#5 of #4] (c);}}
    {\coordinate (c) at ($(#4) + (#5)$);}
 
-  \node[#3, anchor=#2, alias=\LatestRepo-#1] (#1) at (c) {\tt #7};
+  \node[#3, anchor=#2, alias=\LatestRepo-#1, name path=rec] (#1) at (c) {\tt #7};
 
   \IfSubStr{#3}{-hi}{
     \coordinate (pad) at (1, 1);
@@ -157,13 +162,12 @@
   }{}
 
   \ifstrequal{#6}{noarrow}{}{
-    \begin{pgfonlayer}{background}
       \IfSubStr{#4}{base}{
         % Assume we're pointing to another label, horizontally.
         \IfSubStr{#4}{west}{
-          \coordinate (s) at ($(#1.base east) + (-1, #6)$);
+          \coordinate (s) at ($(#1.base east) + (-.5, #6)$);
         }{
-          \coordinate (s) at ($(#1.base west) + (+1, #6)$);
+          \coordinate (s) at ($(#1.base west) + (+.5, #6)$);
         }
         \coordinate[above=#6 of #4] (e);
         \draw[#3, shorten >=0] (s) -- (e);
@@ -172,9 +176,11 @@
         \begin{scope}[local to=#1]
           \coordinate (s) at (#6);
         \end{scope}
-        \draw[#3, shorten >=\CommitArrowShorten mm] (s) -- (#4);
+        % Calculate intersection to correctly clip the arrow.
+        \path [name path=arrow] (s) -- (#4);
+        \path [name intersections={of=rec and arrow, by=cross}];
+        \draw[#3, shorten >=\CommitArrowShorten mm] (cross) -- (#4);
       }
-    \end{pgfonlayer}
   }
 
 }

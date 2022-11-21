@@ -83,13 +83,7 @@ class RemoteSlide(Slide):
         remote = step.remote.off()
         their_repo = step.their_repo.off()
 
-        my_label = step.add_epilog(
-            LocalRepoLabel("base west", "Canvas.west", "my machine")
-        )
         url = step.add_epilog(RemoteRepoLabel("north", "0, 1", "MyAccount", "")).off()
-        their_label = step.add_epilog(
-            LocalRepoLabel("base east", "Canvas.east", "their machine")
-        ).off()
 
         pic_github.off()
         pic_their.off()
@@ -242,7 +236,18 @@ class RemoteSlide(Slide):
         remote.highlight(False, "main")
         STEP()
 
+        def my_opacity(o: float):
+            my_repo.intro.opacity = str(o)
+            my_pointer._opacity = o
+            my_files._opacity = o / 2
+
+        def their_opacity(o: float):
+            their_repo.intro.opacity = str(o)
+            their_pointer._opacity = o
+            their_files._opacity = o / 2
+
         pic_their.on()
+        my_opacity(0.5)
         SPLIT("Collaborate", None, "Working with another person")
 
         # Cloning on their side.
@@ -266,13 +271,13 @@ class RemoteSlide(Slide):
         their_files.intro.location = ".56, 1"
         their_files.populate(my_files)
         command.start = "above=10 of HEAD.west"
-        their_files.all_mod('+')
+        their_files.all_mod("+")
         their_repo.add_remote_branch("origin/main")
         STEP()
 
         their_flow.off()
         command.off()
-        their_files.all_mod('0')
+        their_files.all_mod("0")
         STEP()
 
         their_pointer.highlight = "-hi"
@@ -320,4 +325,9 @@ class RemoteSlide(Slide):
         their_repo.highlight(False, "main")
         remote.highlight(False, "main")
         their_flow.off()
+        STEP()
+
+        # Pulling commits back to our side.
+        my_opacity(1)
+        their_opacity(0.5)
         STEP()

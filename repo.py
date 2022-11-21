@@ -21,13 +21,14 @@ class Repo(TextModifier):
     """
 
     def __init__(self, input: str, offset: str):
-        intro, commits = input.split("{\n", 1)
+        """Assume it's parsed *empty*."""
+        intro, rest = input.split("{}", 1)
         self.intro = AnonymousPlaceHolder(
-            r"\Repo[<anchor>][<name>][<type>]{<loc>}", "parse", intro
+            r"\Repo[<anchor>][<name>][<type>][<opacity>]{<loc>}", "parse", intro
         )
+        assert rest == "{}"
         reponame = self.intro.name
-        commits = commits.rsplit('}', 1)[0]
-        self.commits = Commits.parse(commits)
+        self.commits = Commits.new()
         self.head = Head.new("", "", "")
         self.branch: PlaceHolder | None = Branch.new(
             f"$({reponame}) + ({offset})$", "0:0", "noarrow", "main"
@@ -43,12 +44,13 @@ class Repo(TextModifier):
             self.intro.render()
             + "{\n"
             + self.commits.render()
-            + "}\n"
             + "\n"
+            + "}{\n"
             + "\n".join(
                 m.render()
                 for m in self.branches + [self.head, self.current, self.hi_square]
             )
+            + "}\n"
         )
 
     @property

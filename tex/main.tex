@@ -19,6 +19,7 @@
   \usetikzlibrary{positioning}
   \usetikzlibrary{calc}
   \usetikzlibrary{arrows.meta}
+  \usetikzlibrary{intersections}
 \tikzset{
   x=1mm,
   y=1mm,
@@ -157,8 +158,7 @@
     -/{Another line.},
   }
 
-  \Repo[south west][repo][simple]{Canvas.south west}{
-  }
+  \Repo[south west][repo][simple][1]{Canvas.south west}{}{}
 
   \Command[base][][.5][5]{0, 0}{git init}
 
@@ -190,16 +190,13 @@
     \node[opacity=.2] (theirmachine) at (+.7, -.6) {\PicTheirMachine{75mm}{!}};
   \end{pgfonlayer}\end{scope}
 
-  \Repo[south west][mine][double]{-1, -1}{
-  }
+  \Repo[south west][mine][double][1]{-1, -1}{}{}
 
 
-  \Repo[base][remote][double]{.1, .08}{
-  }
+  \Repo[base][remote][double][1]{.1, .08}{}{}
 
 
-  \Repo[base][theirs][double]{.55, -1}{
-  }
+  \Repo[base][theirs][double][1]{.55, -1}{}{}
 
 } % ENDSLIDE
 
