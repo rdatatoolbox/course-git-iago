@@ -257,6 +257,17 @@ class Slide(TextModifier):
             )
         self.steps = [cast(Step, cast(Callable, StepType)(b)) for b in bodies]
 
+    def copy(self):
+        """Don't copy backref to the document,
+        the document referred to remains the same when the slide is copied.
+        """
+        doc = self._document
+        self._document = None
+        new = super().copy()
+        new._document = doc
+        self._document = doc
+        return new
+
     @render_method
     def render(self) -> str:
         return " {}\n{}\n{} ".format(

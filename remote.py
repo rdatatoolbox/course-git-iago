@@ -84,7 +84,7 @@ class RemoteSlide(Slide):
         their_repo = step.their_repo.off()
 
         url = step.add_prolog(RemoteRepoLabel("north", "0, 1", "MyAccount", "")).off()
-        url._layer = "highlight" # Not not cover them.
+        url._layer = "highlight"  # To not cover the highlights.
 
         pic_github.off()
         pic_their.off()
@@ -141,7 +141,7 @@ class RemoteSlide(Slide):
                 highlight="-hi",
             )
         )
-        hi_git = my_files.highlight('git')
+        hi_git = my_files.highlight("git")
         command.off()
         STEP()
 
@@ -289,7 +289,7 @@ class RemoteSlide(Slide):
 
         their_pointer.highlight = "-hi"
         their_repo.highlight(True, "origin/main")
-        hi_their_git = their_files.highlight('git')
+        hi_their_git = their_files.highlight("git")
         STEP()
 
         their_pointer.highlight = ""
@@ -375,8 +375,8 @@ class RemoteSlide(Slide):
         my_repo.remote_to_branch("github/main")
         my_readme.mod = "m"
         (my_capricciosa := my_files.append(their_capricciosa.copy())).mod = "+"
-        hi_readme = my_files.highlight('readme')
-        hi_capricciosa = my_files.highlight('capricciosa')
+        hi_readme = my_files.highlight("readme")
+        hi_capricciosa = my_files.highlight("capricciosa")
         STEP()
 
         command.off()
@@ -384,5 +384,20 @@ class RemoteSlide(Slide):
         hi_capricciosa.off()
         my_readme.mod = "0"
         my_capricciosa.mod = "0"
-        my_repo.highlight(False, 'main')
+        my_repo.highlight(False, "main")
+        STEP()
+
+        for repo in (my_repo, remote, their_repo):
+            repo.trim(4)
+        my_pointer.start = "above=30 of mine-636694f"
+        remote.intro.location = ".0, .08"
+        their_opacity(1)
+        their_pointer.start = "$(theirs-main.north east) + (15, 10)$"
+        their_pointer.end = "remote.south east"
+        SPLIT("Forking", None, "When we both work at the same time")
+
+        # HERE: debug the two new pizzas.
+        pic_pizza.on().pizza = "Calzone"
+        (pic_other := step.add_epilog(pic_pizza.copy())).pizza = "Marinara"
+        pic_other.position = ".5, -.5"
         STEP()
