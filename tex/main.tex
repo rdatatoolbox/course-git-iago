@@ -61,6 +61,8 @@
   Capricciosa/capricciosa.png,
   Calzone/calzone.png,
   Marinara/marinara.jpg,
+  OMG/omg.png,
+  NowWhat/now_what.jpeg,
   MyMachine/my_machine.png,
   TheirMachine/their_machine.png,
   PullRequestButton/pull_request_button.jpg,
@@ -162,7 +164,7 @@
 
   \Repo[south west][repo][simple][1]{Canvas.south west}{}{}
 
-  \Command[base][][.5][5]{0, 0}{git init}
+  \Command[base][][.5][5][]{0, 0}{git init}
 
 } % ENDSLIDE
 
@@ -187,18 +189,18 @@
   }
 
   \begin{scope}[local to=Canvas]\begin{pgfonlayer}{background}
-    \node[opacity=.2] (github) at (0, .5) {\PicGithubLogo{10cm}{!}};
-    \node[opacity=.2] (mymachine) at (-.7, -.6) {\PicMyMachine{75mm}{!}};
-    \node[opacity=.2] (theirmachine) at (+.7, -.6) {\PicTheirMachine{75mm}{!}};
+    \node[opacity=.15] (github) at (0, .5) {\PicGithubLogo{10cm}{!}};
+    \node[opacity=.15] (mymachine) at (-.7, -.6) {\PicMyMachine{75mm}{!}};
+    \node[opacity=.15] (theirmachine) at (+.7, -.6) {\PicTheirMachine{75mm}{!}};
   \end{pgfonlayer}\end{scope}
 
-  \Repo[south west][mine][double][1]{-1, -1}{}{}
+  \Repo[south west][mine][mixed][1]{-1, -1}{}{}
 
 
-  \Repo[base][remote][double][1]{.1, .08}{}{}
+  \Repo[base][remote][mixed][1]{.1, .08}{}{}
 
 
-  \Repo[base][theirs][double][1]{.55, -1}{}{}
+  \Repo[base][theirs][mixed][1]{.55, -1}{}{}
 
 } % ENDSLIDE
 

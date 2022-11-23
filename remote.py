@@ -142,10 +142,11 @@ class RemoteSlide(Slide):
             )
         )
         hi_git = my_files.highlight("git")
+        my_pointer.style = "hi"
         command.off()
         STEP()
 
-        my_pointer.highlight = ""
+        my_pointer.style = ""
         hi_git.off()
         STEP()
 
@@ -177,24 +178,26 @@ class RemoteSlide(Slide):
 
         remote.highlight(True, "main")
         my_repo.highlight(True, "github/main")
-        my_pointer.highlight = "-hi"
+        my_pointer.style = "hi"
         hi_git.on()
         STEP()
 
         remote.highlight(False, "main")
         my_repo.highlight(False, "github/main")
-        my_pointer.highlight = ""
+        my_pointer.style = ""
         hi_git.off()
         STEP()
 
         # Local commit: Diavola.
-        pic_pizza = step.add_epilog(
+        pic = step.add_epilog(
             AnonymousPlaceHolder(
-                r"\AutomaticCoordinates{c}{<position>}" + "\n"
-                r"\node (pizza) at (c) {\Pic<pizza>{<width>}{<height>}};",
+                r"\AutomaticCoordinates{c}{<location>}" + "\n"
+                r"\node[anchor=<anchor>] (pizza) at (c)"
+                r" {\Pic<which>{<width>}{<height>}};",
                 "new",
-                position=".5, -.5",
-                pizza="Diavola",
+                which="Diavola",
+                location=".5, -.5",
+                anchor="center",
                 width="!",
                 height="10cm",
             )
@@ -203,7 +206,7 @@ class RemoteSlide(Slide):
         (my_readme := my_files["readme"]).mod = "m"
         STEP()
 
-        pic_pizza.off()
+        pic.off()
         command.on().text = "git commit"
         STEP()
 
@@ -243,18 +246,18 @@ class RemoteSlide(Slide):
         remote.highlight(False, "main")
         STEP()
 
-        def my_opacity(o: float):
+        def my_opacity(o=0.4):
             my_repo.intro.opacity = str(o)
             my_pointer._opacity = o
             my_files._opacity = o / 2 if o < 1 else o
 
-        def their_opacity(o: float):
+        def their_opacity(o=0.4):
             their_repo.intro.opacity = str(o)
             their_pointer._opacity = o
             their_files._opacity = o / 2 if o < 1 else o
 
         pic_their.on()
-        my_opacity(0.4)
+        my_opacity()
         SPLIT("Collaborate", None, "Working with another person")
 
         # Cloning on their side.
@@ -268,8 +271,8 @@ class RemoteSlide(Slide):
         )
         their_pointer = step.add_epilog(
             RemoteArrow(
-                ".6, -.25",
-                "remote-d1e8c8c-message.south east",
+                ".65, -.25",
+                "right=5 of remote-d1e8c8c-message.south east",
                 name="origin",
             )
         )
@@ -287,25 +290,25 @@ class RemoteSlide(Slide):
         their_files.all_mod("0")
         STEP()
 
-        their_pointer.highlight = "-hi"
+        their_pointer.style = "hi"
         their_repo.highlight(True, "origin/main")
         hi_their_git = their_files.highlight("git")
         STEP()
 
-        their_pointer.highlight = ""
+        their_pointer.style = ""
         hi_their_git.off()
         their_repo.highlight(False, "origin/main")
         STEP()
 
         # New commit on their side: Capricciosa!
-        step.bump_epilog(pic_pizza).on().pizza = "Capricciosa"
-        pic_pizza.position = "-.5, -.5"
+        step.bump_epilog(pic).on().which = "Capricciosa"
+        pic.location = "-.5, -.5"
         their_capricciosa = their_files.append("capricciosa.md", mod="+")
         (their_readme := their_files["readme"]).mod = "m"
         STEP()
 
         command.on().text = "git commit"
-        pic_pizza.off()
+        pic.off()
         command.location = "0, -.10"
         command.start = "left=2 of HEAD.south west"
         their_readme.mod = their_capricciosa.mod = "0"
@@ -317,10 +320,10 @@ class RemoteSlide(Slide):
 
         command.on().text = "git push origin main"
         command.end = ".5"
-        their_pointer.highlight = "-hi"
+        their_pointer.style = "hi"
         STEP()
 
-        their_pointer.highlight = ""
+        their_pointer.style = ""
         f = their_flow.on()
         f.start, f.end = f.end, f.start
         f.side = "right"
@@ -340,15 +343,15 @@ class RemoteSlide(Slide):
 
         # Fetch commit.
         my_opacity(1)
-        their_opacity(0.4)
+        their_opacity()
         STEP()
 
         command.on().text = "git fetch github"
         command_side("left")
-        my_pointer.highlight = "-hi"
+        my_pointer.style = "hi"
         STEP()
 
-        my_pointer.highlight = ""
+        my_pointer.style = ""
         f = my_flow.on()
         f.start = f.end
         f.end = "-.8, -.1"
@@ -387,17 +390,193 @@ class RemoteSlide(Slide):
         my_repo.highlight(False, "main")
         STEP()
 
+        their_opacity(1)
+        SPLIT("Forking", None, "Synchronous modifications")
+
         for repo in (my_repo, remote, their_repo):
             repo.trim(4)
-        my_pointer.start = "above=30 of mine-636694f"
+        their_repo.intro.location = ".65, -1"
+        my_pointer.start = "$(mine-main.north west) + (-5, 10)$"
         remote.intro.location = ".0, .08"
-        their_opacity(1)
         their_pointer.start = "$(theirs-main.north east) + (15, 10)$"
         their_pointer.end = "remote.south east"
-        SPLIT("Forking", None, "When we both work at the same time")
 
-        # HERE: debug the two new pizzas.
-        pic_pizza.on().pizza = "Calzone"
-        (pic_other := step.add_epilog(pic_pizza.copy())).pizza = "Marinara"
-        pic_other.position = ".5, -.5"
+        # Two diverging commits.
+        pic.on().which = "Calzone"
+        pic.anchor = "south west"
+        pic.location = "-1, -1"
+        pic.height = "12cm"
+        (pic_other := step.add_epilog(pic.copy())).which = "Marinara"
+        pic_other.anchor = "south east"
+        pic_other.location = ".98, -1"
+        STEP()
+
+        my_calzone = my_files.append("calzone.md", mod="+")
+        their_marinara = their_files.append("marinara.md", mod="+")
+        my_readme.mod = "m"
+        their_readme.mod = "m"
+        my_readme_hi = my_files.highlight("readme")
+        their_readme_hi = their_files.highlight("readme")
+        my_calzone_hi = my_files.highlight("calzone")
+        their_marinara_hi = their_files.highlight("marinara")
+        STEP()
+
+        pic.off()
+        pic_other.off()
+        STEP()
+
+        command.aperture = "7"
+        (my_command := command.on()).text = "git commit"
+        their_command = step.add_epilog(command.copy())
+        del command
+        their_command.start = their_command.start.replace("west", "east")
+        my_command.end = ".23"
+        their_command.end = ".78"
+        my_command.location = "-.07, -.29"
+        their_command.location = "+.07, -.40"
+        STEP()
+
+        files_4 = ("my_calzone", "my_readme", "their_marinara", "their_readme")
+        for f in files_4:
+            eval(f).mod = "0"
+            eval(f + "_hi").off()
+        calzone_commit = my_repo.add_commit("I", "4ac80b2", "Add Calzone (the best).")
+        marinara_commit = their_repo.add_commit("I", "0fcd744", "Add Marinara.")
+        my_command.off()
+        their_command.off()
+        my_repo.highlight(True)
+        their_repo.highlight(True)
+        my_git_hi = my_files.highlight("git")
+        their_git_hi = their_files.highlight("git")
+        STEP()
+
+        my_repo.highlight(False)
+        their_repo.highlight(False)
+        my_git_hi.off()
+        their_git_hi.off()
+        STEP()
+
+        for f in files_4:
+            eval(f + "_hi").on()
+        STEP()
+
+        for f in files_4:
+            eval(f + "_hi").off()
+        STEP()
+
+        # Cannot both push at the same time.
+        my_command.on().text = "git push github main"
+        their_command.on().text = "git push origin main"
+        my_command.start = "right=30 of mine-main.north east"
+        their_command.start = "above=5 of theirs-HEAD.north west"
+        my_command.location = "-.07, -.27"
+        STEP()
+
+        my_command.style = "error"
+        their_command.style = "ok"
+        STEP()
+
+        # Their commit is pushed.
+        my_command.off().style = ""
+        their_pointer.style = "hi"
+        their_repo.highlight(True, "main")
+        remote.highlight(True, "main")
+        their_flow.on().start = "$(theirs-main.north east) + (15, 23)$"
+        their_flow.end = "remote.east"
+        STEP()
+
+        remote.add_commit(marinara_commit)
+        STEP()
+
+        their_command.off().style = ""
+        my_command.off()
+        their_flow.off()
+        their_repo.highlight(False, "main")
+        remote.highlight(False, "main")
+        their_pointer.style = ""
+        STEP()
+
+        # My commit cannot be pushed anymore.
+        my_command.on()
+        my_repo.highlight(True, "main")
+        remote.highlight(True, "main")
+        my_pointer.style = "hi"
+        STEP()
+
+        my_command.style = "error"
+        STEP()
+
+        my_command.off().style = ""
+        my_repo.highlight(False, "main")
+        remote.highlight(False, "main")
+        my_pointer.style = ""
+        STEP()
+
+        # Fetching their commits.
+        their_opacity()
+        STEP()
+
+        my_command.on().text = "git fetch github"
+        STEP()
+
+        my_flow.on().end = "above=30 of mine-main.north west"
+        my_pointer.style = "hi"
+        remote.highlight(True, "main")
+        my_repo.highlight(True, "github/main")
+        STEP()
+
+        my_repo.add_commit(marinara_commit, _branch="github/main")
+        my_repo["4ac80b2"].type = "Y"
+        my_pointer.start = "above=5 of mine-github/main.north"
+        STEP()
+
+        my_command.off()
+        my_flow.off()
+        my_pointer.style = ""
+        remote.highlight(False, "main")
+        my_repo.highlight(False, "github/main")
+        STEP()
+
+        pic.on().which = "OMG"
+        pic.anchor = "center"
+        pic.location = "0, -.5"
+        pic.height = "9cm"
+        STEP()
+
+        # Navigating from ours to theirs and back.
+        pic.off()
+        STEP()
+
+        my_readme_hi.on()
+        my_calzone_hi.on()
+        my_repo.highlight(True, "HEAD")
+        STEP()
+
+        my_command.on().text = "git checkout github/main"
+        my_command.location = "-.0, -.35"
+        STEP()
+
+        my_repo.checkout_detached("0fcd744")
+        my_files.remove(my_calzone)
+        my_calzone_hi.off()
+        my_marinara = my_files.append("marinara.md")
+        my_marinara_hi = my_files.highlight("marinara")
+        STEP()
+
+        my_command.on().text = "git checkout main"
+        my_repo.checkout_branch("main")
+        my_files.remove(my_marinara)
+        my_marinara_hi.off()
+        my_files.append(my_calzone)
+        my_calzone_hi.on()
+        STEP()
+
+        my_calzone_hi.off()
+        my_readme_hi.off()
+        my_command.off()
+        my_repo.highlight(False, "HEAD")
+        STEP()
+
+        pic.on().which = "NowWhat"
+        pic.location = ".05, -.5"
         STEP()

@@ -149,13 +149,13 @@ class FileTree(TextModifier):
                     self.add_to_type(file, "last")
         return self
 
-    def highlight(self, name) -> PlaceHolder:  # HighlightSquare
+    def highlight(self, name, pad=1.2) -> PlaceHolder:  # HighlightSquare
         """Highlight one file in particular."""
         return self.add_epilog(
             HighlightSquare.new(
                 f"{name}-icon.south west",
                 f"{name}-filename.east |- {name}-icon.north",
-                padding=2,
+                padding=pad,
             )
         )
 

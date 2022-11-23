@@ -182,6 +182,11 @@ class PizzasSlide(Slide):
 
         f_margherita.mod = d_margherita.mod = "+"
         d_margherita.set_mod("+", 0, -1)
+        hi_on()
+        STEP()
+
+        hi_off()
+        command.off()
         STEP()
 
         command.on().text = "git commit"

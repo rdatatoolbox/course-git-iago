@@ -24,7 +24,7 @@
                        },
   label/.style={line width=1.5, draw, #1, fill=Light3, scale=\CommitScale,
                 inner sep=\LabelIsep, rounded corners, -Stealth},
-  label-hi/.style={label=#1, fill=Yellow1},
+  label hi/.style={label=#1, fill=Yellow1},
   %
   repo label/.style={scale=\NormalScale, inner sep=2, draw, Dark3, fill=Light2},
   remote label/.style={repo label, Blue4, fill=Light2},
@@ -33,10 +33,14 @@
   remote flow/.style={remote pointer, solid, line width=20},
   remote arrow label/.style={scale=\NormalScale, above=2, sloped,
                        draw, solid, inner sep = 2},
-  remote arrow label-hi/.style={remote arrow label, fill=Yellow1},
+  remote arrow label hi/.style={remote arrow label, fill=Yellow1},
   %
   command text/.style={scale=\CommandScale, Dark4},
+  command text error/.style={command text, Red2},
+  command text ok/.style={command text, Green5},
   command box/.style={draw=Dark3, fill=Light4, line width=2.5},
+  command box error/.style={command box, draw=Red2, fill=Light3},
+  command box ok/.style={command box, draw=Green5, fill=Light3},
 }
 
 % Draw one commit with hash and message, use [offset] to align with 2 branches.
@@ -61,7 +65,11 @@
 }
 
 % Chain commits together.
-% [anchor][reponame][simple|double][opacity]{location}{type/hash/message list}{labels}
+% Aligning commit messages is either:
+%   - simple: all aligned with room for 1 commits chain.
+%   - double: all aligned with room for 2 commits chain.
+%   - mixed: eich message is aligned to its own chain.
+% [anchor][reponame][alignment][opacity]{location}{type/hash/message list}{labels}
 \NewDocumentCommand{\Repo}{ O{center} O{repo} O{simple} O{1} m m +m }{
 
   % Update this global variable so commits, branches etc.
@@ -116,6 +124,7 @@
           \coordinate (straight) at (\hash);
           \tikzmath{ \H = 0; }
         }
+        \ifstrequal{#3}{mixed}{\tikzmath{\Hoff = \H;}}{}
         \Commit[\hash][\H][\Hoff]{\hash}{\hash}{\message}
         \ifdefstring{\type}{A}{%
           \coordinate[below=\CommitRadius + .5*\CommitSpacing of \hash] (c);
@@ -146,14 +155,14 @@
 % If local arrow start is 'noarrow', there is no pointer.
 % (Useful on empty repos or to stick origin/main to main.)
 % [name][anchor][style]{ref}{offset}{start}{text}
-\NewDocumentCommand{\Label}{ O{unnamed} O{base} O{label} m m m m }{
+\NewDocumentCommand{\Label}{ O{unnamed} O{base} O{} m m m m }{
 
   \IfSubStr{#4}{base}{\IfSubStr{#4}{west}
    {\coordinate[left=#5 of #4] (c);}
    {\coordinate[right=#5 of #4] (c);}}
    {\coordinate (c) at ($(#4) + (#5)$);}
 
-  \node[#3, anchor=#2, alias=\LatestRepo-#1, name path=rec] (#1) at (c) {\tt #7};
+  \node[label #3, anchor=#2, alias=\LatestRepo-#1, name path=rec] (#1) at (c) {\tt #7};
 
   \ifstrequal{#6}{noarrow}{}{
       \IfSubStr{#4}{base}{
@@ -164,7 +173,7 @@
           \coordinate (s) at ($(#1.base west) + (+.5, #6)$);
         }
         \coordinate[above=#6 of #4] (e);
-        \draw[#3, shorten >=0] (s) -- (e);
+        \draw[label #3, shorten >=0] (s) -- (e);
       }{
         % Assume we're pointing to a commit.
         \begin{scope}[local to=#1]
@@ -173,24 +182,24 @@
         % Calculate intersection to correctly clip the arrow.
         \path [name path=arrow] (s) -- (#4);
         \path [name intersections={of=rec and arrow, by=cross}];
-        \draw[#3, shorten >=\CommitArrowShorten mm] (cross) -- (#4);
+        \draw[label #3, shorten >=\CommitArrowShorten mm] (cross) -- (#4);
       }
   }
 
 }
 % Basic branch label.
 % [anchor][style]{ref}{offset}{start}{name}
-\NewDocumentCommand{\Branch}{ O{base} O{label} m m m m }{
+\NewDocumentCommand{\Branch}{ O{base} O{} m m m m }{
   \Label[#6][#1][#2=Blue4]{#3}{#4}{#5}{#6}
 }
 % Remote branch label.
 % [anchor][style]{ref}{offset}{start}{name}
-\NewDocumentCommand{\RemoteBranch}{ O{base} O{label} m m m m }{
+\NewDocumentCommand{\RemoteBranch}{ O{base} O{} m m m m }{
   \Label[#6][#1][#2=Brown2]{#3}{#4}{#5}{#6}
 }
 % HEAD label.
 % [anchor][style]{ref}{offset}{start}
-\NewDocumentCommand{\Head}{ O{base} O{label} m m m }{
+\NewDocumentCommand{\Head}{ O{base} O{} m m m }{
   \Label[HEAD][#1][#2=Purple4]{#3}{#4}{#5}{HEAD}
 }
 % Highlight current commit.
@@ -217,7 +226,7 @@
 
 
 % Arrow from one repo to another.
-% [name][bend][side][highlight]{start}{end}
+% [name][bend][side][style]{start}{end}
 \NewDocumentCommand{\RemoteArrow}{ O{} O{0} O{left} O{} m m }{
   \AutomaticCoordinates{s}{#5}
   \AutomaticCoordinates{e}{#6}
@@ -227,23 +236,23 @@
     \end{scope}
   }{
     \draw[remote pointer] (s) to[bend #3=#2]
-      node[remote arrow label#4] {\tt #1} (e);
+      node[remote arrow label #4] {\tt #1} (e);
   }
 }
 
 % Display the command used.
 % If 'start' is given, make it like a cartoon bubble,
 % pointing to intensive horizontal coordinate 'end'.
-% [anchor][start][end][aperture]{location}{text}
-\NewDocumentCommand{\Command}{ O{base} O{} O{.5} O{5} m m }{
-  \AutomaticCoordinates{c}{#5}
-  \node[command text, anchor=#1] (command) at (c) {\tt \$ #6};
+% [anchor][start][end][aperture][style]{location}{text}
+\NewDocumentCommand{\Command}{ O{base} O{} O{.5} O{5} O{} m m }{
+  \AutomaticCoordinates{c}{#6}
+  \node[command text #5, anchor=#1] (command) at (c) {\tt \$ #7};
   \coordinate (pad) at (\CommandPad, \CommandPad);
   \coordinate (low) at ($(command.south west) - (pad)$);
   \coordinate (up) at ($(command.north east) + (pad)$);
   \begin{pgfonlayer}{background}
     \ifstrequal{#2}{}{
-      \path[command box] (low) rectangle (up);
+      \path[command box #5] (low) rectangle (up);
     }{
       \AutomaticCoordinates{s}{#2}
       \coordinate (e) at ($(command.west)!#3!(command.east)$);
@@ -258,11 +267,11 @@
       \coordinate[left=.5*#4 of p] (e1);
       \coordinate[right=.5*#4 of p] (e2);
       \ifdefstring{\IsStartHigher}{1}{
-        \path[command box]
+        \path[command box #5]
           (s) -- (e1) -- (low |- up) --
           (low) -- (low -| up) -- (up) -- (e2) -- cycle;
       }{
-        \path[command box]
+        \path[command box #5]
           (s) -- (e1) -- (low) --
           (low |- up) -- (up) -- (up |- low) -- (e2) -- cycle;
       }

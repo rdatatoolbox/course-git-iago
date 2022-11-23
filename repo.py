@@ -145,7 +145,7 @@ class Repo(TextModifier):
                         previous_name = "HEAD"
                 elif self.head is label:
                     # This is a detached HEAD state, leave it to the left with an arrow.
-                    head.offset = "156:20"
+                    head.offset = "140:20" if last_commit else "156:20"
                     head.anchor = "center"
                     head.start = ".5,0"
                     previous_name = "HEAD"
@@ -312,7 +312,7 @@ class Repo(TextModifier):
             self.hi_square.on(on)
             return self
         label = self[name]
-        label.style = "label" + ("-hi" if on else "")
+        label.style = "hi" if on else ""
         # Update ring labels.
         if on:
             self.hi_rings.append(HighlightSquareRing.new(name))

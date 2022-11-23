@@ -203,7 +203,7 @@ class Document(TextModifier):
                 file.unlink()
         # Compile three times so `remember pictures` eventually works.
         for _ in range(3):
-            os.system(f"lualatex {self.genbasename}.tex")
+            assert not os.system(f"lualatex --halt-on-error {self.genbasename}.tex")
         os.chdir(current_folder)
 
         print(f"Copy to {output}..")
