@@ -43,7 +43,11 @@ class PizzasSlide(Slide):
     """Animate pizzas slide so it reproduces the small git history."""
 
     def animate(self) -> Tuple[Repo, FileTree, List[DiffedFile]]:
+
+        # Use this dynamical step as a workspace for edition,
+        # regularly copied into actually recorded steps.
         step = cast(PizzasStep, self.pop_step())
+
         files = step.filetree.clear()
         # There will actually be 3 diffs slots,
         # this original diff will therefore be forked in the epilog.
@@ -55,9 +59,10 @@ class PizzasSlide(Slide):
 
         image = step.add_epilog(
             AnonymousPlaceHolder(
-                r"\node (im) at (Canvas.center) {\Pic<file>{15cm}{!}};",
+                r"\node (im) at (Canvas.center) {\Pic<file>{<width>}{!}};",
                 "new",
                 file="VariousPizzas",
+                width="25cm",
             )
         ).on()
         STEP()
@@ -133,7 +138,7 @@ class PizzasSlide(Slide):
 
         # Git init.
         command._rendered = True
-        command.on().text = "git init"
+        command.on().text = r"git \gkw{init}"
         STEP()
 
         files.remove(f_readme)
@@ -143,8 +148,8 @@ class PizzasSlide(Slide):
 
         hi_gitfolder = files.highlight("git").off()
 
-        hi_on = lambda: (hi_gitfolder.on(), repo.highlight(True))
-        hi_off = lambda: (hi_gitfolder.off(), repo.highlight(False))
+        hi_on = lambda: (hi_gitfolder.on(), repo.hi_on())
+        hi_off = lambda: (hi_gitfolder.off(), repo.hi_off())
 
         git.mod = "0"
         command.off()
@@ -158,7 +163,7 @@ class PizzasSlide(Slide):
         STEP()
 
         # First commit.
-        command.on().text = "git commit"
+        command.on().text = r"git \gkw{commit}"
         STEP()
 
         repo.add_commit("I", "d1e8c8c", "First commit, the intent.")
@@ -175,21 +180,22 @@ class PizzasSlide(Slide):
         d_margherita = (
             step.add_epilog(diff.copy().clear())
             .set_name("diff2")
-            .set_filename(f_margherita.filename, "+")
+            .set_filename(f_margherita.filename)
             .append_text(margherita_text[0])
         )
         d_margherita.intro.location = "below=8 of diff1.south east"
         image.on().file = "Margherita"
+        image.width = "17.5cm"
         STEP()
 
         image.off()
         STEP()
 
-        command.on().text = "git diff"
+        command.on().text = r"git \gkw{diff}"
         STEP()
 
         f_margherita.mod = d_margherita.mod = "+"
-        d_margherita.set_mod("+", 0, -1)
+        d_margherita.set_mod("+", 1, -1)
         hi_on()
         STEP()
 
@@ -199,7 +205,7 @@ class PizzasSlide(Slide):
 
         command.on().text = "git commit"
         f_margherita.mod = d_margherita.mod = "0"
-        d_margherita.set_mod("0", 0, -1)
+        d_margherita.set_mod("0", 1, -1)
         repo.add_commit("I", "4e29052", "First pizza: Margherita.")
         hi_on()
         STEP()
@@ -217,13 +223,13 @@ class PizzasSlide(Slide):
         STEP()
 
         f_margherita.mod = d_margherita.mod = "m"
-        d_margherita.set_mod("+", 10, -1)
+        d_margherita.set_mod("+", 11, -1)
         command.on().text = "git diff"
         STEP()
 
         command.on().text = "git commit"
         f_margherita.mod = d_margherita.mod = "0"
-        d_margherita.set_mod("0", 0, -1)
+        d_margherita.set_mod("0", 1, -1)
         repo.add_commit("I", "45a5b65", "Add note to the Margherita.")
         hi_on()
         STEP()
@@ -250,16 +256,19 @@ class PizzasSlide(Slide):
 
         f_readme.mod = d_readme.mod = "m"
         d_regina.mod = f_regina.mod = "+"
-        d_regina.set_mod("+", 0, -1)
-        d_readme.set_mod("+", 1, -1)
+        d_regina.set_mod("+", 1, -1)
+        d_readme.set_mod("+", 2, -1)
         command.on().text = "git diff"
         STEP()
 
-        command.on().text = "git status"
+        command.on().text = r"git \gkw{status}"
         d_readme.mod = "0"
         d_regina.mod = "0"
-        d_readme.set_mod("0", 0, -1)
-        d_regina.set_mod("0", 0, -1)
+        d_readme.set_mod("0", 1, -1)
+        d_regina.set_mod("0", 1, -1)
+        STEP()
+
+        command.off()
         STEP()
 
         d_readme.mod = d_regina.mod = f_regina.mod = f_readme.mod = "0"
@@ -273,10 +282,10 @@ class PizzasSlide(Slide):
         STEP()
 
         # Rewinding !
-        command.on().text = "git checkout 45a5b65"
+        command.on().text = r"git \gkw{checkout} 45a5b65"
         STEP()
 
-        repo.highlight(True, "HEAD")
+        repo.highlight("HEAD")
         STEP()
 
         repo.checkout_detached("45a5b65")
@@ -284,8 +293,8 @@ class PizzasSlide(Slide):
 
         f_readme.mod = d_readme.mod = "m"
         f_regina.mod = d_regina.mod = "-"
-        d_readme.set_mod("-", 1, -1)
-        d_regina.set_mod("-", 0, -1)
+        d_readme.set_mod("-", 2, -1)
+        d_regina.set_mod("-", 1, -1)
         STEP()
 
         d_readme.delete_lines(1, -1)
@@ -295,11 +304,11 @@ class PizzasSlide(Slide):
         STEP()
 
         command.off()
-        repo.highlight(False, "HEAD")
+        repo.hi_off("HEAD")
         STEP()
 
-        command.on().text = "git checkout d1e8c8c"
-        repo.highlight(True, "HEAD")
+        command.on().text = r"git \gkw{checkout} d1e8c8c"
+        repo.highlight("HEAD")
         STEP()
 
         files.remove(f_margherita)
@@ -309,7 +318,7 @@ class PizzasSlide(Slide):
         repo.checkout_detached("d1e8c8c")
         STEP()
 
-        repo.highlight(False, "HEAD")
+        repo.hi_off("HEAD")
         command.off()
         STEP()
 
@@ -320,18 +329,18 @@ class PizzasSlide(Slide):
         command.on().text = "git checkout 17514f2"
         STEP()
 
-        command.on().text = "git checkout main"
-        repo.highlight(True, "main")
+        command.on().text = r"git checkout \textbf{main}"
+        repo.highlight("main")
         STEP()
 
         f_margherita = files.append("margherita.md")
         f_regina = files.append("regina.md")
         d_margherita.on()
-        d_regina.on()
+        d_regina.on().set_mod("0", 1, -1).mod = '0'
         repo.checkout_branch("main")
         STEP()
 
-        repo.highlight(False, "main")
+        repo.hi_off("main")
         command.off()
         STEP()
 

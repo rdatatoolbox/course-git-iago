@@ -306,9 +306,14 @@ class Repo(TextModifier):
             f"to set remote branch {repr(remote_branch)} on."
         )
 
-    def highlight(self, on: bool, name: str | None = None) -> "Repo":
-        """Highlight the given label, or the whole repo if none is given."""
-        if not name:
+    def highlight(self, name: str | bool = True, on=True) -> "Repo":
+        """Highlight the given label, or the whole repo if none is given.
+        repo.highlight()
+        repo.highlight(False)
+        repo.highlight('main', True)
+        """
+        if type(name) is bool:
+            on = name
             self.hi_square.on(on)
             return self
         label = self[name]
@@ -321,8 +326,25 @@ class Repo(TextModifier):
                 if ring.node == name:
                     self.hi_rings.remove(ring)
                     break
-
         return self
+
+    def hi_on(self, label: str | None = None) -> "Repo":
+        """Simplified version so we can just:
+        repo.hi_on()
+        repo.hi_on('main')
+        """
+        if label is None:
+            return self.highlight(True)
+        return self.highlight(label, True)
+
+    def hi_off(self, label: str | None = None) -> "Repo":
+        """Simplified version so we can just:
+        repo.hi_off()
+        repo.hi_off('main')
+        """
+        if label is None:
+            return self.highlight(False)
+        return self.highlight(label, False)
 
     def populate(self, repo: "Repo") -> "Repo":
         """Import all commits from another repo."""

@@ -245,12 +245,14 @@
 % pointing to intensive horizontal coordinate 'end'.
 % [anchor][start][end][aperture][style]{location}{text}
 \NewDocumentCommand{\Command}{ O{base} O{} O{.5} O{5} O{} m m }{
-  \AutomaticCoordinates{c}{#6}
-  \node[command text #5, anchor=#1] (command) at (c) {\tt \$ #7};
-  \coordinate (pad) at (\CommandPad, \CommandPad);
-  \coordinate (low) at ($(command.south west) - (pad)$);
-  \coordinate (up) at ($(command.north east) + (pad)$);
-  \begin{pgfonlayer}{background}
+  \begin{pgfonlayer}{command-text}
+    \AutomaticCoordinates{c}{#6}
+    \node[command text #5, anchor=#1] (command) at (c) {\tt \$ #7};
+    \coordinate (pad) at (\CommandPad, \CommandPad);
+    \coordinate (low) at ($(command.south west) - (pad)$);
+    \coordinate (up) at ($(command.north east) + (pad)$);
+  \end{pgfonlayer}
+  \begin{pgfonlayer}{command-background}
     \ifstrequal{#2}{}{
       \path[command box #5] (low) rectangle (up);
     }{
@@ -277,4 +279,10 @@
       }
     }
   \end{pgfonlayer}
+}
+
+% Special highlight for git keywords.
+\newcommand{\gkw}[1]{%
+  \tikz[baseline={(n.base)}]
+    {\node[fill=Blue1](n){\vphantom{git}\tt\textbf{#1}};}%
 }

@@ -92,7 +92,7 @@ class DiffedFile(TextModifier):
         """Iterate on lines, counting from 1, end included, None for single, -1 for end."""
         yield from self.lines.list[start - 1 : end]
 
-    def set_mod(self, mod: str, start: int, end=None):
+    def set_mod(self, mod: str, start: int, end=None) -> "DiffedFile":
         """Modify the state of one or several lines.
         (counting from 1, end included)
         """
@@ -103,6 +103,7 @@ class DiffedFile(TextModifier):
             end = len(self.lines.list)
         for line in self.lines.list[start:end]:
             line.mod = mod
+        return self
 
     def delete_lines(self, start: int, end=None):
         """Delete a range of lines."""

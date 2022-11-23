@@ -124,7 +124,7 @@ class RemoteSlide(Slide):
 
         command_side("left")
         command.location = "0, -.20"
-        command.on().text = "git remote add github <url>"
+        command.on().text = r"git \gkw{remote add} github <url>"
         STEP()
 
         my_pointer = step.add_epilog(
@@ -145,16 +145,15 @@ class RemoteSlide(Slide):
         STEP()
 
         # First push
-        step.bump_epilog(command)
-        command.on().text = "git push github main"
+        command.on().text = r"git \gkw{push} github main"
         command.location = "0, -.25"
         STEP()
 
         my_flow = step.add_epilog(
             RemoteArrow("-.8, -.15", "left=5 of remote-HEAD.west", bend="30")
         )
-        remote.highlight(True, "main")
-        my_repo.highlight(True, "main")
+        remote.highlight("main")
+        my_repo.highlight("main")
         STEP()
 
         remote.populate(pizzas_repo)
@@ -166,18 +165,18 @@ class RemoteSlide(Slide):
 
         command.off()
         my_flow.off()
-        remote.highlight(False, "main")
-        my_repo.highlight(False, "main")
+        remote.hi_off("main")
+        my_repo.hi_off("main")
         STEP()
 
-        remote.highlight(True, "main")
-        my_repo.highlight(True, "github/main")
+        remote.highlight("main")
+        my_repo.highlight("github/main")
         my_pointer.style = "hi"
         hi_git.on()
         STEP()
 
-        remote.highlight(False, "main")
-        my_repo.highlight(False, "github/main")
+        remote.hi_off("main")
+        my_repo.hi_off("github/main")
         my_pointer.style = ""
         hi_git.off()
         STEP()
@@ -210,34 +209,34 @@ class RemoteSlide(Slide):
         command.off()
         STEP()
 
-        remote.highlight(True, "main")
-        my_repo.highlight(True, "github/main")
+        remote.highlight("main")
+        my_repo.highlight("github/main")
         STEP()
 
-        remote.highlight(False, "main")
-        my_repo.highlight(False, "github/main")
+        remote.hi_off("main")
+        my_repo.hi_off("github/main")
         STEP()
 
         # Pushing new commit to remote.
-        command.on().text = "git push github main"
+        command.on().text = r"git \gkw{push} github main"
         command.location = "0, -.20"
         STEP()
 
         my_flow.on()
         remote.add_commit(new_commit)
-        my_repo.highlight(True, "main")
-        remote.highlight(True, "main")
+        my_repo.highlight("main")
+        remote.highlight("main")
         STEP()
 
         my_repo.remote_to_branch("github/main")
-        my_repo.highlight(False, "main")
-        my_repo.highlight(True, "github/main")
+        my_repo.hi_off("main")
+        my_repo.highlight("github/main")
         STEP()
 
         my_flow.off()
         command.off()
-        my_repo.highlight(False, "github/main")
-        remote.highlight(False, "main")
+        my_repo.hi_off("github/main")
+        remote.hi_off("main")
         STEP()
 
         def my_opacity(o=0.4):
@@ -256,13 +255,15 @@ class RemoteSlide(Slide):
 
         # Cloning on their side.
         command_side("right")
-        command.on().text = "git clone <url>"
+        command.on().text = r"git \gkw{clone} <url>"
         command.location = "0, -.15"
         STEP()
 
         their_flow = step.add_epilog(
             RemoteArrow("remote.center", "above=30 of theirmachine", bend="40")
         )
+        STEP()
+
         their_pointer = step.add_epilog(
             RemoteArrow(
                 ".65, -.25",
@@ -285,13 +286,19 @@ class RemoteSlide(Slide):
         STEP()
 
         their_pointer.style = "hi"
-        their_repo.highlight(True, "origin/main")
+        their_repo.highlight("origin/main")
         hi_their_git = their_files.highlight("git")
         STEP()
 
         their_pointer.style = ""
         hi_their_git.off()
-        their_repo.highlight(False, "origin/main")
+        their_repo.hi_off("origin/main")
+        STEP()
+
+        my_opacity(1)
+        STEP()
+
+        my_opacity()
         STEP()
 
         # New commit on their side: Capricciosa!
@@ -312,7 +319,7 @@ class RemoteSlide(Slide):
         command.off()
         STEP()
 
-        command.on().text = "git push origin main"
+        command.on().text = r"git push \textbf{origin} main"
         command.end = ".5"
         their_pointer.style = "hi"
         STEP()
@@ -324,14 +331,14 @@ class RemoteSlide(Slide):
         f.bend = "30"
         remote.add_commit(new_commit.copy())
         their_pointer.start = "above=5 of origin/main.north east"
-        their_repo.highlight(True, "main")
-        remote.highlight(True, "main")
+        their_repo.highlight("main")
+        remote.highlight("main")
         their_repo.remote_to_branch("origin/main")
         STEP()
 
         command.off()
-        their_repo.highlight(False, "main")
-        remote.highlight(False, "main")
+        their_repo.hi_off("main")
+        remote.hi_off("main")
         their_flow.off()
         STEP()
 
@@ -340,7 +347,7 @@ class RemoteSlide(Slide):
         their_opacity()
         STEP()
 
-        command.on().text = "git fetch github"
+        command.on().text = r"git \gkw{fetch} github"
         command_side("left")
         my_pointer.style = "hi"
         STEP()
@@ -352,36 +359,64 @@ class RemoteSlide(Slide):
         f.side = "right"
         f.bend = "30"
         my_repo.add_commit(new_commit.copy(), _branch="github/main")
-        my_repo.highlight(True, "github/main")
-        remote.highlight(True, "main")
-        my_pointer.start = "-.6, -.1"
+        my_repo.highlight("github/main")
+        remote.highlight("main")
+        my_pointer.start = "$(mine-636694f) + (25, 25)$"
         STEP()
 
-        my_repo.highlight(False, "github/main")
-        remote.highlight(False, "main")
+        my_repo.hi_off("github/main")
+        remote.hi_off("main")
         command.off()
         my_flow.off()
         STEP()
 
-        command.on().text = "git merge github/main"
-        my_repo.highlight(True, "main")
+        # Navigating to new commit and back.
+        my_repo.highlight("HEAD")
+        STEP()
+
+        command.on().text = r"git checkout \textbf{github/main}"
+        my_repo.highlight("github/main")
+        STEP()
+
+        my_repo.checkout_detached("636694f")
+        (my_capricciosa := my_files.append(their_capricciosa.copy())).mod = "+"
+        hi_capricciosa = my_files.highlight("capricciosa")
+        my_readme.mod = "m"
+        hi_readme = my_files.highlight("readme")
+        STEP()
+
+        command.on().text = r"git checkout \textbf{main}"
+        hi_capricciosa.off()
+        my_repo.checkout_branch("main")
+        my_repo.hi_off("github/main")
+        my_repo.highlight("main")
+        my_files.remove(my_capricciosa)
+        my_readme.mod = "0"
+        STEP()
+
+        hi_readme.off()
+        command.off()
+        my_repo.hi_off('main')
+        my_repo.hi_off('HEAD')
+        STEP()
+
+        # Merging commit.
+        command.on().text = r"git \gkw{merge} github/main"
+        my_repo.highlight("main")
         STEP()
 
         my_repo.move_branch("main", new_commit.hash)
         my_repo.checkout_branch("main")
         my_repo.remote_to_branch("github/main")
+        my_files.append(my_capricciosa).mod = "+"
         my_readme.mod = "m"
-        (my_capricciosa := my_files.append(their_capricciosa.copy())).mod = "+"
-        hi_readme = my_files.highlight("readme")
-        hi_capricciosa = my_files.highlight("capricciosa")
         STEP()
 
         command.off()
         hi_readme.off()
-        hi_capricciosa.off()
         my_readme.mod = "0"
         my_capricciosa.mod = "0"
-        my_repo.highlight(False, "main")
+        my_repo.hi_off("main")
         STEP()
 
         their_opacity(1)
@@ -394,6 +429,7 @@ class RemoteSlide(Slide):
         remote.intro.location = ".0, .08"
         their_pointer.start = "$(theirs-main.north east) + (15, 10)$"
         their_pointer.end = "remote.south east"
+        STEP()
 
         # Two diverging commits.
         pic.on().which = "Calzone"
@@ -438,14 +474,14 @@ class RemoteSlide(Slide):
         marinara_commit = their_repo.add_commit("I", "0fcd744", "Add Marinara.")
         my_command.off()
         their_command.off()
-        my_repo.highlight(True)
-        their_repo.highlight(True)
+        my_repo.highlight()
+        their_repo.highlight()
         my_git_hi = my_files.highlight("git")
         their_git_hi = their_files.highlight("git")
         STEP()
 
-        my_repo.highlight(False)
-        their_repo.highlight(False)
+        my_repo.hi_off()
+        their_repo.hi_off()
         my_git_hi.off()
         their_git_hi.off()
         STEP()
@@ -473,8 +509,8 @@ class RemoteSlide(Slide):
         # Their commit is pushed.
         my_command.off().style = ""
         their_pointer.style = "hi"
-        their_repo.highlight(True, "main")
-        remote.highlight(True, "main")
+        their_repo.highlight("main")
+        remote.highlight("main")
         their_flow.on().start = "$(theirs-main.north east) + (15, 23)$"
         their_flow.end = "remote.east"
         STEP()
@@ -485,15 +521,15 @@ class RemoteSlide(Slide):
         their_command.off().style = ""
         my_command.off()
         their_flow.off()
-        their_repo.highlight(False, "main")
-        remote.highlight(False, "main")
+        their_repo.hi_off("main")
+        remote.hi_off("main")
         their_pointer.style = ""
         STEP()
 
         # My commit cannot be pushed anymore.
         my_command.on()
-        my_repo.highlight(True, "main")
-        remote.highlight(True, "main")
+        my_repo.highlight("main")
+        remote.highlight("main")
         my_pointer.style = "hi"
         STEP()
 
@@ -501,8 +537,8 @@ class RemoteSlide(Slide):
         STEP()
 
         my_command.off().style = ""
-        my_repo.highlight(False, "main")
-        remote.highlight(False, "main")
+        my_repo.hi_off("main")
+        remote.hi_off("main")
         my_pointer.style = ""
         STEP()
 
@@ -510,13 +546,13 @@ class RemoteSlide(Slide):
         their_opacity()
         STEP()
 
-        my_command.on().text = "git fetch github"
+        my_command.on().text = r"git \gkw{fetch} github"
         STEP()
 
         my_flow.on().end = "above=30 of mine-main.north west"
         my_pointer.style = "hi"
-        remote.highlight(True, "main")
-        my_repo.highlight(True, "github/main")
+        remote.highlight("main")
+        my_repo.highlight("github/main")
         STEP()
 
         my_repo.add_commit(marinara_commit, _branch="github/main")
@@ -527,8 +563,8 @@ class RemoteSlide(Slide):
         my_command.off()
         my_flow.off()
         my_pointer.style = ""
-        remote.highlight(False, "main")
-        my_repo.highlight(False, "github/main")
+        remote.hi_off("main")
+        my_repo.hi_off("github/main")
         STEP()
 
         pic.on().which = "OMG"
@@ -543,10 +579,10 @@ class RemoteSlide(Slide):
 
         my_readme_hi.on()
         my_calzone_hi.on()
-        my_repo.highlight(True, "HEAD")
+        my_repo.highlight("HEAD")
         STEP()
 
-        my_command.on().text = "git checkout github/main"
+        my_command.on().text = r"git checkout \textbf{github/main}"
         my_command.location = "-.0, -.35"
         STEP()
 
@@ -557,7 +593,7 @@ class RemoteSlide(Slide):
         my_marinara_hi = my_files.highlight("marinara")
         STEP()
 
-        my_command.on().text = "git checkout main"
+        my_command.on().text = r"git checkout \textbf{main}"
         my_repo.checkout_branch("main")
         my_files.remove(my_marinara)
         my_marinara_hi.off()
@@ -568,7 +604,14 @@ class RemoteSlide(Slide):
         my_calzone_hi.off()
         my_readme_hi.off()
         my_command.off()
-        my_repo.highlight(False, "HEAD")
+        my_repo.hi_off("HEAD")
+        STEP()
+
+        my_command.on().text = "git push github main"
+        my_command.style = "error"
+        STEP()
+
+        my_command.off()
         STEP()
 
         pic.on().which = "NowWhat"

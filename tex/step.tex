@@ -27,7 +27,15 @@
 
   \pgfdeclarelayer{highlight}
   \pgfdeclarelayer{background}
-  \pgfsetlayers{highlight, background, main}
+  \pgfdeclarelayer{command-background}
+  \pgfdeclarelayer{command-text}
+  \pgfsetlayers{
+    highlight,
+    background,
+    main,
+    command-background,
+    command-text
+  }
 
   % Set off global structure first.
 
@@ -45,7 +53,7 @@
 
   % SubTitle.
   \node[Light2, anchor=base east, scale=\SubTitleScale,
-        left=10 of TitleBar.east] (SubTitle) {\bf \SubTitleText};
+        left=10 of TitleBar.east] (SubTitle) {\SubTitleText};
 
   % Page number.
   \node[Dark4, inner sep=5, anchor=south east, scale=\PageNumScale]
