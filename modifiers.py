@@ -367,7 +367,7 @@ class PlaceHolderBuilder(Builder[PH]):
             regex += re.escape(literal)
             model += cast(str, py_escape(literal))
         self.placeholders = placeholders
-        self.regex = regex
+        self.regex = regex + r"$"
         self.model = model
         self.types = types
 

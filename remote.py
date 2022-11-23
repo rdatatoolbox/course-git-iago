@@ -1,10 +1,10 @@
 """Slide(s) to work with a remote, 3-ways.
 """
 
-from typing import cast
+from typing import List, cast
 
-from diffs import DiffList
-from document import HighlightSquare, Slide
+from diffs import DiffedFile
+from document import Slide
 from filetree import FileTree
 from modifiers import (
     AnonymousPlaceHolder,
@@ -14,7 +14,7 @@ from modifiers import (
     Regex,
     render_method,
 )
-from repo import Command, LocalRepoLabel, RemoteArrow, RemoteRepoLabel, Repo
+from repo import Command, RemoteArrow, RemoteRepoLabel, Repo
 from steps import Step
 
 
@@ -27,7 +27,6 @@ class RemoteStep(Step):
         it = iter(chunks)
         self.myfiles = FileTree(next(it))
         self.theirfiles = FileTree(next(it))
-        self.diffs = DiffList(next(it))
         self.images = Regex(
             next(it), r"\s*\\begin.*?\n(.*)\\end.*", "list", list=Images
         )
@@ -47,7 +46,6 @@ class RemoteStep(Step):
             for m in [
                 self.myfiles,
                 self.theirfiles,
-                self.diffs,
                 self.images,
                 self.my_repo,
                 self.remote,
@@ -61,7 +59,7 @@ class RemoteSlide(Slide):
         self,
         pizzas_repo: Repo,
         pizzas_files: FileTree,
-        pizzas_diffs: DiffList,
+        pizzas_diffs: List[DiffedFile],
     ):
 
         # Use this dynamical step as a workspace for edition,
@@ -77,7 +75,6 @@ class RemoteSlide(Slide):
 
         my_files = step.myfiles
         their_files = step.theirfiles.off()
-        diffs = step.diffs
         pic_github, pic_my, pic_their = cast(ListOf, step.images.list)
         my_repo = step.my_repo
         remote = step.remote.off()
@@ -91,18 +88,15 @@ class RemoteSlide(Slide):
 
         my_files.populate(pizzas_files)
 
-        diffs.clear()
-        for pizza_diff in pizzas_diffs.files:
-            diffs.files.append(pizza_diff.copy())
-
         my_repo.populate(pizzas_repo)
+        diffs = [step.add_epilog(d.copy()) for d in pizzas_diffs]
         STEP()
 
         # Create Account.
         pic_github.on()
         STEP()
 
-        diffs.off()
+        [step.remove_from_epilog(d) for d in diffs]
         url.highlight = "account"
         url.on()
         STEP()

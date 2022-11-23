@@ -13,6 +13,12 @@ from modifiers import (
     render_method,
 )
 
+FileTreeLineModifier, FileTreeLine = MakePlaceHolder(
+    "FileTreeLine",
+    r"<type>/<mod>/<name>/<filename>",
+)
+FileTreeLines = ListBuilder(FileTreeLine, ",\n", tail=True)
+
 
 class FileTree(TextModifier):
     """One chain of files, arranged top-down.
@@ -37,9 +43,10 @@ class FileTree(TextModifier):
     def render(self) -> str:
         return self.intro.render() + "{\n" + self.list.render() + "}\n"
 
-    def clear(self):
+    def clear(self) -> "FileTree":
         self.list.clear()
         self._sub = False
+        return self
 
     def populate(self, filetree: "FileTree") -> "FileTree":
         """Import/copy all files from another value."""
@@ -158,10 +165,3 @@ class FileTree(TextModifier):
                 padding=pad,
             )
         )
-
-
-FileTreeLineModifier, FileTreeLine = MakePlaceHolder(
-    "FileTreeLine",
-    r"<type>/<mod>/<name>/<filename>",
-)
-FileTreeLines = ListBuilder(FileTreeLine, ",\n", tail=True)

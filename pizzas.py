@@ -1,9 +1,9 @@
 """The slide with repo / project folder / file content."""
 
-from typing import Tuple, cast
+from typing import List, Tuple, cast
 
-from diffs import DiffList
-from document import HighlightSquare, Slide
+from diffs import DiffedFile
+from document import Slide
 from filetree import FileTree
 from modifiers import AnonymousPlaceHolder, render_method
 from repo import Command, Repo
@@ -17,7 +17,7 @@ class PizzasStep(Step):
         chunks = input.split("\n\n")
         it = iter(chunks)
         self.filetree = FileTree(next(it))
-        self.diffs = DiffList(next(it))
+        self.diff = DiffedFile(next(it))
         self.repo = Repo(next(it))
         self.command = Command.parse(next(it))
         try:
@@ -32,7 +32,7 @@ class PizzasStep(Step):
             m.render()
             for m in [
                 self.filetree,
-                self.diffs,
+                self.diff,
                 self.repo,
                 self.command,
             ]
@@ -42,16 +42,15 @@ class PizzasStep(Step):
 class PizzasSlide(Slide):
     """Animate pizzas slide so it reproduces the small git history."""
 
-    def animate(self) -> Tuple[Repo, FileTree, DiffList]:
+    def animate(self) -> Tuple[Repo, FileTree, List[DiffedFile]]:
         step = cast(PizzasStep, self.pop_step())
-        files = step.filetree
-        diffs = step.diffs
-        repo = step.repo
-        command = step.command
-        files.clear()
-        diffs.clear()
-        command.off()
-        repo.off()
+        files = step.filetree.clear()
+        # There will actually be 3 diffs slots,
+        # this original diff will therefore be forked in the epilog.
+        diff = step.diff.clear().off()
+        repo = step.repo.off()
+        command = step.command.off()
+
         STEP = lambda: self.add_step(step)
 
         image = step.add_epilog(
@@ -121,8 +120,12 @@ class PizzasSlide(Slide):
         # Root folder.
         _ = files.append("pizzas", "folder")
         f_readme = files.append("README.md", "stepin")
-        d_readme = diffs.append(pos="Canvas.north east", filename="README.md")
-        d_readme.append_text(readme_text[0])
+        d_readme = (
+            diff.on()
+            .set_name("diff1")
+            .set_filename(f_readme.filename)
+            .append_text(readme_text[0])
+        )
         STEP()
 
         image.off()
@@ -138,7 +141,7 @@ class PizzasSlide(Slide):
         f_readme = files.append("README.md")
         STEP()
 
-        hi_gitfolder = files.highlight('git').off()
+        hi_gitfolder = files.highlight("git").off()
 
         hi_on = lambda: (hi_gitfolder.on(), repo.highlight(True))
         hi_off = lambda: (hi_gitfolder.off(), repo.highlight(False))
@@ -169,8 +172,13 @@ class PizzasSlide(Slide):
         # Adding Margherita
         command.off()
         f_margherita = files.append("margherita.md")
-        d_margherita = diffs.append(filename="margherita.md")
-        d_margherita.append_text(margherita_text[0])
+        d_margherita = (
+            step.add_epilog(diff.copy().clear())
+            .set_name("diff2")
+            .set_filename(f_margherita.filename, "+")
+            .append_text(margherita_text[0])
+        )
+        d_margherita.intro.location = "below=8 of diff1.south east"
         image.on().file = "Margherita"
         STEP()
 
@@ -227,8 +235,13 @@ class PizzasSlide(Slide):
         # Adding Regina.
         d_readme.append_text(readme_text[1])
         f_regina = files.append("regina.md")
-        d_regina = diffs.append(filename="regina.md")
-        d_regina.append_text(regina_text[0])
+        d_regina = (
+            step.add_epilog(diff.copy().clear())
+            .set_name("diff3")
+            .set_filename(f_regina.filename)
+            .append_text(regina_text[0])
+        )
+        d_regina.intro.location = d_margherita.intro.location.replace("diff1", "diff2")
         image.on().file = "Regina"
         STEP()
 
@@ -278,7 +291,7 @@ class PizzasSlide(Slide):
         d_readme.delete_lines(1, -1)
         f_readme.mod = d_readme.mod = "0"
         files.remove(f_regina)
-        diffs.erase(d_regina)
+        d_regina.off()
         STEP()
 
         command.off()
@@ -290,7 +303,7 @@ class PizzasSlide(Slide):
         STEP()
 
         files.remove(f_margherita)
-        diffs.erase(d_margherita)
+        d_margherita.off()
         d_readme.delete_lines(0, -1)
         d_readme.append_text(readme_text[0])
         repo.checkout_detached("d1e8c8c")
@@ -312,12 +325,9 @@ class PizzasSlide(Slide):
         STEP()
 
         f_margherita = files.append("margherita.md")
-        d_margherita = diffs.append(filename="margherita.md")
-        d_margherita.append_text(margherita_text[0] + margherita_text[1])
         f_regina = files.append("regina.md")
-        d_regina = diffs.append(filename="regina.md")
-        d_regina.append_text(regina_text[0])
-        d_readme.append_text(readme_text[1])
+        d_margherita.on()
+        d_regina.on()
         repo.checkout_branch("main")
         STEP()
 
@@ -328,4 +338,4 @@ class PizzasSlide(Slide):
         image.on().file = "VariousPizzas"
         STEP()
 
-        return repo, files, diffs
+        return repo, files, [d_readme, d_margherita, d_regina]

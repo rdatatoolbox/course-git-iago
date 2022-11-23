@@ -154,12 +154,8 @@
     folder/+/root/rootfolder,
   }
 
-  \AutomaticCoordinates{A}{1, 1}
-  \Diff[m][north east][A]{A}{file.ext}{
+  \Diff[m][north east][diff][5]{1, 1}{file.ext}{
     +/{One line},
-  }
-  \Diff[0][north east][A]{$(A.south east) + (0, -\DiffFilesSpacing)$}{other.ext}{
-    -/{Another line.},
   }
 
   \Repo[south west][repo][simple][1]{Canvas.south west}{}{}
@@ -183,11 +179,6 @@
     folder/+/root/rootfolder,
   }
 
-  \AutomaticCoordinates{A}{1, .85}
-  \Diff[m][north east][A]{A}{file.ext}{
-    +/{One line},
-  }
-
   \begin{scope}[local to=Canvas]\begin{pgfonlayer}{background}
     \node[opacity=.15] (github) at (0, .5) {\PicGithubLogo{10cm}{!}};
     \node[opacity=.15] (mymachine) at (-.7, -.6) {\PicMyMachine{75mm}{!}};
@@ -201,6 +192,59 @@
 
 
   \Repo[base][theirs][mixed][1]{.55, -1}{}{}
+
+} % ENDSLIDE
+
+% SLIDE Conflicts
+\renewcommand{\TitleText}{Resolving Conflicts}
+\renewcommand{\SubTitleText}{What a ``conflict'' means}
+\renewcommand{\PageNumText}{4}
+\renewcommand{\Progress}{4/4}
+\Step{
+
+\AutomaticCoordinates{low}{-.35, -.95}
+\AutomaticCoordinates{up}{+.35, +.95}
+\AutomaticCoordinates{lexical}{0, -.1}
+\AutomaticCoordinates{semantic}{0, .3}
+
+\path[fill=Blue1, draw=Blue3, line width=2] (low) rectangle (up);
+
+\coordinate (mid) at ($(up)!.5!(low)$);
+\coordinate (bottom) at (low-|mid);
+
+\path[fill=Brown1, draw=Brown3, line width=2, fill opacity=0.5]
+  (lexical) ellipse (63 and 70);
+
+\path[fill=Purple1, draw=Purple3, line width=2, fill opacity=0.5]
+  (semantic) ellipse (63 and 70);
+
+\node[scale=\LargeScale, anchor=south, above=27 of bottom] (line) {no conflicts};
+\node[below=3 of line, scale=\LargeScale] (line) {\it (happy zone)};
+\node[below=1 of line, scale=\LargeScale, Green5] (line) {\rotatebox{-90}{\tt :)}};
+
+\node[below=25 of lexical, scale=\LargeScale] (line) {\bf lexical conflicts};
+\node[below=3 of line, scale=\LargeScale] (line) {\tt >> git conflicts <<};
+\node[below=1 of line, scale=\LargeScale, Red4] (line) {\rotatebox{-90}{\tt :(}};
+
+\node[above=44 of semantic, scale=\LargeScale] (line) {\bf semantic conflicts};
+\node[below=3 of line, scale=\LargeScale] (line) {\tt >> git sees not <<};
+\node[below=-2 of line, scale=\LargeScale, Red4] (line) {\rotatebox{-90}{\tt :(}};
+
+\node[scale=\LargeScale] at ($(lexical)!.6!(semantic)$) (line) {\tt >> git catches you <<};
+\node[below=3 of line, scale=\LargeScale] (line) {\it (happy zone)};
+\node[below=1 of line, scale=\LargeScale, Green5] (line) {\rotatebox{-90}{\tt :)}};
+
+\Diff[m][west][left][8]{-1, .5}{MY\_VERSION}{
+  0/{my line},
+}
+
+\Diff[m][east][right][8]{1, .5}{THEIR\_VERSION}{
+  0/{their line},
+}
+
+\Diff[0][north][merge][8]{$(left.north)!.5!(right.north)$}{MERGED\_VERSION}{
+  0/{merged line},
+}
 
 } % ENDSLIDE
 

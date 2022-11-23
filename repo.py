@@ -336,13 +336,14 @@ class Repo(TextModifier):
         self.labels.clear()
         return self
 
-    def trim(self, n:int) -> "Repo":
-        """Remove the first n commits (and associated branches) to make room.
-        """
+    def trim(self, n: int) -> "Repo":
+        """Remove the first n commits (and associated branches) to make room."""
         for _ in range(n):
             self.commits.list.pop(0)
             labels = self.labels.pop(0)
-            assert self.branch not in labels # Don't trim the branch checked out though.
+            assert (
+                self.branch not in labels
+            )  # Don't trim the branch checked out though.
         return self
 
 

@@ -1,114 +1,84 @@
 """Craft/edit diffed files.
 """
 
-import re
 from textwrap import dedent
-from typing import cast
+from typing import Iterable
 
-from document import AutomaticCoordinates
 from modifiers import (
-    Constant,
+    AnonymousPlaceHolder,
     ListBuilder,
-    ListOf,
     MakePlaceHolder,
-    Regex,
+    PlaceHolder,
     TextModifier,
     render_method,
 )
-from utils import increment_name
+
+DiffLineModifier, DiffLine = MakePlaceHolder("DiffLine", r"<mod>/{<text>}")
+DiffLines = ListBuilder(DiffLine, ",\n", tail=True)
 
 
-class DiffList(TextModifier):
-    """One chain of diffed files.
-    Be careful that the first one needs be anchored,
-    and the others are located wrt to it.
-    """
-
-    _sepkw = "Diff"
-    _sep = re.compile(r"\\" + _sepkw + r"\b")
+class DiffedFile(TextModifier):
+    """One chain of diffed lines."""
 
     def __init__(self, input: str):
         """First line is an intensive coordinate supposed to locate the first Diff."""
-        xy, rest = input.split("\n", 1)
-        self.xy = AutomaticCoordinates.parse(xy)
-        files = self._sep.split(rest)
-        self.head = Constant(files.pop(0))
-        self.files = [Diff(f) for f in files]
+        intro, lines = input.split("{\n", 1)
+        self.intro = AnonymousPlaceHolder(
+            r"\Diff[<mod>][<anchor>][<name>][<linespacing>]{<location>}{<filename>}",
+            "parse",
+            intro,
+        )
+        lines = lines.rsplit("}", 1)[0]
+        self.lines = DiffLines.parse(lines)
+
+    @staticmethod
+    def new(**kwargs) -> "DiffedFile":
+        """Create empty diffed file."""
+        model = "\\Diff[{mod}][{anchor}][{name}][{linespacing}]{{{location}}}{{{filename}}}{{\n}}"
+        return DiffedFile(model.format(**kwargs))
+
+    @property
+    def name(self):
+        return self.intro.name
+
+    def set_name(self, name: str) -> "DiffedFile":
+        self.intro.name = name
+        return self
+
+    @property
+    def mod(self):
+        return self.intro.mod
+
+    @mod.setter
+    def mod(self, value):
+        self.intro.mod = value
+
+    @property
+    def filename(self) -> str:
+        return self.intro.filename
+
+    def set_filename(self, filename: str, mod="0") -> "DiffedFile":
+        self.intro.filename = filename
+        self.intro.mod = mod
+        return self
 
     @render_method
     def render(self) -> str:
-        return (
-            self.xy.render()
-            + "\n"
-            + ("\\" + self._sepkw).join(m.render() for m in [self.head] + self.files)
-        )
+        return self.intro.render() + "{\n" + self.lines.render() + "}\n"
 
-    def append(self, **kwargs) -> "Diff":
-        # Default connect to previous one and use the same name +1.
-        # Start default names with to "F".
-        # But the first one needs an explicit position.
-        kwargs.setdefault("mod", "0")
-        kwargs.setdefault("anchor", "north east")
-        if not "pos" in kwargs:
-            prevname = cast(str, self.files[-1].name)
-            kwargs["pos"] = r"$({}.south east) + (0, -\DiffFilesSpacing)$".format(
-                prevname
-            )
-        if not "name" in kwargs:
-            prevname = cast(str, self.files[-1].name if self.files else "D")
-            kwargs["name"] = increment_name(prevname)
-        diff = Diff.new(**kwargs)
-        self.files.append(diff)
-        return diff
-
-    def erase(self, file: "Diff"):
-        """Remove from the chain, taking care of preserving the chain structure."""
-        i = 0
-        l = self.files
-        assert l  # or it's erasing from empty list
-        for i, f in enumerate(l):
-            if f is file:
-                break
-        # When erasing not the last one, reconnect.
-        if i == len(l) - 1:
-            l.pop()
-            return
-        l.pop(i)
-        l[i].pos = cast(str, file.pos)
-
-    def clear(self):
-        self.files.clear()
-
-
-class Diff(Regex):
-    """One diffed file."""
-
-    lines: ListOf
-
-    def __init__(self, input: str):
-        super().__init__(
-            input.strip(),
-            r"\[(.*?)\]" * 3 + r"{(.*?)}.*?" * 2 + r"{(.*)}",
-            "mod anchor name pos filename lines",
-            lines=DiffLines,
-        )
-
-    @staticmethod
-    def new(**kwargs) -> "Diff":
-        """Create a new line with given parameters (minus leading separator)."""
-        model = "[{mod}][{anchor}][{name}]{{{pos}}}{{{filename}}}{{}}"
-        return Diff(model.format(**kwargs))
+    def clear(self) -> "DiffedFile":
+        self.lines.clear()
+        return self
 
     @staticmethod
     def latex_escape(input: str) -> str:
-        """Escape special characters for Latex input."""
+        """Escape special characters for LaTeX input."""
         input = input.replace("_", r"\_")
         input = input.replace("#", r"\#")
         return input
 
-    def append_text(self, input: str, mod="0"):
+    def append_text(self, input: str, mod="0") -> "DiffedFile":
         r"""Construct the lines list from raw text.
-        Escaping for tex.
         Input is stripped, unless it starts with \n\n in which case \n is kept.
         """
         lines = dedent(self.latex_escape(input)).strip().split("\n")
@@ -116,26 +86,28 @@ class Diff(Regex):
             lines = [""] + lines
         for line in lines:
             self.lines.append(mod, line)
+        return self
+
+    def lines_range(self, start: int, end=None) -> Iterable[PlaceHolder]:  # DiffLine
+        """Iterate on lines, counting from 1, end included, None for single, -1 for end."""
+        yield from self.lines.list[start - 1 : end]
 
     def set_mod(self, mod: str, start: int, end=None):
-        """Modify the state of one or several lines."""
+        """Modify the state of one or several lines.
+        (counting from 1, end included)
+        """
+        start -= 1
         if end is None:
-            end = start
-        if end == -1:
+            end = start + 1
+        elif end == -1:
             end = len(self.lines.list)
         for line in self.lines.list[start:end]:
-            line = cast(Regex, line)
             line.mod = mod
 
     def delete_lines(self, start: int, end=None):
-        """Modify the state of one or several lines."""
+        """Delete a range of lines."""
         if end is None:
             end = start
         if end == -1:
             end = len(self.lines.list)
         self.lines.list = self.lines.list[:start] + self.lines.list[end + 1 :]
-
-
-DiffLineModifier, DiffLine = MakePlaceHolder("DiffLine", r"<mod>/{<text>}")
-
-DiffLines = ListBuilder(DiffLine, ",\n", tail=True)

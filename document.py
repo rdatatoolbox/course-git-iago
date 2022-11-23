@@ -7,7 +7,7 @@ import re
 import shutil as shu
 from textwrap import dedent
 from typing import Any, Tuple
-from typing import Callable, List, cast, Self
+from typing import Callable, List, Self, cast
 
 from modifiers import (
     MakePlaceHolder,
@@ -307,6 +307,7 @@ class Slide(TextModifier):
         The newly created slide only contains a copy of the given step.
         """
         # Find ourselves within the document.
+        assert self._document
         slides = self._document.slides
         i = slides.index(self)
         # Insert a copy with only one step right after self.
