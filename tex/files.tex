@@ -1,8 +1,8 @@
 % Draw something looking like a files hierarchy.
 % Not everything is possible yet, but it's maybe useful at least.
 \tikzmath{
-  \FileNameScale = 1.9;
-  \FileSpacing = 15;
+  \FileNameScale = 1.8;
+  \FileSpacing = 16;
   \IntoFileTreeSpacing = 15;
   \IconSize = 14;
 }
@@ -54,7 +54,7 @@
 }}}
 
 % Insert file/folder icon with a name and correct modification status.
-% Type contains keywords like 'file|folder' and 'last' checked with \IfSubStr.
+% Type contains keywords like 'file|folder' and 'angle' checked with \IfSubStr.
 % 'mod' is either '0+-m' TODO: c for 'conflict'.
 % [type][mode]{location}{name}{filename}
 \NewDocumentCommand{\FileLine}{ O{file} O{0} m m m }{{
@@ -71,7 +71,7 @@
   \node[anchor=base west, scale=\FileNameScale, #2,
         alias=\LatestFileTree-#4-filename] (#4-filename)
     at ($(#4-icon.south east) + (offset)$)
-    {\tt#5\IfSubStr{#1}{folder}{/}{}};
+    {\Code{#5\IfSubStr{#1}{folder}{/}{}}};
 
   % Status sign.
   \ifdefstring{#2}{0}{}{
@@ -104,7 +104,6 @@
         % type with:
         %   'stepin' to enter into last folder.
         %   'connect' to append sibling into currently 'stepped in' folder.
-        %   'last' to mark last sibling within a 'steeped in' folder.
         % TODO: 'step out' and continuing outer line within sub-subfolders.
         \IfSubStr{\type}{stepin}{
           \coordinate[right=\IntoFileTreeSpacing of current] (current);
@@ -122,8 +121,9 @@
           % Draw the actual line, creating 'anchor' for next time.
           \coordinate[left=3 of \name-icon.west] (e);
           \coordinate (anchor) at (s|-e);
-          % Only color whole line for last items in the chain.
-          \IfSubStr{\type}{last}{
+          % Style whole angle for '+' and '-' modes, otherwise only the tick.
+          \ifboolexpr{ test {\ifdefstring{\mod}{+}}
+                    or test {\ifdefstring{\mod}{-}}}{
             \draw[file tree line, \mod] (s) -- (anchor) -- (e);
           }{
             \draw[file tree line] (s) -- (anchor);

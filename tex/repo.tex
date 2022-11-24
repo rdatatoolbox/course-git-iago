@@ -3,7 +3,7 @@
 
 \tikzmath{
   \CommitRadius = 3;
-  \CommitScale = 2.0;
+  \CommitScale = 1.8;
   \CommitMargins = 5;
   \CommitBaseHeight = -2;
   \CommitSpacing = 11;
@@ -11,7 +11,7 @@
   \LabelIsep = 2;
   \CommitArrowShorten = \CommitRadius + 2;
   \LabelArrowShorten = \CommitRadius + 2;
-  \CommandScale = 4;
+  \CommandScale = 3.5;
   \CommandPad = 2;
 }
 \tikzset{
@@ -31,8 +31,8 @@
   %
   remote pointer/.style={-Stealth, line width=2, Brown2, dashed},
   remote flow/.style={remote pointer, solid, line width=20},
-  remote arrow label/.style={scale=\NormalScale, above=2, sloped,
-                       draw, solid, inner sep = 2},
+  remote arrow label/.style={scale=1.8, above=2, sloped,
+                             draw, solid, inner sep = 2},
   remote arrow label hi/.style={remote arrow label, fill=Yellow1},
   %
   command text/.style={scale=\CommandScale, Dark4},
@@ -41,27 +41,27 @@
   command box/.style={draw=Dark3, fill=Light4, line width=2.5},
   command box error/.style={command box, draw=Red2, fill=Light3},
   command box ok/.style={command box, draw=Green5, fill=Light3},
+  url/.style={fill=Light2},
+  url hi/.style={url, fill=Yellow1},
 }
 
 % Draw one commit with hash and message, use [offset] to align with 2 branches.
-% [name][hash-offset][messa-offset]{location}{hash}{message}
-\NewDocumentCommand{\Commit}{ O{commit-center} O{0} O{0} m m m }{
-
-  \coordinate[alias=\LatestRepo-#1] (#1) at (#4);
-  \path[commit] (#1) circle (\CommitRadius);
+% [type][hash-offset][message-offset]{location}{hash}{message}
+\NewDocumentCommand{\Commit}{ O{} O{0} O{0} m m m }{
+  \coordinate[alias=\LatestRepo-#5] (#5) at (#4);
+  \path[commit] (#5) circle (\CommitRadius);
 
   % Hash.
   \node[scale=\CommitScale, anchor=base east, hash,
         alias=\LatestRepo-#5-hash] (#5-hash)
-    at ($(#1) - (\CommitRadius + \CommitMargins + #2, -\CommitBaseHeight)$)
-    {\tt #5};
+    at ($(#5) - (\CommitRadius + \CommitMargins + #2, -\CommitBaseHeight)$)
+    {\Code{#5}};
 
   % Message.
   \node[scale=\CommitScale, anchor=base west, Dark4,
         alias=\LatestRepo-#5-message] (#5-message)
-    at ($(#1) + (\CommitRadius + \CommitMargins - #2 + #3, \CommitBaseHeight)$)
-    {\tt #6};
-
+    at ($(#5) + (\CommitRadius + \CommitMargins - #2 + #3, \CommitBaseHeight)$)
+    {\Code{#6}};
 }
 
 % Chain commits together.
@@ -91,6 +91,7 @@
     % so they remain aligned.
     \ifstrequal{#3}{double}{\tikzmath{ \Hoff = \H; }}{}
     \foreach \type/\hash/\message [count=\i] in {#6} {\ifcsempty{hash}{}{
+      \IfSubStr{\type}{fade}{\begin{scope}[transparency group, opacity=.3]}{}
       \ifnumcomp{\i}{=}{1}{
         \Commit[\hash][0][\Hoff]{#2}{\hash}{\message}
         % Keep track of last commit on the straight/parallel chain..
@@ -104,11 +105,11 @@
         % Y: fork commit (the first on the parallel chain).
         % H: commit on the parallel chain.
         % A: merge commit (on the straight chain).
-        \ifdefstring{\type}{Y}{
+        \IfSubStr{\type}{Y}{
           \coordinate (parallel) at (straight);
         }{}
-        \ifboolexpr{ test {\ifdefstring{\type}{H}}
-                  or test {\ifdefstring{\type}{Y}} }{
+        \ifboolexpr{ test {\IfSubStr{\type}{H}}
+                  or test {\IfSubStr{\type}{Y}} }{
           \ifdefstring{\merged}{1}{
             \draw[commit arrow] (parallel) -- (\hash);
           }{
@@ -125,8 +126,8 @@
           \tikzmath{ \H = 0; }
         }
         \ifstrequal{#3}{mixed}{\tikzmath{\Hoff = \H;}}{}
-        \Commit[\hash][\H][\Hoff]{\hash}{\hash}{\message}
-        \ifdefstring{\type}{A}{%
+        \Commit[\type][\H][\Hoff]{\hash}{\hash}{\message}
+        \IfSubStr{\type}{A}{%
           \coordinate[below=\CommitRadius + .5*\CommitSpacing of \hash] (c);
           \draw[commit arrow] (parallel)
                   .. controls (parallel |- c) .. (\hash);
@@ -136,6 +137,7 @@
         }{}
     }
     \coordinate (last) at (\hash);
+    \IfSubStr{\type}{fade}{\end{scope}}{}
   }}
   % Labels go here, within the embed tikz picture,
   % so they are calculated in the global repo dimensions.
@@ -162,28 +164,34 @@
    {\coordinate[right=#5 of #4] (c);}}
    {\coordinate (c) at ($(#4) + (#5)$);}
 
-  \node[label #3, anchor=#2, alias=\LatestRepo-#1, name path=rec] (#1) at (c) {\tt #7};
+  \node[label #3, anchor=#2, alias=\LatestRepo-#1, name path=rec] (#1) at (c) {\Code{#7}};
+
+  \IfSubStr{#3}{hi}{%
+    \HighlightSquareRing[1]{#1}
+  }{
+    \HighlightSquareRing[1][0]{#1} % Phantom to not shift when highlighting.
+  }
 
   \ifstrequal{#6}{noarrow}{}{
-      \IfSubStr{#4}{base}{
-        % Assume we're pointing to another label, horizontally.
-        \IfSubStr{#4}{west}{
-          \coordinate (s) at ($(#1.base east) + (-.5, #6)$);
+        \IfSubStr{#4}{base}{
+          % Assume we're pointing to another label, horizontally.
+          \IfSubStr{#4}{west}{
+            \coordinate (s) at ($(#1.base east) + (-.5, #6)$);
+          }{
+            \coordinate (s) at ($(#1.base west) + (+.5, #6)$);
+          }
+          \coordinate[above=#6 of #4] (e);
+          \draw[label #3, shorten >=0] (s) -- (e);
         }{
-          \coordinate (s) at ($(#1.base west) + (+.5, #6)$);
+          % Assume we're pointing to a commit.
+          \begin{scope}[local to=#1]
+            \coordinate (s) at (#6);
+          \end{scope}
+          % Calculate intersection to correctly clip the arrow.
+          \path[name path=arrow] (s) -- (#4);
+          \path[name intersections={of=rec and arrow, by=cross}];
+          \draw[label #3, shorten >=\CommitArrowShorten mm] (cross) -- (#4);
         }
-        \coordinate[above=#6 of #4] (e);
-        \draw[label #3, shorten >=0] (s) -- (e);
-      }{
-        % Assume we're pointing to a commit.
-        \begin{scope}[local to=#1]
-          \coordinate (s) at (#6);
-        \end{scope}
-        % Calculate intersection to correctly clip the arrow.
-        \path [name path=arrow] (s) -- (#4);
-        \path [name intersections={of=rec and arrow, by=cross}];
-        \draw[label #3, shorten >=\CommitArrowShorten mm] (cross) -- (#4);
-      }
   }
 
 }
@@ -213,15 +221,20 @@
   \IntensiveCoordinates{Canvas}{c}{#2}
   \node[repo label, anchor=#1] at (c) {\textit{#3}};
 }
-\newcommand{\UrlHighlight}[1]{%
-  \tikz[baseline={(n.base)},inner sep=.5]{\node[fill=Yellow1](n){#1};}%
+% {style}{text}
+\newcommand{\UrlHighlight}[2]{%
+  \tikz[baseline={(n.base)},inner sep=.5]{\node[#1](n){\vphantom{My}#2};}%
 }
 % [highlight]{anchor}{location}{account}{name}
 \NewDocumentCommand{\RemoteRepoLabel}{ O{} m m m m }{{%
-  \def\account{\IfSubStr{#1}{account}{\UrlHighlight{#4}}{#4}}
-  \def\name   {\IfSubStr{#1}{name}{\UrlHighlight{#5}}{#5}}
+  \def\account{\IfSubStr{#1}{account}
+    {\UrlHighlight{url hi}{#4}}
+    {\UrlHighlight{url}{#4}}}
+  \def\name{\IfSubStr{#1}{name}
+    {\UrlHighlight{url hi}{#5}}
+    {\UrlHighlight{url}{#5}}}
   \AutomaticCoordinates{c}{#3}
-  \node[remote label, anchor=#2] at (c) {\tt https://github.com/\account/\name};
+  \node[remote label, anchor=#2] at (c) {\Code{https://github.com/\account/\name}};
 }}
 
 
@@ -236,7 +249,7 @@
     \end{scope}
   }{
     \draw[remote pointer] (s) to[bend #3=#2]
-      node[remote arrow label #4] {\tt #1} (e);
+      node[remote arrow label #4] {\Code{#1}} (e);
   }
 }
 
@@ -247,7 +260,7 @@
 \NewDocumentCommand{\Command}{ O{base} O{} O{.5} O{5} O{} m m }{
   \begin{pgfonlayer}{command-text}
     \AutomaticCoordinates{c}{#6}
-    \node[command text #5, anchor=#1] (command) at (c) {\tt \$ #7};
+    \node[command text #5, anchor=#1] (command) at (c) {\Code{\$ #7}};
     \coordinate (pad) at (\CommandPad, \CommandPad);
     \coordinate (low) at ($(command.south west) - (pad)$);
     \coordinate (up) at ($(command.north east) + (pad)$);
@@ -281,8 +294,13 @@
   \end{pgfonlayer}
 }
 
-% Special highlight for git keywords.
-\newcommand{\gkw}[1]{%
+% Highlight command parts.
+% {color}{text}
+\newcommand{\CommandHighlight}[2]{%
   \tikz[baseline={(n.base)}]
-    {\node[fill=Blue1](n){\vphantom{git}\tt\textbf{#1}};}%
+    {\node[fill=#1](n){\vphantom{git}\Code{#2}};}%
 }
+% Git keywords.
+\newcommand{\gkw}[1]{\CommandHighlight{Blue1}{#1}}
+% Just highlight one word in particular..
+\newcommand{\ghi}[1]{\CommandHighlight{Light3}{#1}}

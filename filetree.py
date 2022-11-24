@@ -22,7 +22,6 @@ FileTreeLines = ListBuilder(FileTreeLine, ",\n", tail=True)
 
 class FileTree(TextModifier):
     """One chain of files, arranged top-down.
-    Be careful that the last one within every folder must be marked with 'last'.
     Keep it simple as subsubfolders and 'step out' are not exactly used/implemented yet.
     """
 
@@ -99,14 +98,10 @@ class FileTree(TextModifier):
         if "stepin" in words:
             self._sub = True
             words -= {"connect"}
-            words.add("last")
         elif self._sub:
-            self.remove_from_type(self.list[-1], "last")
             words.add("connect")
-            words.add("last")
         else:
             words -= {"connect"}
-            words -= {"last"}
         file.type = " ".join(words)
         return self.list.append(file)
 
@@ -121,17 +116,11 @@ class FileTree(TextModifier):
         file.type = " ".join(kws)
 
     def remove(self, file: PlaceHolder):
-        """Remove from the chain, taking care of preserving the 'last' keyword."""
+        """Remove from the chain, taking care of preserving the structure."""
         i = self.list.list.index(file)
         removed = self.list.list.pop(i)
-        was_last = len(self.list) == i
         if "stepin" in removed.type:
-            assert was_last
             self._sub = False
-        elif was_last:
-            new_last = self.list[-1]
-            if self._sub and not "stepin" in new_last.type:
-                self.add_to_type(new_last, "last")
 
     def __getitem__(self, name: str) -> PlaceHolder:  # FileTreeLine
         """Search and retrieve file by name (*not* filename)."""
@@ -142,18 +131,11 @@ class FileTree(TextModifier):
 
     def all_mod(self, mod: str) -> "FileTree":
         """Set all content to the same mode,
-        temporary setting all items to 'last'.
         Reset with mod='0'.
         """
         assert self.list.list
-        for i, file in enumerate(self.list):
+        for file in self.list:
             file.mod = mod
-            if "connect" in file.type or "stepin" in file.type:
-                if mod == "0":
-                    if i < len(self.list) - 1:
-                        self.remove_from_type(file, "last")
-                else:
-                    self.add_to_type(file, "last")
         return self
 
     def highlight(self, name, pad=1.2) -> PlaceHolder:  # HighlightSquare

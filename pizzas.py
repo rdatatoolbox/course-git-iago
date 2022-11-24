@@ -329,7 +329,7 @@ class PizzasSlide(Slide):
         command.on().text = "git checkout 17514f2"
         STEP()
 
-        command.on().text = r"git checkout \textbf{main}"
+        command.on().text = r"git checkout \ghi{main}"
         repo.highlight("main")
         STEP()
 

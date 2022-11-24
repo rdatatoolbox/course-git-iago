@@ -8,8 +8,11 @@
 
 \usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
+\usepackage{droidsansmono}
 \usepackage{mathptmx}
 \usepackage[T1]{fontenc}
+\newfontfamily\DroidSansMono{Droid Sans Mono}
+\newcommand{\Code}[1]{{\DroidSansMono#1}}
 
 \usepackage{xstring}
 \usepackage{xkeyval}
@@ -206,11 +209,10 @@
 \AutomaticCoordinates{up}{+.35, +.95}
 \AutomaticCoordinates{lexical}{0, -.1}
 \AutomaticCoordinates{semantic}{0, .3}
-
-\path[fill=Blue1, draw=Blue3, line width=2] (low) rectangle (up);
-
 \coordinate (mid) at ($(up)!.5!(low)$);
 \coordinate (bottom) at (low-|mid);
+
+\path[fill=Blue1, draw=Blue3, line width=2] (low) rectangle (up);
 
 \path[fill=Brown1, draw=Brown3, line width=2, fill opacity=0.5]
   (lexical) ellipse (63 and 70);
@@ -220,19 +222,19 @@
 
 \node[scale=\LargeScale, anchor=south, above=27 of bottom] (line) {no conflicts};
 \node[below=3 of line, scale=\LargeScale] (line) {\it (happy zone)};
-\node[below=1 of line, scale=\LargeScale, Green5] (line) {\rotatebox{-90}{\tt :)}};
+\node[below=1 of line, scale=\LargeScale, Green5] (line) {\rotatebox{-90}{\Code{:)}}};
 
 \node[below=25 of lexical, scale=\LargeScale] (line) {\bf lexical conflicts};
-\node[below=3 of line, scale=\LargeScale] (line) {\tt >> git conflicts <<};
-\node[below=1 of line, scale=\LargeScale, Red4] (line) {\rotatebox{-90}{\tt :(}};
+\node[below=3 of line, scale=\LargeScale] (line) {\Code{>> git conflicts <<}};
+\node[below=1 of line, scale=\LargeScale, Red4] (line) {\rotatebox{-90}{\Code{:(}}};
 
 \node[above=44 of semantic, scale=\LargeScale] (line) {\bf semantic conflicts};
-\node[below=3 of line, scale=\LargeScale] (line) {\tt >> git sees not <<};
-\node[below=-2 of line, scale=\LargeScale, Red4] (line) {\rotatebox{-90}{\tt :(}};
+\node[below=3 of line, scale=\LargeScale] (line) {\Code{>> git sees not <<}};
+\node[below=-2 of line, scale=\LargeScale, Red4] (line) {\rotatebox{-90}{\Code{:(}}};
 
-\node[scale=\LargeScale] at ($(lexical)!.6!(semantic)$) (line) {\tt >> git catches you <<};
+\node[scale=\LargeScale] at ($(lexical)!.6!(semantic)$) (line) {\Code{>> git catches you <<}};
 \node[below=3 of line, scale=\LargeScale] (line) {\it (happy zone)};
-\node[below=1 of line, scale=\LargeScale, Green5] (line) {\rotatebox{-90}{\tt :)}};
+\node[below=1 of line, scale=\LargeScale, Green5] (line) {\rotatebox{-90}{\Code{:)}}};
 
 \Diff[m][west][left][8]{-1, .5}{MY\_VERSION}{
   0/{my line},

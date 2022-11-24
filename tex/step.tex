@@ -25,12 +25,13 @@
 \begin{step}%
 \begin{tikzpicture}
 
-  \pgfdeclarelayer{highlight}
+  % Tikz's 'z' system is not awesome, so many layers end up very specific :\
+  \pgfdeclarelayer{highlight-behind}
   \pgfdeclarelayer{background}
   \pgfdeclarelayer{command-background}
   \pgfdeclarelayer{command-text}
   \pgfsetlayers{
-    highlight,
+    highlight-behind,
     background,
     main,
     command-background,
@@ -84,7 +85,7 @@
 % Factorize bounding box highlighting procedures.
 % [padding]{lower}{upper}
 \NewDocumentCommand{\HighlightSquare}{ O{5} m m }{
-  \begin{pgfonlayer}{highlight}%
+  \begin{pgfonlayer}{highlight-behind}%
     \coordinate (pad) at (#1, #1);
     \coordinate (lower) at ($(#2) - (pad)$);
     \coordinate (upper) at ($(#3) + (pad)$);
@@ -93,20 +94,18 @@
 }
 
 % Hollow bounding box, useful for branches labels.
-% [padding]{node}
-\NewDocumentCommand{\HighlightSquareRing}{ O{1} m }{
-  \begin{pgfonlayer}{main}%
+% [padding][opacity][color]{node}
+\NewDocumentCommand{\HighlightSquareRing}{ O{1} O{1} O{Yellow1} m }{
     \coordinate (pad) at (#1, #1);
-    \coordinate (lo) at ($(#2.south west) - (pad)$);
-    \coordinate (up) at ($(#2.north east) + (pad)$);
-    \draw[Yellow1, line width=4] (lo) rectangle (up);
-  \end{pgfonlayer}
+    \coordinate (lower) at ($(#4.south west) - (pad)$);
+    \coordinate (upper) at ($(#4.north east) + (pad)$);
+    \path[draw=#3, draw opacity=#2, line width=4] (lower) rectangle (upper);
 }
 
 % Highlight with background shade instead.
 % [padding]{node}
 \NewDocumentCommand{\HighlightShade}{ O{5} m }{
-  \begin{pgfonlayer}{highlight}%
+  \begin{pgfonlayer}{highlight-behind}%
     \coordinate (pad) at (#1, #1);
     \coordinate (lower) at ($(#2.south west) - (pad)$);
     \coordinate (upper) at ($(#2.north east) + (pad)$);

@@ -1,7 +1,7 @@
 """Craft and edit a simple repo.
 """
 
-from typing import List
+from typing import Callable, Iterable, List, cast
 
 from document import FindPlaceHolder, HighlightSquare, HighlightSquareRing
 from modifiers import (
@@ -49,9 +49,8 @@ class Repo(TextModifier):
 
         self.checkout_branch(self.branch.name)
 
-        # Highlighting, the kind which must happen after *the* strict \Repo command.
+        # Highlighting.
         self.hi_square = HighlightSquare.new("", "").off()  # Filled on render.
-        self.hi_rings: List[PlaceHolder] = []  # HighlightSquareRing
 
     @property
     def name(self):
@@ -79,7 +78,7 @@ class Repo(TextModifier):
                 + [self.current]
             )
             + "}\n"
-            + "\n".join(m.render() for m in [self.hi_square] + self.hi_rings)
+            + self.hi_square.render()
         )
 
     def pre_render(self):
@@ -118,11 +117,12 @@ class Repo(TextModifier):
             def point_to_commit(branch: PlaceHolder):
                 branch.ref = commit.hash
                 branch.anchor = "south west"
+                # Fine-tweak against 'main' here
+                # because adjustement actually depends on content.
                 if last_commit:
-                    branch.offset = "55:13"
-                    branch.start = "-.5, 0"
+                    branch.offset = "45:13"
+                    branch.start = "-.5, 0" if branch.name == "main" else "-.8, 0"
                 else:
-                    # Fine-tweak here because adjustement actually depends on content.
                     branch.offset = "20:13" if branch.name == "main" else "17:11"
                     branch.start = "-.9, 0"
 
@@ -318,14 +318,6 @@ class Repo(TextModifier):
             return self
         label = self[name]
         label.style = "hi" if on else ""
-        # Update ring labels.
-        if on:
-            self.hi_rings.append(HighlightSquareRing.new(name))
-        else:
-            for ring in self.hi_rings:
-                if ring.node == name:
-                    self.hi_rings.remove(ring)
-                    break
         return self
 
     def hi_on(self, label: str | None = None) -> "Repo":
@@ -357,6 +349,49 @@ class Repo(TextModifier):
         self.commits.clear()
         self.labels.clear()
         return self
+
+    def iter(self, start=1, end: int | None = None) -> Iterable[PlaceHolder]:  # Commit
+        """Iterate on requested commits, counting from 1, end included, -1 is end."""
+        start -= 1
+        if end is None:
+            end = start + 1
+        elif end == -1:
+            end = len(self.commits)
+        yield from self.commits.list[start:end]
+
+    @staticmethod
+    def fade_commit(c: PlaceHolder) -> PlaceHolder:  # Commit
+        kws = set(c.type.split())
+        kws.add("fade")
+        c.type = " ".join(kws)
+        return c
+
+    @staticmethod
+    def unfade_commit(c: PlaceHolder) -> PlaceHolder:  # Commit
+        c.type = " ".join(set(c.type.split()) - {"fade"})
+        return c
+
+    def alter_commits(
+        self,
+        alter: Callable,
+        start: int | List[str] = 1,
+        end: int | None = None,
+    ):
+        """Apply one function to a range of commits, given by either integers or hashes."""
+        if type(start) is int:
+            for commit in self.iter(start, end):
+                alter(commit)
+        else:
+            hashes = cast(List[str], start)
+            for commit in self.commits:
+                if commit.hash in hashes:
+                    alter(commit)
+
+    def fade_commits(self, *args, **kwargs):
+        self.alter_commits(self.fade_commit, *args, **kwargs)
+
+    def unfade_commits(self, *args, **kwargs):
+        self.alter_commits(self.unfade_commit, *args, **kwargs)
 
     def trim(self, n: int) -> "Repo":
         """Remove the first n commits (and associated branches) to make room."""
