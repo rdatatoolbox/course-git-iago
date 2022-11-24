@@ -51,30 +51,39 @@
 \graphicspath{{./pictures}}
 
 \foreach \bx/\filename in {
-  GitLogo/git_logo.png,
+  Calzone/calzone.png,
+  Capricciosa/capricciosa.png,
+  ConsoleGit/console_git.png,
+  Diavola/diavola.jpg,
+  DuckFlames/duck_flames.png,
+  DuckShy/duck_shy.png,
   GithubLogo/github_logo.png,
   GitlabLogo/gitlab_logo.png,
-  RStudioExtension/rstudio_extension.png,
-  ConsoleGit/console_git.png,
-  VSCodeExtension/vscode_extension.png,
-  VariousPizzas/pizzas_various.jpg,
+  GitLogo/git_logo.png,
+  Hazard/hazard.png,
+  Heart/heart.jpg,
   Margherita/margherita.png,
-  Regina/regina.jpg,
-  Diavola/diavola.jpg,
-  Capricciosa/capricciosa.png,
-  Calzone/calzone.png,
   Marinara/marinara.jpg,
-  OMG/omg.png,
-  NowWhat/now_what.jpeg,
+  Matrix/matrix.jpeg,
   MyMachine/my_machine.png,
-  TheirMachine/their_machine.png,
+  NowWhat/now_what.jpeg,
+  OMG/omg.png,
   PullRequestButton/pull_request_button.jpg,
-  SyncForkButton/sync_fork_button.png
-}{%
+  Regina/regina.jpg,
+  Relief/relief.jpg,
+  RStudioExtension/rstudio_extension.png,
+  Skull/skull.pdf,
+  Surprise/surprise.jpg,
+  SyncForkButton/sync_fork_button.png,
+  TheirMachine/their_machine.png,
+  Think/think.jpg,
+  VariousPizzas/pizzas_various.jpg,
+  VSCodeExtension/vscode_extension.png,
+}{\ifcsempty{bx}{}{%
   \xsavebox{\bx}{\includegraphics[width=1cm]{\filename}}
   \expandafter\xdef\csname Pic\bx\endcsname##1##2%
     {\resizebox{##1}{##2}{\xusebox{\bx}}}
-}
+}}
 
 \input{palette}
 \input{step}
@@ -203,16 +212,20 @@
 \renewcommand{\SubTitleText}{What a ``conflict'' means}
 \renewcommand{\PageNumText}{4}
 \renewcommand{\Progress}{4/4}
+\tikzset{
+  zone/.style={scale=\LargeScale, Dark4},
+  zone code/.style={scale=2.3},
+}
 \Step{
 
-\AutomaticCoordinates{low}{-.35, -.95}
-\AutomaticCoordinates{up}{+.35, +.95}
+\AutomaticCoordinates{low}{-.34, -.95}
+\AutomaticCoordinates{up}{+.34, +.95}
 \AutomaticCoordinates{lexical}{0, -.1}
 \AutomaticCoordinates{semantic}{0, .3}
 \coordinate (mid) at ($(up)!.5!(low)$);
 \coordinate (bottom) at (low-|mid);
 
-\path[fill=Blue1, draw=Blue3, line width=2] (low) rectangle (up);
+\path[fill=Blue1, draw=Blue3, line width=2, fill opacity=1] (low) rectangle (up);
 
 \path[fill=Brown1, draw=Brown3, line width=2, fill opacity=0.5]
   (lexical) ellipse (63 and 70);
@@ -220,33 +233,38 @@
 \path[fill=Purple1, draw=Purple3, line width=2, fill opacity=0.5]
   (semantic) ellipse (63 and 70);
 
-\node[scale=\LargeScale, anchor=south, above=27 of bottom] (line) {no conflicts};
-\node[below=3 of line, scale=\LargeScale] (line) {\it (happy zone)};
-\node[below=1 of line, scale=\LargeScale, Green5] (line) {\rotatebox{-90}{\Code{:)}}};
+\node[zone, anchor=south, above=27 of bottom] (line) {no conflicts};
+\node[zone, below=3 of line] (line) {\it (happy zone)};
+\node[zone, below=1 of line, Green5] (line) {\rotatebox{-90}{\Code{:)}}};
 
-\node[below=25 of lexical, scale=\LargeScale] (line) {\bf lexical conflicts};
-\node[below=3 of line, scale=\LargeScale] (line) {\Code{>> git conflicts <<}};
-\node[below=1 of line, scale=\LargeScale, Red4] (line) {\rotatebox{-90}{\Code{:(}}};
+\node[zone, below=25 of lexical] (line) {\bf lexical conflicts};
+\node[zone code, below=3 of line] (line) {\Code{>> git conflicts <<}};
+\node[zone, below=1 of line, Red4] (line) {\rotatebox{-90}{\Code{:(}}};
 
-\node[above=44 of semantic, scale=\LargeScale] (line) {\bf semantic conflicts};
-\node[below=3 of line, scale=\LargeScale] (line) {\Code{>> git sees not <<}};
-\node[below=-2 of line, scale=\LargeScale, Red4] (line) {\rotatebox{-90}{\Code{:(}}};
+\node[zone, above=44 of semantic] (line) {\bf semantic conflicts};
+\node[zone code, below=3 of line] (line) {\Code{>> git sees not <<}};
+\node[zone, below=-2 of line, Red4] (line) {\rotatebox{-90}{\Code{:(}}};
 
-\node[scale=\LargeScale] at ($(lexical)!.6!(semantic)$) (line) {\Code{>> git catches you <<}};
-\node[below=3 of line, scale=\LargeScale] (line) {\it (happy zone)};
-\node[below=1 of line, scale=\LargeScale, Green5] (line) {\rotatebox{-90}{\Code{:)}}};
+\node[zone code] at ($(lexical)!.55!(semantic)$) (line) {\Code{>>git's got your back<<}};
+\node[zone, below=3 of line] (line) {\it (happy zone)};
+\node[zone, below=1 of line, Green5] (line) {\rotatebox{-90}{\Code{:)}}};
 
-\Diff[m][west][left][8]{-1, .5}{MY\_VERSION}{
+\Diff[m][north west][left][8]{-1, .8}{MY\_VERSION}{
   0/{my line},
 }
 
-\Diff[m][east][right][8]{1, .5}{THEIR\_VERSION}{
+\Diff[m][north east][right][8]{1, .8}{THEIR\_VERSION}{
   0/{their line},
 }
 
 \Diff[0][north][merge][8]{$(left.north)!.5!(right.north)$}{MERGED\_VERSION}{
   0/{merged line},
 }
+
+\AutomaticCoordinates{c}{Canvas.center}
+\node[scale=\LargeScale, Dark4] (message) at (c) {\bf message};
+\coordinate[below=1 of message] (c);
+\draw[line width = 2, Dark4] (c-|message.west) -- (c-|message.east);
 
 } % ENDSLIDE
 

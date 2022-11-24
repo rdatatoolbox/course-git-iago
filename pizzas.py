@@ -73,7 +73,7 @@ class PizzasSlide(Slide):
             """,
             """
 
-            Where to find the pizza in the project:
+            Where to find the pizzas in the project:
 
             - __Margherita__: `./margherita.md`
             - __Regina__: `./regina.md`
@@ -129,7 +129,7 @@ class PizzasSlide(Slide):
             diff.on()
             .set_name("diff1")
             .set_filename(f_readme.filename)
-            .append_text(readme_text[0])
+            .insert_lines(readme_text[0])
         )
         STEP()
 
@@ -181,7 +181,7 @@ class PizzasSlide(Slide):
             step.add_epilog(diff.copy().clear())
             .set_name("diff2")
             .set_filename(f_margherita.filename)
-            .append_text(margherita_text[0])
+            .insert_lines(margherita_text[0])
         )
         d_margherita.intro.location = "below=8 of diff1.south east"
         image.on().file = "Margherita"
@@ -215,7 +215,7 @@ class PizzasSlide(Slide):
         STEP()
 
         # Editing Margherita
-        d_margherita.append_text(margherita_text[1])
+        d_margherita.insert_lines(margherita_text[1])
         image.on()
         STEP()
 
@@ -239,13 +239,13 @@ class PizzasSlide(Slide):
         STEP()
 
         # Adding Regina.
-        d_readme.append_text(readme_text[1])
+        d_readme.insert_lines(readme_text[1], 2)
         f_regina = files.append("regina.md")
         d_regina = (
             step.add_epilog(diff.copy().clear())
             .set_name("diff3")
             .set_filename(f_regina.filename)
-            .append_text(regina_text[0])
+            .insert_lines(regina_text[0])
         )
         d_regina.intro.location = d_margherita.intro.location.replace("diff1", "diff2")
         image.on().file = "Regina"
@@ -297,7 +297,7 @@ class PizzasSlide(Slide):
         d_regina.set_mod("-", 1, -1)
         STEP()
 
-        d_readme.delete_lines(1, -1)
+        d_readme.erase_lines(2, -1)
         f_readme.mod = d_readme.mod = "0"
         files.remove(f_regina)
         d_regina.off()
@@ -313,8 +313,8 @@ class PizzasSlide(Slide):
 
         files.remove(f_margherita)
         d_margherita.off()
-        d_readme.delete_lines(0, -1)
-        d_readme.append_text(readme_text[0])
+        d_readme.clear()
+        d_readme.insert_lines(readme_text[0])
         repo.checkout_detached("d1e8c8c")
         STEP()
 
@@ -336,7 +336,8 @@ class PizzasSlide(Slide):
         f_margherita = files.append("margherita.md")
         f_regina = files.append("regina.md")
         d_margherita.on()
-        d_regina.on().set_mod("0", 1, -1).mod = '0'
+        d_regina.on().reset()
+        d_readme.insert_lines(readme_text[1], 2)
         repo.checkout_branch("main")
         STEP()
 

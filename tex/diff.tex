@@ -12,12 +12,14 @@
 \colorlet{minus}{Red5}
 \colorlet{unchanged}{black}
 \colorlet{modified}{Orange3}
+\colorlet{conflict}{Purple3}
 \tikzset{
   sign icon/.style={line width=2.0},
   +/.style={plus},
   -/.style={minus},
   0/.style={unchanged},
   m/.style={modified},
+  c/.style={conflict},
 }
 
 % Plus icon.
@@ -55,6 +57,27 @@
 }}
 \newcommand{\Tilde}{\usebox{\TildeBox}}
 
+% Lightning icon.
+\newsavebox{\LightningBox}
+\savebox{\LightningBox}{\tikz[sign icon, baseline={(0, \SignBaseHeight)}]{
+  \tikzmath{
+    \a = 80;  \AL = 1.5;
+    \b = 75; \BL = .3;
+    \c = 30;  \CL = 1;
+  }
+  \coordinate (A) at (\a:\AL*\SignRadius);
+  \coordinate (B) at (\b:\BL*\SignRadius);
+  \coordinate (C) at (\c:\CL*\SignRadius);
+  \coordinate (A') at (\a-180:\AL*\SignRadius);
+  \coordinate (B') at (\b-180:\BL*\SignRadius);
+  \coordinate (C') at (\c-180:\CL*\SignRadius);
+  \fill[c] (A) -- (B) -- (C) -- (A') -- (B') -- (C') -- cycle;
+}}
+\newcommand{\Lightning}{\usebox{\LightningBox}}
+
+% Phantom icon, useful for alignment.
+\newcommand{\PhantomSign}{\phantom{\usebox{\PlusBox}}}
+
 % [mode][anchor][name][line spacing]{location}{name}{mod/lines}
 \NewDocumentCommand{\Diff}{ O{0} O{center} O{file} O{5} m m m }{
   % Not exactly the corner we expect, but at least the one of first line.
@@ -66,16 +89,22 @@
       \begin{scope}[local bounding box=fileview,
                     every node/.style={scale=\CodeScale}]
 
-        \foreach \sign/\line [count=\i] in {#7} {\ifcsempty{sign}{}{
+        \foreach \mod/\line [count=\i] in {#7} {\ifcsempty{mod}{}{
+          % Define this for \dhi.
+          \def\DiffBackgroundCol{\ifdefstring{\mod}{+}{fill=plus}
+                                {\ifdefstring{\mod}{-}{fill=minus}
+                                {\ifdefstring{\mod}{0}{fill=none}
+                                {\ifdefstring{\mod}{m}{fill=modified}
+                                {}}}}} % For \dhi.
           % First line has special positionning.
-            \ifnumcomp{\i}{=}{1}{
-              \node[anchor=north west,\sign] (line-1) {\Code{\line}};
-            }{
-              \tikzmath{\prev = int(\i - 1);}
-              \node[below=#4 of line-\prev.base west, \sign,
-                anchor=base west]
-                  (line-\i) {\Code{\line}};
-            }
+          \ifnumcomp{\i}{=}{1}{
+            \node[anchor=north west,\mod] (line-1) {\Code{\line}};
+          }{
+            \tikzmath{\prev = int(\i - 1);}
+            \node[below=#4 of line-\prev.base west, \mod,
+              anchor=base west]
+                (line-\i) {\Code{\line}};
+          }
         }}
 
     % File background.
@@ -88,23 +117,29 @@
 
     % Setup file name label.
       \node[above=\FileNameMargins+\CodeMargins of line-1.north west,
-      scale=\FileNameScale, anchor=south west, #1]
+            scale=\FileNameScale, anchor=south west, #1]
         (filename) {\Code{#6}};
     \coordinate (pad) at (\FileNameMargins-\eps, \FileNameMargins);
     \coordinate (lower) at ($(filename.south west) - (pad)$);
     \coordinate (upper) at ($(filename.north east) + (pad)$);
     \draw (lower) -- (lower |- upper) -- (upper) -- (upper |- lower);
-    \ifstrequal{#1}{0}{}{%
-      \node[anchor=base east] at ($(filename.base west) + (-\SignOffset, .5)$)
-      {\ifstrequal{#1}{m}{\Tilde}{\ifstrequal{#1}{+}{\Plus}{\Minus}}};
-    }
+    \begin{pgfonlayer}{background}
+      \fill[white] ($(lower) + (0, \eps)$) rectangle (upper);
+    \end{pgfonlayer}
+    \node[anchor=base east] at ($(filename.base west) + (-\SignOffset, .5)$)
+      {\ifstrequal{#1}{0}{\PhantomSign}
+      {\ifstrequal{#1}{m}{\Tilde}
+      {\ifstrequal{#1}{c}{\Lightning}
+      {\ifstrequal{#1}{+}{\Plus}{\Minus}}}}};
 
     % Second pass to append diff signs.
     \foreach \sign/\line [count=\i] in {#7} {\ifcsempty{sign}{}{
       \node[left=\SignOffset of line-\i.base west, anchor=base east]
+        {\ifdefstring{\sign}{0}{\PhantomSign}
         {\ifdefstring{\sign}{m}{\Tilde}
+        {\ifdefstring{\sign}{c}{\Lightning}
         {\ifdefstring{\sign}{+}{\Plus}
-        {\ifdefstring{\sign}{-}{\Minus}{}}}};
+        {\ifdefstring{\sign}{-}{\Minus}{}}}}}};
     }}
 
   }};
@@ -112,3 +147,9 @@
 
 }
 
+% Highlight changed content in diffed line (uses \CurrentMod)
+\newcommand{\dhi}[1]{%
+  \tikz[baseline={(n.base)}]{%
+    \node[fill=Blue1, fill opacity=0.3, text opacity=1,
+          scale=1/\CodeScale] (n) {\vphantom{My}\Code{#1}};}%
+}

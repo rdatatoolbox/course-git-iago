@@ -262,7 +262,7 @@ class RemoteSlide(Slide):
         STEP()
 
         their_flow = step.add_epilog(
-            RemoteArrow("remote.center", "above=30 of theirmachine", bend="40")
+            RemoteArrow("remote.center", "above=30 of theirmachine", bend="30")
         )
         STEP()
 
@@ -298,6 +298,16 @@ class RemoteSlide(Slide):
         STEP()
 
         my_opacity(1)
+        STEP()
+
+        step.bump_epilog(pic).on().which = "Matrix"
+        pic.location = '0, 0'
+        h = pic.height
+        pic.height = '12cm'
+        STEP()
+
+
+        pic.off().height = h
         STEP()
 
         my_opacity()
