@@ -295,12 +295,12 @@
 }
 
 % Highlight command parts.
-% {color}{text}
-\newcommand{\CommandHighlight}[2]{%
+% [vphantom]{color}{text}
+\NewDocumentCommand{\CommandHighlight}{ O{Ip} m m }{%
   \tikz[baseline={(n.base)}]
-    {\node[fill=#1](n){\vphantom{git}\Code{#2}};}%
+    {\node[fill=#2](n){\vphantom{#1}\Code{#3}};}%
 }
 % Git keywords.
-\newcommand{\gkw}[1]{\CommandHighlight{Blue1}{#1}}
+\NewDocumentCommand{\gkw}{ O{Ip} m }{\CommandHighlight[#1]{Blue1}{#2}}
 % Just highlight one word in particular..
-\newcommand{\ghi}[1]{\CommandHighlight{Light3}{#1}}
+\NewDocumentCommand{\ghi}{ O{Ip} m }{\CommandHighlight[#1]{Light3}{#2}}

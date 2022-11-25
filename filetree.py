@@ -115,12 +115,16 @@ class FileTree(TextModifier):
         kws.add(keyword)
         file.type = " ".join(kws)
 
-    def remove(self, file: PlaceHolder):
+    def pop(self, file: PlaceHolder | str) -> PlaceHolder:  # FileTreeLine
         """Remove from the chain, taking care of preserving the structure."""
+        if type(file) is str:
+            file = self[file]
+        file = cast(PlaceHolder, file)
         i = self.list.list.index(file)
         removed = self.list.list.pop(i)
         if "stepin" in removed.type:
             self._sub = False
+        return removed
 
     def __getitem__(self, name: str) -> PlaceHolder:  # FileTreeLine
         """Search and retrieve file by name (*not* filename)."""

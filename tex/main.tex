@@ -108,7 +108,7 @@
 \renewcommand{\SubTitleText}{Git and git clients}
 \renewcommand{\PageNumText}{1}
 \newlength{\U}
-\Step{1/4}{
+\Step{1/5}{
   \begin{scope}[inner sep=10]
     \setlength{\U}{75mm}
     \tikzmath{
@@ -158,7 +158,7 @@
 \renewcommand{\TitleText}{The Pizzas Repository}
 \renewcommand{\SubTitleText}{Crafting your first commits}
 \renewcommand{\PageNumText}{2}
-\Step{2/4}{
+\Step{2/5}{
 
   \FileTree[north west][files]{-1, 1}{
     folder/+/root/rootfolder,
@@ -174,11 +174,113 @@
 
 } % ENDSLIDE
 
+% SLIDE Staging
+\renewcommand{\TitleText}{Recording a Commit}
+\renewcommand{\SubTitleText}{The whole process}
+\renewcommand{\PageNumText}{3}
+\tikzmath{
+  \CommitSpacingSafe = \CommitSpacing;
+  \CommitSpacing = 184; % Highjack locally to better see.
+}
+\tikzset{
+  area/.style 2 args={fill=#1, draw=#2,
+                      line width=2,
+                      fill opacity=.6,
+                      minimum width=250mm,
+                      minimum height=46mm,
+                      alias=highest,
+                      anchor=south,
+                      },
+  area label/.style={scale=\LargeScale, anchor=base west, Dark3,
+                     right=3 of highest.west},
+  machine/.style={line width=2, draw=Dark1, fill=Light3},
+  machine label/.style={anchor=base west, scale=2.4, Dark3},
+  not left/.style={right=#1, anchor=west}, % -_-"
+  not right/.style={left=#1, anchor=east},
+}
+\NewDocumentCommand{\MakeArea}{ O{highest.north} m m m m }{
+  \AutomaticCoordinates{c}{#1}
+  \node[area={#2}{#3}] (#4) at (c) {};
+  \node[area label] (#4-label) {#5};
+  % Provide adjusted coordinates for lines match.
+  \coordinate[above=3*\eps of #4.south east] (#4-s);
+  \coordinate[below=3*\eps of #4.north east] (#4-e);
+}
+% [slide][crit][labeled][offset]{side}{start}{end}{text}
+\NewDocumentCommand{\SwitchArrow}{ O{.35} O{.35} O{0} O{5} m m m m }{{
+  \ifstrequal{#5}{left}{
+    \IntensiveCoordinates{#6}{s}{-#1, -.2}
+    \IntensiveCoordinates{#7}{e}{-#1+.10, -.2}
+  }{
+    \IntensiveCoordinates{#6}{s}{#1+.10, .23}
+    \IntensiveCoordinates{#7}{e}{#1, .23}
+  }
+  \begin{pgfonlayer}{command-background}
+  \begin{scope}[transparency group, opacity=0.7]
+    \draw[-Stealth, Brown3, line width=10]
+      (s) to[bend left=25]
+      % Coordinate escapes the group.
+      node[name=n, not #5=#4, pos=#2, anchor=center] {} (e);
+  \end{scope}
+  \end{pgfonlayer}
+  \ifstrequal{#3}{0}{}{
+  \begin{pgfonlayer}{command-text}
+    \node[command text, scale=.7, not #5, anchor=center] (n) at (n) {\Code{#8}};
+  \end{pgfonlayer}
+  \begin{pgfonlayer}{command-background}
+    \coordinate (pad) at (1, 1);
+    \coordinate (low) at ($(n.south west) - (pad)$);
+    \coordinate (up) at ($(n.north east) + (pad)$);
+    \path[command box, line width=1, fill=Light2] (low) rectangle (up);
+  \end{pgfonlayer}
+  }
+}}
+\Step{3/5}{
+
+\Repo[south west][repo][simple][1]{-1, -.76}{}{}
+
+\MakeArea[.17, -.9]{Blue1}{Blue3}{last}{in Commit}
+\MakeArea{Purple1}{Purple3}{editor}{\hspace{-.2em}\it<in editor>}
+\MakeArea{Yellow1}{Yellow5}{modified}{Modified}\node[area label, below=1 of modified-label] {(*)};
+\MakeArea{Green1}{Green3}{stage}{Stage}\node[area label, below=1 of stage-label] {(*)};
+\MakeArea{Blue1}{Blue3}{next}{in Commit}
+
+\coordinate (right) at (Canvas.east);
+\coordinate[left=6 of right] (left);
+\path[machine] (last-s) rectangle (next-e -| right);
+\node[machine label, right=6 of stage.east] {on disk};
+
+\path[machine, fill=white] (editor-s) rectangle (editor-e -| left);
+\node[machine label, right=2 of editor.east] {in RAM};
+
+\IntensiveCoordinates{last}{c}{.35, 0}
+\FileTree[base west][unit-tree]{c}{file/0/filenode/filename.ext}
+
+\SwitchArrow[.49][.35][1][0]{left}{last}{editor}{<keyboard>}
+\SwitchArrow[.54][.35][1][0]{left}{editor}{modified}{<ctrl-S>}
+\SwitchArrow[.59][.35][1][0]{left}{modified}{stage}{\$ git \gkw{add}}
+\SwitchArrow[.67][.35][1][0]{left}{stage}{next}{\$ git \gkw{commit}}
+\SwitchArrow[.60][.35][1][22]{right}{next}{stage}{\$ git reset \CommandHighlight{Green1}{--soft}}
+\SwitchArrow[.70][.40][1][20]{right}{stage}{modified}{\$ git \gkw{reset}}
+\SwitchArrow[.80][.35][0][0]{right}{next}{last}{}
+\SwitchArrow[.80][.35][0][0]{right}{stage}{last}{}
+\SwitchArrow[.80][.19][1][25]{right}{modified}{last}{\$ git reset \CommandHighlight{Red1}{--hard}}
+\SwitchArrow[.60][.35][1][1]{right}{editor}{last}{<ctrl-Z>}
+
+\Diff[+][north east][gitignore][8]{left=3 of editor.north west}{.gitignore}{
+  +/{\# Files to ignore:},
+}
+
+} % ENDSLIDE
+
 % SLIDE Remote
 \renewcommand{\TitleText}{Collaborating}
 \renewcommand{\SubTitleText}{Working with a remote}
-\renewcommand{\PageNumText}{3}
-\Step{3/4}{
+\renewcommand{\PageNumText}{4}
+\tikzmath{
+  \CommitSpacing = \CommitSpacingSafe;
+}
+\Step{4/5}{
 
   \FileTree[north west][myfiles]{-1, 1}{
     folder/+/root/rootfolder,
@@ -207,12 +309,12 @@
 % SLIDE Conflicts
 \renewcommand{\TitleText}{Resolving Conflicts}
 \renewcommand{\SubTitleText}{What a ``conflict'' means}
-\renewcommand{\PageNumText}{4}
+\renewcommand{\PageNumText}{5}
 \tikzset{
   zone/.style={scale=\LargeScale, Dark4},
   zone code/.style={scale=2.3},
 }
-\Step{4/4}{
+\Step{5/5}{
 
 \AutomaticCoordinates{low}{-.34, -.95}
 \AutomaticCoordinates{up}{+.34, +.95}

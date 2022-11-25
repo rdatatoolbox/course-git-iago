@@ -1,7 +1,7 @@
 """Modifiers concerned with individual slides and their very concrete content.
 """
 
-from modifiers import TextModifier, render_method
+from modifiers import TextModifier
 
 
 class Step(TextModifier):

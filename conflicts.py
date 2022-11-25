@@ -619,10 +619,10 @@ class ConflictsSlide(Slide):
         pic.height = "10cm"
         (shy := step.add_epilog(pic.copy()).on()).which = "DuckShy"
         shy.anchor = "north west"
-        shy.location = "-.80, .71"
+        shy.location = "-.75, .71"
         (flames := step.add_epilog(pic.copy()).on()).which = "DuckFlames"
         flames.anchor = "north east"
-        flames.location = ".90, .90"
+        flames.location = ".99, .91"
         STEP()
 
         (think := step.add_epilog(pic.copy()).on()).which = "Think"

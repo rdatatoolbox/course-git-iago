@@ -3,7 +3,7 @@
 
 from typing import Callable, Iterable, List, cast
 
-from document import FindPlaceHolder, HighlightSquare, HighlightSquareRing
+from document import FindPlaceHolder, HighlightSquare
 from modifiers import (
     AnonymousPlaceHolder,
     Builder,
@@ -13,6 +13,47 @@ from modifiers import (
     TextModifier,
     render_method,
 )
+
+CommitModifier, Commit = MakePlaceHolder("Commit", r"<type>/<hash>/{<message>}")
+
+HeadModifier, Head = FindPlaceHolder("Head")
+BranchModifier, Branch = FindPlaceHolder("Branch")
+RemoteBranchModifier, RemoteBranch = FindPlaceHolder("RemoteBranch")
+HighlightCommitModifier, HighlightCommit = FindPlaceHolder("HighlightCommit")
+
+
+LocalRepoLabelModifier, LocalRepoLabel = FindPlaceHolder("LocalRepoLabel")
+RemoteRepoLabelModifier, RemoteRepoLabel = FindPlaceHolder("RemoteRepoLabel")
+RemoteArrowModifier, RemoteArrow = FindPlaceHolder("RemoteArrow")
+CommandModifier, Command = FindPlaceHolder("Command")
+
+
+class _LabelBuilder(Builder[PlaceHolder]):
+    """Artificial singleton to automatically parse into correct label
+    and create the correct label based on the given arguments.
+    """
+
+    def parse(self, input: str) -> PlaceHolder:
+        for PHB in (Head, Branch, RemoteBranch, LocalRepoLabel):
+            try:
+                return PHB.parse(input)
+            except ValueError:
+                pass
+        return RemoteRepoLabel.parse(input)
+
+    def new(self, *args) -> PlaceHolder:
+        """Assuming 'new' is undesired for RepoLabels,
+        decide based on number of arguments.
+        """
+        if len(args) == 3:
+            return Head.new(*args)
+        else:
+            return Branch.new(*args)
+
+
+LabelBuilder = _LabelBuilder()
+
+Commits = ListBuilder(Commit, ",\n", tail=True)
 
 
 class Repo(TextModifier):
@@ -52,6 +93,9 @@ class Repo(TextModifier):
         # Highlighting.
         self.hi_square = HighlightSquare.new("", "").off()  # Filled on render.
 
+        # Lower to see just the commits.
+        self._render_labels = True
+
     @property
     def name(self):
         return self.intro.name
@@ -72,10 +116,16 @@ class Repo(TextModifier):
             + "}{\n"
             + "\n".join(
                 m.render()
-                for m in ([self.branch] if self.branch else [])
-                + [l for labs in self.labels for l in labs]
-                + ([] if self.detached else [self.head])
-                + [self.current]
+                for m in (
+                    (
+                        ([self.branch] if self.branch else [])
+                        + [l for labs in self.labels for l in labs]
+                        + ([] if self.detached else [self.head])
+                        + [self.current]
+                    )
+                    if self._render_labels
+                    else ([self.current])
+                )
             )
             + "}\n"
             + self.hi_square.render()
@@ -402,45 +452,3 @@ class Repo(TextModifier):
                 self.branch not in labels
             )  # Don't trim the branch checked out though.
         return self
-
-
-CommitModifier, Commit = MakePlaceHolder("Commit", r"<type>/<hash>/{<message>}")
-
-HeadModifier, Head = FindPlaceHolder("Head")
-BranchModifier, Branch = FindPlaceHolder("Branch")
-RemoteBranchModifier, RemoteBranch = FindPlaceHolder("RemoteBranch")
-HighlightCommitModifier, HighlightCommit = FindPlaceHolder("HighlightCommit")
-
-
-LocalRepoLabelModifier, LocalRepoLabel = FindPlaceHolder("LocalRepoLabel")
-RemoteRepoLabelModifier, RemoteRepoLabel = FindPlaceHolder("RemoteRepoLabel")
-RemoteArrowModifier, RemoteArrow = FindPlaceHolder("RemoteArrow")
-CommandModifier, Command = FindPlaceHolder("Command")
-
-
-class _LabelBuilder(Builder[PlaceHolder]):
-    """Artificial singleton to automatically parse into correct label
-    and create the correct label based on the given arguments.
-    """
-
-    def parse(self, input: str) -> PlaceHolder:
-        for PHB in (Head, Branch, RemoteBranch, LocalRepoLabel):
-            try:
-                return PHB.parse(input)
-            except ValueError:
-                pass
-        return RemoteRepoLabel.parse(input)
-
-    def new(self, *args) -> PlaceHolder:
-        """Assuming 'new' is undesired for RepoLabels,
-        decide based on number of arguments.
-        """
-        if len(args) == 3:
-            return Head.new(*args)
-        else:
-            return Branch.new(*args)
-
-
-LabelBuilder = _LabelBuilder()
-
-Commits = ListBuilder(Commit, ",\n", tail=True)

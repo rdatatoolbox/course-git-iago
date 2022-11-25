@@ -74,12 +74,13 @@
     {\Code{#5\IfSubStr{#1}{folder}{/}{}}};
 
   % Status sign.
-  \ifdefstring{#2}{0}{}{
-    \node[anchor=base west, right=\SignOffset of #4-filename]
-      {\ifdefstring{#2}{m}{\Tilde}
-      {\ifdefstring{#2}{+}{\Plus}
-      {\ifdefstring{#2}{-}{\Minus}
-      {[#2]}}}};} % (fallback to writing unexpected mode literally)
+  \node[anchor=base west, right=\SignOffset of #4-filename]
+    {\ifdefstring{#2}{0}{\PhantomSign}
+    {\ifdefstring{#2}{c}{\Lightning}
+    {\ifdefstring{#2}{m}{\Tilde}
+    {\ifdefstring{#2}{+}{\Plus}
+    {\ifdefstring{#2}{-}{\Minus}
+    {[#2]}}}}}}; % (fallback to writing unexpected mode literally)
 
 }}
 

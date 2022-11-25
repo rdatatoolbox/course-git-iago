@@ -5,7 +5,7 @@ from typing import List, Tuple, cast
 from diffs import DiffedFile
 from document import Slide
 from filetree import FileTree
-from modifiers import AnonymousPlaceHolder, render_method
+from modifiers import AnonymousPlaceHolder
 from repo import Command, Repo
 from steps import Step
 
@@ -141,7 +141,7 @@ class PizzasSlide(Slide):
         command.on().text = r"git \gkw{init}"
         STEP()
 
-        files.remove(f_readme)
+        files.pop(f_readme)
         git = files.append(".git", "folder stepin", "+")
         f_readme = files.append("README.md")
         STEP()
@@ -299,7 +299,7 @@ class PizzasSlide(Slide):
 
         d_readme.erase_lines(2, -1)
         f_readme.mod = d_readme.mod = "0"
-        files.remove(f_regina)
+        files.pop(f_regina)
         d_regina.off()
         STEP()
 
@@ -311,7 +311,7 @@ class PizzasSlide(Slide):
         repo.highlight("HEAD")
         STEP()
 
-        files.remove(f_margherita)
+        files.pop(f_margherita)
         d_margherita.off()
         d_readme.clear()
         d_readme.insert_lines(readme_text[0])

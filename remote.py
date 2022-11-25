@@ -6,14 +6,7 @@ from typing import List, cast
 from diffs import DiffedFile
 from document import Slide
 from filetree import FileTree
-from modifiers import (
-    AnonymousPlaceHolder,
-    ConstantBuilder,
-    ListBuilder,
-    ListOf,
-    Regex,
-    render_method,
-)
+from modifiers import AnonymousPlaceHolder, ConstantBuilder, ListBuilder, ListOf, Regex
 from repo import Command, RemoteArrow, RemoteRepoLabel, Repo
 from steps import Step
 
@@ -401,7 +394,7 @@ class RemoteSlide(Slide):
         my_repo.checkout_branch("main")
         my_repo.hi_off("github/main")
         my_repo.highlight("main")
-        my_files.remove(my_capricciosa)
+        my_files.pop(my_capricciosa)
         my_readme.mod = "0"
         STEP()
 
@@ -605,7 +598,7 @@ class RemoteSlide(Slide):
         STEP()
 
         my_repo.checkout_detached("0fcd744")
-        my_files.remove(my_calzone)
+        my_files.pop(my_calzone)
         my_calzone_hi.off()
         my_marinara = my_files.append("marinara.md")
         my_marinara_hi = my_files.highlight("marinara")
@@ -613,7 +606,7 @@ class RemoteSlide(Slide):
 
         my_command.on().text = r"git checkout \ghi{main}"
         my_repo.checkout_branch("main")
-        my_files.remove(my_marinara)
+        my_files.pop(my_marinara)
         my_marinara_hi.off()
         my_files.append(my_calzone)
         my_calzone_hi.on()

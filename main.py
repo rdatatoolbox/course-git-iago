@@ -10,6 +10,7 @@ from conflicts import ConflictsSlide
 from document import Document
 from pizzas import PizzasSlide
 from remote import RemoteSlide
+from staging import StagingSlide
 
 main_tex = Path("tex", "main.tex")
 with open(main_tex, "r") as file:
@@ -18,10 +19,11 @@ with open(main_tex, "r") as file:
 doc = Document(content)
 
 # Extract all slides individually.
-(clients, pizzas, remote, conflicts) = cast(
+(clients, pizzas, stage, remote, conflicts) = cast(
     Tuple[
         ClientsSlide,
         PizzasSlide,
+        StagingSlide,
         RemoteSlide,
         ConflictsSlide,
     ],
@@ -31,6 +33,7 @@ doc = Document(content)
 # Animate, taking care of dependencies among slides.
 clients.animate()
 repo, filetree, diffs = pizzas.animate()
+stage.animate()
 remote.animate(repo, filetree, diffs)
 conflicts.animate()
 
@@ -45,6 +48,6 @@ for i_slide, slide in enumerate(doc.slides):
         i_step += 1
         step.progress = f"{i_step}/{n_steps}"
 
-doc.generate_tex()
+doc.generate_tex(266)
 
 doc.compile("res.pdf")

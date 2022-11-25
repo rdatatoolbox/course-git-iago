@@ -296,6 +296,25 @@ class Regex(TextModifier):
         self.__dict__[name] = value
 
 
+class RegexBuilder(Builder[Regex]):
+    """Useful when the same regex needs be reused.
+    Cannot construct without input, so no new() method provided.
+    """
+
+    def __init__(
+        self,
+        pattern: str,
+        groups: str,
+        **kwargs: Builder,
+    ):
+        self.pattern = re.compile(pattern)
+        self.groups = groups
+        self.builders = kwargs
+
+    def parse(self, input: str) -> Regex:
+        return Regex(input, self.pattern, self.groups, **self.builders)
+
+
 class PlaceHolder(Regex):
     """Trivial Regex object with simple placeholders,
     with simplified API and constructible from simple patterns with special <>.

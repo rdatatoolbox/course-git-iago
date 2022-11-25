@@ -237,11 +237,10 @@ class Slide(TextModifier):
     """
 
     def __init__(self, name: str, input: str, document: Document):
-        """Assume there is only one step during parsing.
-        """
+        """Assume there is only one step during parsing."""
         self._document = document
         self.name = name
-        prefix = r'\Step{'
+        prefix = r"\Step{"
         head, body = input.split(prefix)
         self.header = SlideHeader.parse(head)
         # Match name against Step type names to find the correct type.
