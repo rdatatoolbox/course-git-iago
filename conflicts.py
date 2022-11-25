@@ -65,7 +65,8 @@ class Arrow(TextModifier):
 
 
 class ConflictsStep(Step):
-    def __init__(self, input: str):
+    def parse_body(self):
+        input = self.body
         chunks = input.split("\n\n")
         it = iter(chunks)
         self.coordinates = Constant(next(it))
@@ -92,8 +93,7 @@ class ConflictsStep(Step):
         except StopIteration:
             pass
 
-    @render_method
-    def render(self) -> str:
+    def render_body(self) -> str:
         return "\n\n".join(
             m.render()
             for m in [

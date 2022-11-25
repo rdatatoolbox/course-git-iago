@@ -18,10 +18,11 @@ ListOfChunks = ListBuilder(
 class ClientsStep(Step):
     """Good example of simple slide to animate simply with various chunks."""
 
-    def __init__(self, input: str):
+    def parse_body(self):
+        input = self.body
         self.list = ListOfChunks.parse(input)
 
-    def render(self) -> str:
+    def render_body(self) -> str:
         return self.list.render()
 
 

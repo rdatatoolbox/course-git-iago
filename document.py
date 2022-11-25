@@ -218,8 +218,7 @@ SlideHeaderModifier, SlideHeader = MakePlaceHolder(
         r"""
         \renewcommand{\TitleText}{<title>}
         \renewcommand{\SubTitleText}{<subtitle>}
-        \renewcommand{\PageNumText}{<page>}
-        \renewcommand{\Progress}{<progress>}<tail>
+        \renewcommand{\PageNumText}{<page>}<tail>
         """
     ).strip(),
 )
@@ -238,12 +237,13 @@ class Slide(TextModifier):
     """
 
     def __init__(self, name: str, input: str, document: Document):
+        """Assume there is only one step during parsing.
+        """
         self._document = document
         self.name = name
-        bodies = input.split(r"\Step{")
-        header = bodies.pop(0).strip()
-        bodies = [b.rsplit("}", 1)[0].strip() for b in bodies]
-        self.header = SlideHeader.parse(header)
+        prefix = r'\Step{'
+        head, body = input.split(prefix)
+        self.header = SlideHeader.parse(head)
         # Match name against Step type names to find the correct type.
         found = False
         StepType = None
@@ -255,7 +255,7 @@ class Slide(TextModifier):
             raise RuntimeError(
                 f"Could not match name {repr(self.name)} with a subclass of `Step`."
             )
-        self.steps = [cast(Step, cast(Callable, StepType)(b)) for b in bodies]
+        self.steps = [cast(Step, cast(Callable, StepType)(prefix + body))]
 
     def copy(self):
         """Don't copy backref to the document,
@@ -273,7 +273,7 @@ class Slide(TextModifier):
         return " {}\n{}\n{} ".format(
             self.name,
             self.header.render(),
-            "\n".join("\\Step{{\n{}  \n}}".format(s.render()) for s in self.steps),
+            "\n".join(s.render() for s in self.steps),
         )
 
     def pop_step(self) -> Step:

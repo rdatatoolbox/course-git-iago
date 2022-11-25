@@ -36,11 +36,15 @@ conflicts.animate()
 
 # Setup page numbers and progress.
 total = len(doc.slides)
-for i, slide in enumerate(doc.slides):
-    pagenum = str(i + 1)
+n_steps = sum(len(slide.steps) for slide in doc.slides)
+i_step = 0
+for i_slide, slide in enumerate(doc.slides):
+    pagenum = str(i_slide + 1)
     slide.header.page = pagenum
-    slide.header.progress = f"{pagenum}/{total}"
+    for step in slide.steps:
+        i_step += 1
+        step.progress = f"{i_step}/{n_steps}"
 
-doc.generate_tex("Conflicts")
+doc.generate_tex()
 
 doc.compile("res.pdf")

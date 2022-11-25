@@ -13,7 +13,8 @@ from steps import Step
 class PizzasStep(Step):
     """The slide with repo / project folder / file content."""
 
-    def __init__(self, input: str):
+    def parse_body(self):
+        input = self.body
         chunks = input.split("\n\n")
         it = iter(chunks)
         self.filetree = FileTree(next(it))
@@ -26,8 +27,7 @@ class PizzasStep(Step):
         except StopIteration:
             pass
 
-    @render_method
-    def render(self) -> str:
+    def render_body(self) -> str:
         return "\n\n".join(
             m.render()
             for m in [

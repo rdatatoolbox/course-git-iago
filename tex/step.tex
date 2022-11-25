@@ -18,9 +18,9 @@
   progress remaining/.style={fill=Yellow1},
 }
 
-% Uses \TitleText, \SubTitleText, \PageNumText, \Progress
-% {content}
-\NewDocumentCommand{\Step}{ +m }{
+% Uses \TitleText, \SubTitleText, \PageNumText
+% {progress}{content}
+\NewDocumentCommand{\Step}{ m +m }{
 
 \begin{step}%
 \begin{tikzpicture}
@@ -66,7 +66,7 @@
     ($(TitleBar.south east) + (-\eps, \ProgressHeight)$);
   \coordinate[right=\eps of TitleBar.south west] (lower);
   \path[progress remaining] (lower) rectangle (upper);
-  \coordinate[left=(1-\Progress)*\ScreenWidth of upper] (upper);
+  \coordinate[left=(1-#1)*\ScreenWidth of upper] (upper);
   \path[progress made] (lower) rectangle (upper);
 
   % The "Canvas" refers to only the white area reserved for actual drawing,
@@ -75,7 +75,7 @@
   \node[anchor=south west] at (offset) (Canvas) {\tikz{
     \path (offset) rectangle ($(TitleBar.south east) - (offset)$);}};
 
-  #1
+  #2
 
 \end{tikzpicture}%
 \end{step}

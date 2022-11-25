@@ -22,7 +22,8 @@ Images = ListBuilder(ConstantBuilder, "\n", head=False, tail=True)
 
 
 class RemoteStep(Step):
-    def __init__(self, input: str):
+    def parse_body(self):
+        input = self.body
         chunks = input.split("\n\n")
         it = iter(chunks)
         self.myfiles = FileTree(next(it))
@@ -39,8 +40,7 @@ class RemoteStep(Step):
         except StopIteration:
             pass
 
-    @render_method
-    def render(self) -> str:
+    def render_body(self) -> str:
         return "\n\n".join(
             m.render()
             for m in [
@@ -301,11 +301,10 @@ class RemoteSlide(Slide):
         STEP()
 
         step.bump_epilog(pic).on().which = "Matrix"
-        pic.location = '0, 0'
+        pic.location = "0, 0"
         h = pic.height
-        pic.height = '12cm'
+        pic.height = "12cm"
         STEP()
-
 
         pic.off().height = h
         STEP()
@@ -408,8 +407,8 @@ class RemoteSlide(Slide):
 
         hi_readme.off()
         command.off()
-        my_repo.hi_off('main')
-        my_repo.hi_off('HEAD')
+        my_repo.hi_off("main")
+        my_repo.hi_off("HEAD")
         STEP()
 
         # Merging commit.
@@ -545,7 +544,7 @@ class RemoteSlide(Slide):
         # My commit cannot be pushed anymore.
         my_command.on()
         my_command.location = ".0, -.35"
-        my_command.end = '.1'
+        my_command.end = ".1"
         my_repo.highlight("main")
         remote.highlight("main")
         my_pointer.style = "hi"
@@ -568,7 +567,7 @@ class RemoteSlide(Slide):
         STEP()
 
         my_flow.on().end = "$(mine-4ac80b2-hash.north east) + (15, 40)$"
-        my_flow.bend = '25'
+        my_flow.bend = "25"
         my_pointer.style = "hi"
         remote.highlight("main")
         my_repo.highlight("github/main")
