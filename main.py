@@ -48,6 +48,6 @@ for i_slide, slide in enumerate(doc.slides):
         i_step += 1
         step.progress = f"{i_step}/{n_steps}"
 
-doc.generate_tex("Forking")
+doc.generate_tex(220, 236)
 
 doc.compile("res.pdf")

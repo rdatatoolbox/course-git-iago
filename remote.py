@@ -542,6 +542,7 @@ class RemoteSlide(Slide):
         STEP()
 
         c_marinara = remote.add_commit(c_marinara.copy())
+        their_repo.remote_to_branch("origin/main")
         remote.hi_on(c_marinara)
         their_repo.hi_off("main")
         remote.hi_off("main")
@@ -840,3 +841,190 @@ class RemoteSlide(Slide):
         right.labels.pop(2)
         right.labels.pop(2)
         STEP()
+
+        # Now back to our three-way repos to propagate the merge.
+        for m in (left, right, merge_title, rebase_title):
+            m.off()
+        for m in (
+            my_repo,
+            remote,
+            my_pointer,
+            their_pointer,
+            their_repo,
+            my_files,
+            their_files,
+            pic_my,
+            pic_github,
+            pic_their,
+            url,
+        ):
+            m.on()
+        repos_safe = []
+        for r in (my_repo, remote, their_repo):
+            r.intro.alignment = "double"
+            r.intro.anchor = "base"
+            repos_safe.append(r.copy())
+        my_repo.left_labels.add("github/main")
+        my_repo.intro.location = "-.60, -.95"
+        my_pointer.start = "-.6, -.4"
+        remote.intro.location = "0, .1"
+        their_repo.intro.location = "+.52875, -.95"
+        their_pointer.start = ".75, -.4"
+        their_pointer.end = ".25, .1"
+        SPLIT("PropagateMerge", "Sharing integrated work", "(Merge style)")
+
+        # Merge.
+        (mc := my_command).on().text = r"git \gkw{merge} github/main"
+        mc.location, mc.start, mc.end = "0, -.2", "-.3, -.5", ".3"
+        my_pointer.start = "-.6, -.2"
+        c = my_repo.add_commit("A", "5d3fd0b", "Merge commit.")
+        my_repo.hi_on(c)
+        my_files.append(my_marinara)
+        [m.on() for m in (my_marinara_hi, my_calzone_hi, my_readme_hi)]
+        STEP()
+
+        my_repo.hi_off(c)
+        my_command.off()
+        [m.off() for m in (my_marinara_hi, my_calzone_hi, my_readme_hi)]
+        STEP()
+
+        # Push merge commit to remote.
+        my_command.on().text = "git push github main"
+        (mf := my_flow).on()
+        mf.start, mf.end = "-.70, -.2", mf.start
+        mf.side = "left"
+        remote.clear().populate(my_repo)
+        my_repo.remote_to_branch("github/main")
+        my_repo.left_labels.remove("github/main")
+        [remote.hi_on(h) for h in ["4ac80b2", "5d3fd0b"]]
+        # Why would the bases not stick? :(
+        remote.intro.location = ".0875, .1"
+        my_repo.intro.location = "-.5475, -.95"
+        STEP()
+
+        my_command.off()
+        my_flow.off()
+        [remote.hi_off(h) for h in ["4ac80b2", "5d3fd0b"]]
+        STEP()
+
+        # Pull merge commit on their side.
+        their_opacity(1)
+        (tc := their_command).on().text = r"git \gkw{pull} origin main"
+        tc.location = my_command.location
+        tc.start, tc.end = "$(theirs.west) + (-5, 5)$", ".6"
+        (tf := their_flow).on()
+        tf.start, tf.end = "remote.east", ".75 ,-.2"
+        tf.side = "left"
+        their_repo.clear().populate(remote)
+        their_repo.add_remote_branch("origin/main")
+        [their_repo.hi_on(h) for h in ["4ac80b2", "5d3fd0b"]]
+        their_pointer.start = ".70, -.25"
+        their_calzone = their_files.append(my_calzone)
+        their_calzone_hi = their_files.highlight("calzone")
+        [m.on() for m in (their_marinara_hi, their_calzone_hi, their_readme_hi)]
+        # Why would the bases not stick either? :(
+        their_repo.intro.location = "+.60, -.95"
+        STEP()
+
+        [m.off() for m in (their_marinara_hi, their_calzone_hi, their_readme_hi)]
+        [their_repo.hi_off(h) for h in ["4ac80b2", "5d3fd0b"]]
+        their_flow.off()
+        their_command.off()
+        STEP()
+
+        files_6 = files_4 + ("my_marinara", "their_calzone")
+        for f in files_6:
+            eval(f + "_hi").on()
+        STEP()
+
+        for f in files_6:
+            eval(f + "_hi").off()
+        STEP()
+
+        # Same with rebase instead.
+        for r, s in zip((my_repo, remote, their_repo), repos_safe):
+            r.intro.alignment = "double"
+            r.intro.anchor = "base"
+            r.intro.alignment = "mixed"
+            r.clear().populate(s)
+        their_opacity()
+        my_repo.add_remote_branch('github/main')
+        my_repo.move_branch('main', '4ac80b2')
+        their_repo.add_remote_branch('origin/main')
+        my_files.pop('marinara')
+        their_files.pop('calzone')
+        my_repo.intro.location = "-.60, -.95"
+        my_pointer.start = "-.6, -.35"
+        remote.intro.location = "0, .1"
+        their_repo.intro.location = "+.5495, -.95"
+        their_pointer.start = ".75, -.4"
+        their_pointer.end = ".25, .1"
+        SPLIT("PropagateRebase", "Sharing integrated work", "(Rebase style)")
+
+        # Rebase.
+        (mc := my_command).on().text = r"git \gkw{rebase} github/main"
+        mc.start, mc.end = "-.25, -.5", ".4"
+        c = my_repo['4ac80b2']
+        my_repo.fade_commit(c)
+        my_repo.hi_on(c)
+        c = my_repo.add_commit("I", "394e864", c.message)
+        my_repo.hi_on(c)
+        my_pointer.start = "above=5 of mine-main.north"
+        my_files.append(my_marinara)
+        [m.on() for m in (my_marinara_hi, my_calzone_hi, my_readme_hi)]
+        STEP()
+
+        my_repo.commits.list.pop(2)
+        my_repo.labels.pop(2)
+        my_pointer.start = "above=10 of mine-main.north"
+        # Why would the bases not stick? :(
+        my_repo.intro.location = "-.6205, -.95"
+        STEP()
+
+        my_repo.hi_off(c)
+        my_command.off()
+        [m.off() for m in (my_marinara_hi, my_calzone_hi, my_readme_hi)]
+        STEP()
+
+        # Push rebased commit to remote.
+        my_command.on().text = "git push github main"
+        my_flow.on()
+        c = remote.add_commit(c.copy())
+        remote.hi_on(c)
+        my_repo.remote_to_branch("github/main")
+        # Why would the bases not stick? :(
+        remote.intro.location = ".0875, .1"
+        STEP()
+
+        # Pull rebased commit on their side.
+        remote.hi_off(c)
+        their_opacity(1)
+        my_command.off()
+        my_flow.off()
+        their_command.on().text = r"git \gkw{pull} origin main"
+        their_flow.on()
+        their_pointer.start = '.7, -.35'
+        c = their_repo.add_commit(c.copy())
+        their_repo.hi_on(c)
+        their_repo.remote_to_branch('origin/main')
+        their_calzone = their_files.append(my_calzone)
+        their_calzone_hi = their_files.highlight("calzone")
+        [m.on() for m in (their_marinara_hi, their_calzone_hi, their_readme_hi)]
+        # Why would the bases not stick either? :(
+        their_repo.intro.location = "+.60, -.95"
+        STEP()
+
+        [m.off() for m in (their_marinara_hi, their_calzone_hi, their_readme_hi)]
+        their_repo.hi_off(c)
+        their_flow.off()
+        their_command.off()
+        STEP()
+
+        for f in files_6:
+            eval(f + "_hi").on()
+        STEP()
+
+        for f in files_6:
+            eval(f + "_hi").off()
+        STEP()
+

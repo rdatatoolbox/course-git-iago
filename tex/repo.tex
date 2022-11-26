@@ -80,7 +80,7 @@
   \def\LatestRepo{#2}
 
   \AutomaticCoordinates{repoloc}{#5}
-  \node[anchor=#1] (#2) at (repoloc) {\tikz[remember picture,
+  \node[anchor=#1] (#2) at (repoloc) {\tikz[remember picture, baseline={(#2)},
                                             transparency group, opacity=#4]{
     \def\merged{1} % Lower when there are two chains.
     % Vertical/Horizontal commit spacing.
