@@ -46,22 +46,25 @@
 }
 
 % Draw one commit with hash and message, use [offset] to align with 2 branches.
-% [type][hash-offset][message-offset]{location}{hash}{message}
-\NewDocumentCommand{\Commit}{ O{} O{0} O{0} m m m }{
-  \coordinate[alias=\LatestRepo-#5] (#5) at (#4);
-  \path[commit] (#5) circle (\CommitRadius);
+% [type][hash-offset][message-offset][type]{location}{hash}{message}
+\NewDocumentCommand{\Commit}{ O{} O{0} O{0} O{} m m m }{
+  \coordinate[alias=\LatestRepo-#6] (#6) at (#5);
+  \path[commit] (#6) circle (\CommitRadius);
 
   % Hash.
   \node[scale=\CommitScale, anchor=base east, hash,
-        alias=\LatestRepo-#5-hash] (#5-hash)
-    at ($(#5) - (\CommitRadius + \CommitMargins + #2, -\CommitBaseHeight)$)
-    {\Code{#5}};
+        alias=\LatestRepo-#6-hash] (#6-hash)
+    at ($(#6) - (\CommitRadius + \CommitMargins + #2, -\CommitBaseHeight)$)
+    {\Code{#6}};
 
   % Message.
   \node[scale=\CommitScale, anchor=base west, Dark4,
-        alias=\LatestRepo-#5-message] (#5-message)
-    at ($(#5) + (\CommitRadius + \CommitMargins - #2 + #3, \CommitBaseHeight)$)
-    {\Code{#6}};
+        alias=\LatestRepo-#6-message] (#6-message)
+    at ($(#6) + (\CommitRadius + \CommitMargins - #2 + #3, \CommitBaseHeight)$)
+    {\Code{#7}};
+
+  \IfSubStr{#4}{hi}{\IfSubStr{#4}{fade}{\def\op{.2}}{\def\op{1}}}{\def\op{0}}
+  \HighlightSquare[.8][\op]{#6-message.south west}{#6-message.north east}
 }
 
 % Chain commits together.
@@ -93,7 +96,7 @@
     \foreach \type/\hash/\message [count=\i] in {#6} {\ifcsempty{hash}{}{
       \IfSubStr{\type}{fade}{\begin{scope}[transparency group, opacity=.3]}{}
       \ifnumcomp{\i}{=}{1}{
-        \Commit[\hash][0][\Hoff]{#2}{\hash}{\message}
+        \Commit[\hash][0][\Hoff][\type]{#2}{\hash}{\message}
         % Keep track of last commit on the straight/parallel chain..
         \coordinate (straight) at (\hash);
         \coordinate (parallel) at (\hash); % (but they start merged)
@@ -126,7 +129,7 @@
           \tikzmath{ \H = 0; }
         }
         \ifstrequal{#3}{mixed}{\tikzmath{\Hoff = \H;}}{}
-        \Commit[\type][\H][\Hoff]{\hash}{\hash}{\message}
+        \Commit[\type][\H][\Hoff][\type]{\hash}{\hash}{\message}
         \IfSubStr{\type}{A}{%
           \coordinate[below=\CommitRadius + .5*\CommitSpacing of \hash] (c);
           \draw[commit arrow] (parallel)

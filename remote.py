@@ -6,7 +6,14 @@ from typing import List, cast
 from diffs import DiffedFile
 from document import Slide
 from filetree import FileTree
-from modifiers import AnonymousPlaceHolder, ConstantBuilder, ListBuilder, ListOf, Regex
+from modifiers import (
+    PlaceHolder,
+    AnonymousPlaceHolder,
+    ConstantBuilder,
+    ListBuilder,
+    ListOf,
+    Regex,
+)
 from repo import Command, RemoteArrow, RemoteRepoLabel, Repo
 from steps import Step
 
@@ -145,25 +152,27 @@ class RemoteSlide(Slide):
         my_flow = step.add_epilog(
             RemoteArrow("-.8, -.15", "left=5 of remote-HEAD.west", bend="30")
         )
-        remote.highlight("main")
-        my_repo.highlight("main")
+        remote.hi_on("main")
+        my_repo.hi_on("main")
         STEP()
 
+        remote.hi_off("main")
         remote.populate(pizzas_repo)
         my_pointer.end = "remote.south west"
         my_flow.end = "left=5 of remote.west"
+        [remote.hi_on(c) for c in remote.commits]
         my_repo.add_remote_branch("github/main")
-        remote.intro.location = ".1, .08"
+        remote.intro.location = ".1, .07"
         STEP()
 
+        [remote.hi_off(c) for c in remote.commits]
+        my_repo.hi_off("main")
         command.off()
         my_flow.off()
-        remote.hi_off("main")
-        my_repo.hi_off("main")
         STEP()
 
-        remote.highlight("main")
-        my_repo.highlight("github/main")
+        remote.hi_on("main")
+        my_repo.hi_on("github/main")
         my_pointer.style = "hi"
         hi_git.on()
         STEP()
@@ -198,12 +207,14 @@ class RemoteSlide(Slide):
 
         my_readme.mod = "0"
         my_diavola.mod = "0"
-        new_commit = my_repo.add_commit("I", "aa0299e", "Add Diavola.")
+        c = my_repo.add_commit("I", "aa0299e", "Add Diavola.")
+        my_repo.hi_on(c)
         command.off()
         STEP()
 
-        remote.highlight("main")
-        my_repo.highlight("github/main")
+        my_repo.hi_off(c)
+        remote.hi_on("main")
+        my_repo.hi_on("github/main")
         STEP()
 
         remote.hi_off("main")
@@ -216,22 +227,24 @@ class RemoteSlide(Slide):
         STEP()
 
         my_flow.on()
-        my_repo.highlight("main")
-        remote.highlight("main")
+        my_repo.hi_on("main")
+        remote.hi_on("main")
         STEP()
 
-        remote.add_commit(new_commit)
-        STEP()
-
+        c = remote.add_commit(c.copy())
+        remote.hi_on(c)
+        remote.hi_off("main")
         my_repo.remote_to_branch("github/main")
-        my_repo.hi_off("main")
-        my_repo.highlight("github/main")
         STEP()
 
+        remote.hi_off(c)
+        my_repo.hi_off("main")
+        my_repo.hi_on("github/main")
         my_flow.off()
         command.off()
+        STEP()
+
         my_repo.hi_off("github/main")
-        remote.hi_off("main")
         STEP()
 
         def my_opacity(o=0.4):
@@ -267,6 +280,7 @@ class RemoteSlide(Slide):
             )
         )
         their_repo.on().populate(remote)
+        [their_repo.hi_on(c) for c in their_repo.commits]
         their_files.on()
         their_files.intro.location = ".54, 1"
         their_files.populate(my_files)
@@ -275,13 +289,14 @@ class RemoteSlide(Slide):
         their_repo.add_remote_branch("origin/main")
         STEP()
 
+        [their_repo.hi_off(c) for c in their_repo.commits]
         their_flow.off()
         command.off()
         their_files.all_mod("0")
         STEP()
 
         their_pointer.style = "hi"
-        their_repo.highlight("origin/main")
+        their_repo.hi_on("origin/main")
         hi_their_git = their_files.highlight("git")
         STEP()
 
@@ -305,10 +320,10 @@ class RemoteSlide(Slide):
         my_opacity()
         STEP()
 
-        # New commit on their side: Capricciosa!
-        step.bump_epilog(pic).on().which = "Capricciosa"
+        # New commit on their side: Siciliana!
+        step.bump_epilog(pic).on().which = "Siciliana"
         pic.location = "-.5, -.5"
-        their_capricciosa = their_files.append("capricciosa.md", mod="+")
+        their_siciliana = their_files.append("siciliana.md", mod="+")
         (their_readme := their_files["readme"]).mod = "m"
         STEP()
 
@@ -316,16 +331,20 @@ class RemoteSlide(Slide):
         pic.off()
         command.location = "0, -.10"
         command.start = "left=2 of HEAD.south west"
-        their_readme.mod = their_capricciosa.mod = "0"
-        new_commit = their_repo.add_commit("I", "636694f", "Add Capricciosa.")
+        their_readme.mod = their_siciliana.mod = "0"
+        c = their_repo.add_commit("I", "636694f", "Add Siciliana.")
+        their_repo.hi_on(c)
         STEP()
 
         command.off()
+        their_repo.hi_off(c)
         STEP()
 
         command.on().text = r"git push \ghi{origin} main"
         command.end = ".5"
         their_pointer.style = "hi"
+        their_repo.hi_on("main")
+        remote.hi_on("main")
         STEP()
 
         their_pointer.style = ""
@@ -333,16 +352,16 @@ class RemoteSlide(Slide):
         f.start, f.end = f.end, f.start
         f.side = "right"
         f.bend = "20"
-        remote.add_commit(new_commit.copy())
+        c = remote.add_commit(c.copy())
+        remote.hi_on(c)
+        remote.hi_off("main")
         their_pointer.start = "above=5 of origin/main.north"
-        their_repo.highlight("main")
-        remote.highlight("main")
         their_repo.remote_to_branch("origin/main")
         STEP()
 
+        remote.hi_off(c)
         command.off()
         their_repo.hi_off("main")
-        remote.hi_off("main")
         their_flow.off()
         STEP()
 
@@ -362,39 +381,37 @@ class RemoteSlide(Slide):
         f.end = "-.8, -.1"
         f.side = "right"
         f.bend = "20"
-        my_repo.add_commit(new_commit.copy(), _branch="github/main")
-        my_repo.highlight("github/main")
-        remote.highlight("main")
+        c = my_repo.add_commit(c.copy(), _branch="github/main")
+        my_repo.hi_on(c)
         my_pointer.start = "$(mine-636694f) + (15, 25)$"
         STEP()
 
-        my_repo.hi_off("github/main")
-        remote.hi_off("main")
+        my_repo.hi_off(c)
         command.off()
         my_flow.off()
         STEP()
 
         # Navigating to new commit and back.
-        my_repo.highlight("HEAD")
+        my_repo.hi_on("HEAD")
         STEP()
 
         command.on().text = r"git checkout \ghi{github/main}"
-        my_repo.highlight("github/main")
+        my_repo.hi_on("github/main")
         STEP()
 
         my_repo.checkout_detached("636694f")
-        (my_capricciosa := my_files.append(their_capricciosa.copy())).mod = "+"
-        hi_capricciosa = my_files.highlight("capricciosa")
+        (my_siciliana := my_files.append(their_siciliana.copy())).mod = "+"
+        hi_siciliana = my_files.highlight("siciliana")
         my_readme.mod = "m"
         hi_readme = my_files.highlight("readme")
         STEP()
 
         command.on().text = r"git checkout \ghi{main}"
-        hi_capricciosa.off()
+        hi_siciliana.off()
         my_repo.checkout_branch("main")
         my_repo.hi_off("github/main")
-        my_repo.highlight("main")
-        my_files.pop(my_capricciosa)
+        my_repo.hi_on("main")
+        my_files.pop(my_siciliana)
         my_readme.mod = "0"
         STEP()
 
@@ -406,20 +423,20 @@ class RemoteSlide(Slide):
 
         # Merging commit.
         command.on().text = r"git \gkw{merge} github/main"
-        my_repo.highlight("main")
+        my_repo.hi_on("main")
         STEP()
 
-        my_repo.move_branch("main", new_commit.hash)
+        my_repo.move_branch("main", c.hash)
         my_repo.checkout_branch("main")
         my_repo.remote_to_branch("github/main")
-        my_files.append(my_capricciosa).mod = "+"
+        my_files.append(my_siciliana).mod = "+"
         my_readme.mod = "m"
         STEP()
 
         command.off()
         hi_readme.off()
         my_readme.mod = "0"
-        my_capricciosa.mod = "0"
+        my_siciliana.mod = "0"
         my_repo.hi_off("main")
         STEP()
 
@@ -432,7 +449,8 @@ class RemoteSlide(Slide):
 
         for repo in (my_repo, remote, their_repo):
             repo.trim(4)
-        their_repo.intro.location = ".65, -1"
+        their_repo.intro.location = ".40, -1"
+        their_repo.intro.anchor = "south west"
         my_pointer.start = "$(mine-main.north west) + (-5, 10)$"
         remote.intro.location = ".0, .08"
         their_pointer.start = "$(theirs-main.north east) + (5, 10)$"
@@ -478,20 +496,20 @@ class RemoteSlide(Slide):
         for f in files_4:
             eval(f).mod = "0"
             eval(f + "_hi").off()
-        calzone_commit = my_repo.add_commit("I", "4ac80b2", "Add Calzone (the best).")
-        marinara_commit = their_repo.add_commit("I", "0fcd744", "Add Marinara.")
+        c_calzone = my_repo.add_commit("I", "4ac80b2", "Add Calzone (the best).")
+        c_marinara = their_repo.add_commit("I", "0fcd744", "Add Marinara.")
+        my_repo.hi_on(c_calzone)
+        their_repo.hi_on(c_marinara)
         my_command.off()
         their_command.off()
-        my_repo.highlight()
-        their_repo.highlight()
         my_git_hi = my_files.highlight("git")
         their_git_hi = their_files.highlight("git")
         STEP()
 
-        my_repo.hi_off()
-        their_repo.hi_off()
         my_git_hi.off()
         their_git_hi.off()
+        my_repo.hi_off(c_calzone)
+        their_repo.hi_off(c_marinara)
         STEP()
 
         for f in files_4:
@@ -517,20 +535,22 @@ class RemoteSlide(Slide):
         # Their commit is pushed.
         my_command.off().style = ""
         their_pointer.style = "hi"
-        their_repo.highlight("main")
-        remote.highlight("main")
+        their_repo.hi_on("main")
+        remote.hi_on("main")
         their_flow.on().start = "$(theirs-main.north east) + (10, 20)$"
         their_flow.end = "remote.east"
         STEP()
 
-        remote.add_commit(marinara_commit)
+        c_marinara = remote.add_commit(c_marinara.copy())
+        remote.hi_on(c_marinara)
+        their_repo.hi_off("main")
+        remote.hi_off("main")
         STEP()
 
+        remote.hi_off(c_marinara)
         their_command.off().style = ""
         my_command.off()
         their_flow.off()
-        their_repo.hi_off("main")
-        remote.hi_off("main")
         their_pointer.style = ""
         STEP()
 
@@ -538,8 +558,8 @@ class RemoteSlide(Slide):
         my_command.on()
         my_command.location = ".0, -.35"
         my_command.end = ".1"
-        my_repo.highlight("main")
-        remote.highlight("main")
+        my_repo.hi_on("main")
+        remote.hi_on("main")
         my_pointer.style = "hi"
         STEP()
 
@@ -562,20 +582,22 @@ class RemoteSlide(Slide):
         my_flow.on().end = "$(mine-4ac80b2-hash.north east) + (15, 40)$"
         my_flow.bend = "25"
         my_pointer.style = "hi"
-        remote.highlight("main")
-        my_repo.highlight("github/main")
+        remote.hi_on("main")
+        my_repo.hi_on("github/main")
         STEP()
 
-        my_repo.add_commit(marinara_commit, _branch="github/main")
+        c_marinara = my_repo.add_commit(c_marinara.copy(), _branch="github/main")
+        my_repo.hi_on(c_marinara)
         my_repo["4ac80b2"].type = "Y"
         my_pointer.start = "above=5 of mine-github/main.north"
-        STEP()
-
-        my_command.off()
-        my_flow.off()
-        my_pointer.style = ""
         remote.hi_off("main")
         my_repo.hi_off("github/main")
+        my_pointer.style = ""
+        STEP()
+
+        my_repo.hi_off(c_marinara)
+        my_command.off()
+        my_flow.off()
         STEP()
 
         pic.on().which = "OMG"
@@ -590,7 +612,7 @@ class RemoteSlide(Slide):
 
         my_readme_hi.on()
         my_calzone_hi.on()
-        my_repo.highlight("HEAD")
+        my_repo.hi_on("HEAD")
         STEP()
 
         my_command.on().text = r"git checkout \ghi{github/main}"
@@ -622,9 +644,199 @@ class RemoteSlide(Slide):
         my_command.style = "error"
         STEP()
 
-        my_command.off()
+        my_command.off().style = ""
         STEP()
 
         pic.on().which = "NowWhat"
         pic.location = ".05, -.5"
+        STEP()
+
+        # Focus on current repo to illustrate merge and rebase.
+        for m in (
+            my_files,
+            their_files,
+            my_repo,
+            remote,
+            their_repo,
+            my_pointer,
+            their_pointer,
+            url,
+            pic,
+            pic_my,
+            pic_github,
+            pic_their,
+        ):
+            m.off()
+        left = step.add_prolog(my_repo.copy()).on()
+        left.intro.name = "left"
+        left.intro.location = "-.9, -.9"
+        left.intro.alignment = "double"
+        left.left_labels.add("github/main")
+        SPLIT("Merging", "Merge and Rebase", "Integrating diverging works together")
+
+        merge_title = step.add_prolog(
+            AnonymousPlaceHolder(
+                r"""
+                \AutomaticCoordinates{c}{<location>}
+                \node[scale=4, Dark3] at (c)
+                    {\textcolor{Purple3}{\textbf{<text>}} strategy};
+                """,
+                "new",
+                location="-.5, .8",
+                text=r"Merge",
+            )
+        )
+        STEP()
+
+        rebase_title = step.add_prolog(merge_title.copy())
+        rebase_title.location = "+.5, .8"
+        rebase_title.text = "Rebase"
+        right = step.add_prolog(left.copy())
+        right.intro.name = "right"
+        right.intro.location = "+.1, -.9"
+        STEP()
+
+        # Merge.
+        left_command = step.add_epilog(my_command.copy()).on()
+        (l := left_command).text = r"git \gkw{merge} \ghi{github/main}"
+        l.start, l.end, l.aperture = "-.40, -.15", ".3", "6"
+        l.location = ".0, .2"
+        left_safe = left.copy()
+        left.hi_on("HEAD")
+        STEP()
+
+        left.add_commit("A", "007e53f", "Merge github/main into main.")
+        left.hi_on("007e53f")
+        left.hi_off("HEAD")
+        STEP()
+
+        left_command.off()
+        left.hi_off("007e53f")
+        STEP()
+
+        # Rebase
+        right_command = step.add_epilog(left_command.copy()).on()
+        (r := right_command).text = r"git \gkw{rebase} \ghi{github/main}"
+        r.start, r.end, r.aperture = ".20, -.15", ".55", "5"
+        right_safe = right.copy()
+        right.hi_on("HEAD")
+        STEP()
+
+        a = right.fade_commit("4ac80b2")
+        b = right.add_commit("I", "a136a71", a.message)
+        [right.hi_on(c.hash) for c in (a, b)]
+        right.hi_off("HEAD")
+        STEP()
+
+        right_command.off()
+        [right.hi_off(c.hash) for c in (a, b)]
+        STEP()
+
+        right.commits.list.pop(2)  # Surgery-cleanup. (UNSTABLE)
+        right.labels.pop(2)
+        STEP()
+
+        # Rewind.
+        merged_safe = left.copy()
+        rebased_safe = right.copy()
+        message = step.add_epilog(
+            AnonymousPlaceHolder(
+                r"""
+                \AutomaticCoordinates{c}{<location>}
+                \node[scale=3, Dark3] at (c) {\bf <text>};
+                """,
+                "new",
+                location="0, .4",
+                text="Wait, do this again.",
+            )
+        )
+        STEP()
+
+        step.remove_from_prolog(left)
+        left = step.add_prolog(left_safe)
+        step.remove_from_prolog(right)
+        right = step.add_prolog(right_safe)
+        for m in (message, merge_title, rebase_title):
+            m.off()
+        right.off()
+        STEP()
+
+        # Fetching one new commit.
+        left_command.on().text = "git fetch"
+        left_command.start = ""
+        both = (left, right)
+        c = None
+        for r in both:
+            c = r.add_commit("I", "9549b2a", "Add Napoletana.", _branch="github/main")
+        c = cast(PlaceHolder, c)
+        left.hi_on(c.hash)
+        STEP()
+
+        # Producing one new commit.
+        left.hi_off("9549b2a")
+        left_command.text = "git commit"
+        for r in (left, right):
+            c = r.add_commit("H", "8dd46ef", "Surprise pizza.")
+            # Swap for better rendering: UNSTABLE SURGERY AT PLAY.
+            r.commits.list.insert(3, r.commits.list.pop())
+            r.labels.insert(3, r.labels.pop())
+        left.hi_on(c.hash)
+        STEP()
+
+        left.hi_off(c.hash)
+        left_command.off()
+        STEP()
+
+        merge_title.on()
+        STEP()
+
+        rebase_title.on()
+        right.on()
+        STEP()
+
+        # Merge 4 commits.
+        left_command.on().text = r"git \gkw{merge} \ghi{github/main}"
+        left_command.location = ".0, .35"
+        left_command.start = "-.35, 0"
+        left.hi_on("HEAD")
+        STEP()
+
+        c = left.add_commit("A", "cbcce18", "Merge github/main into main.")
+        left.hi_off()
+        left.hi_off("HEAD")
+        STEP()
+
+        left.hi_off(c.hash)
+        left_command.off()
+        STEP()
+
+        # Rebase 2 commits.
+        right_command.on().text = r"git \gkw{rebase} \ghi{github/main}"
+        right_command.location = left_command.location
+        right_command.end = ".6"
+        right_command.start = ".18, 0"
+        right.hi_on("HEAD")
+        STEP()
+
+        a = right.fade_commit(right["4ac80b2"])
+        b = right.fade_commit(right["8dd46ef"])
+        c = right.add_commit("I", "a03a2bb", a.message)
+        [right.hi_on(k.hash) for k in (a, c)]
+        right.hi_off("HEAD")
+        STEP()
+
+        [right.hi_off(k.hash) for k in (a, c)]
+        c = right.add_commit("I", "4a6ebf4", b.message)
+        [right.hi_on(k.hash) for k in (b, c)]
+        right.hi_on(c.hash)
+        STEP()
+
+        [right.hi_off(k.hash) for k in (b, c)]
+        right_command.off()
+        STEP()
+
+        right.commits.list.pop(2)  # Surgery-cleanup. (UNSTABLE)
+        right.commits.list.pop(2)
+        right.labels.pop(2)
+        right.labels.pop(2)
         STEP()

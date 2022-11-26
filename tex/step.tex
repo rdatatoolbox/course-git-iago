@@ -83,13 +83,15 @@
 }
 
 % Factorize bounding box highlighting procedures.
-% [padding]{lower}{upper}
-\NewDocumentCommand{\HighlightSquare}{ O{5} m m }{
+% [padding][opacity]{lower}{upper}
+\NewDocumentCommand{\HighlightSquare}{ O{5} O{1} m m }{
   \begin{pgfonlayer}{highlight-behind}%
+    \ifstrequal{#2}{1}{}{\begin{scope}[opacity=#2]}
     \coordinate (pad) at (#1, #1);
-    \coordinate (lower) at ($(#2) - (pad)$);
-    \coordinate (upper) at ($(#3) + (pad)$);
+    \coordinate (lower) at ($(#3) - (pad)$);
+    \coordinate (upper) at ($(#4) + (pad)$);
     \draw[Light5, line width=1, fill=Yellow1] (lower) rectangle (upper);
+    \ifstrequal{#2}{1}{}{\end{scope}}
   \end{pgfonlayer}
 }
 

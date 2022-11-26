@@ -148,29 +148,30 @@ class PizzasSlide(Slide):
 
         hi_gitfolder = files.highlight("git").off()
 
-        hi_on = lambda: (hi_gitfolder.on(), repo.hi_on())
-        hi_off = lambda: (hi_gitfolder.off(), repo.hi_off())
-
         git.mod = "0"
         command.off()
         STEP()
 
-        hi_on()
+        hi_gitfolder.on()
         repo.on()
+        repo.hi_on()
         STEP()
 
-        hi_off()
+        hi_gitfolder.off()
+        repo.hi_off()
         STEP()
 
         # First commit.
         command.on().text = r"git \gkw{commit}"
         STEP()
 
-        repo.add_commit("I", "d1e8c8c", "First commit, the intent.")
-        hi_on()
+        c = repo.add_commit("I", "d1e8c8c", "First commit, the intent.")
+        hi_gitfolder.on()
+        repo.hi_on(c)
         STEP()
 
-        hi_off()
+        hi_gitfolder.off()
+        repo.hi_off(c)
         command.off()
         STEP()
 
@@ -196,22 +197,26 @@ class PizzasSlide(Slide):
 
         f_margherita.mod = d_margherita.mod = "+"
         d_margherita.set_mod("+", 1, -1)
-        hi_on()
+        hi_gitfolder.on()
+        repo.hi_on(c)
         STEP()
 
-        hi_off()
+        hi_gitfolder.off()
+        repo.hi_off(c)
         command.off()
         STEP()
 
         command.on().text = "git commit"
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 1, -1)
-        repo.add_commit("I", "4e29052", "First pizza: Margherita.")
-        hi_on()
+        c = repo.add_commit("I", "4e29052", "First pizza: Margherita.")
+        hi_gitfolder.on()
+        repo.hi_on(c)
         STEP()
 
         command.off()
-        hi_off()
+        hi_gitfolder.off()
+        repo.hi_off(c)
         STEP()
 
         # Editing Margherita
@@ -230,12 +235,14 @@ class PizzasSlide(Slide):
         command.on().text = "git commit"
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 1, -1)
-        repo.add_commit("I", "45a5b65", "Add note to the Margherita.")
-        hi_on()
+        c = repo.add_commit("I", "45a5b65", "Add note to the Margherita.")
+        hi_gitfolder.on()
+        repo.hi_on(c)
         STEP()
 
         command.off()
-        hi_off()
+        hi_gitfolder.off()
+        repo.hi_off(c)
         STEP()
 
         # Adding Regina.
@@ -273,12 +280,14 @@ class PizzasSlide(Slide):
 
         d_readme.mod = d_regina.mod = f_regina.mod = f_readme.mod = "0"
         command.on().text = "git commit"
-        repo.add_commit("I", "17514f2", "Add Regina. List pizzas in README.")
-        hi_on()
+        c = repo.add_commit("I", "17514f2", "Add Regina. List pizzas in README.")
+        hi_gitfolder.on()
+        repo.hi_on(c)
         STEP()
 
         command.off()
-        hi_off()
+        hi_gitfolder.off()
+        repo.hi_off(c)
         STEP()
 
         # Rewinding !
@@ -322,9 +331,13 @@ class PizzasSlide(Slide):
         command.off()
         STEP()
 
-        hi_on()
+        hi_gitfolder.on()
+        repo.hi_on()
         STEP()
-        hi_off()
+
+        hi_gitfolder.off()
+        repo.hi_off()
+        STEP()
 
         command.on().text = "git checkout 17514f2"
         STEP()

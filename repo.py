@@ -1,7 +1,7 @@
 """Craft and edit a simple repo.
 """
 
-from typing import Callable, Iterable, List, cast
+from typing import Callable, Iterable, List, Set, cast
 
 from document import FindPlaceHolder, HighlightSquare
 from modifiers import (
@@ -73,7 +73,9 @@ class Repo(TextModifier):
         """Assume it's parsed *empty*."""
         intro, rest = input.split("{}", 1)
         self.intro = AnonymousPlaceHolder(
-            r"\Repo[<anchor>][<name>][<type>][<opacity>]{<location>}", "parse", intro
+            r"\Repo[<anchor>][<name>][<alignment>][<opacity>]{<location>}",
+            "parse",
+            intro,
         )
         assert rest == "{}"
 
@@ -95,6 +97,11 @@ class Repo(TextModifier):
 
         # Lower to see just the commits.
         self._render_labels = True
+
+        # Labels in this set are displayed to the left of the chain.
+        # TODO: Only supports one branch at a time for now, and alone on its commit.
+        # HEAD is still special-cased.
+        self.left_labels: Set[str] = set()
 
     @property
     def name(self):
@@ -199,6 +206,13 @@ class Repo(TextModifier):
                     head.anchor = "center"
                     head.start = ".5,0"
                     previous_name = "HEAD"
+                elif label.name in self.left_labels:
+                    assert len(labels) == 1  # Or unsupported yet.
+                    label.anchor = "south east"
+                    label.offset = "156:9"
+                    label.start = ".9,0"
+                    label.ref = commit.hash
+                    previous_name = label.name
                 else:
                     # Other, regular branches just stack right.
                     branch = label
@@ -356,8 +370,8 @@ class Repo(TextModifier):
             f"to set remote branch {repr(remote_branch)} on."
         )
 
-    def highlight(self, name: str | bool = True, on=True) -> "Repo":
-        """Highlight the given label, or the whole repo if none is given.
+    def highlight(self, name: str | PlaceHolder | bool = True, on=True) -> "Repo":
+        """Highlight the given label/commit, or the whole repo if none is given.
         repo.highlight()
         repo.highlight(False)
         repo.highlight('main', True)
@@ -366,11 +380,19 @@ class Repo(TextModifier):
             on = name
             self.hi_square.on(on)
             return self
-        label = self[name]
-        label.style = "hi" if on else ""
+        label = cast(PlaceHolder, self[name] if type(name) is str else name)
+        if isinstance(commit := label, CommitModifier):
+            words = set(commit.type.split())
+            if on:
+                words.add("hi")
+            else:
+                words -= {"hi"}
+            commit.type = " ".join(words)
+        else:
+            label.style = "hi" if on else ""
         return self
 
-    def hi_on(self, label: str | None = None) -> "Repo":
+    def hi_on(self, label: str | PlaceHolder | None = None) -> "Repo":
         """Simplified version so we can just:
         repo.hi_on()
         repo.hi_on('main')
@@ -379,7 +401,7 @@ class Repo(TextModifier):
             return self.highlight(True)
         return self.highlight(label, True)
 
-    def hi_off(self, label: str | None = None) -> "Repo":
+    def hi_off(self, label: str | PlaceHolder | None = None) -> "Repo":
         """Simplified version so we can just:
         repo.hi_off()
         repo.hi_off('main')
@@ -409,22 +431,26 @@ class Repo(TextModifier):
             end = len(self.commits)
         yield from self.commits.list[start:end]
 
-    @staticmethod
-    def fade_commit(c: PlaceHolder) -> PlaceHolder:  # Commit
+    def fade_commit(self, c: PlaceHolder | str) -> PlaceHolder:  # Commit
+        if type(c) is str:
+            c = self[c]
+        c = cast(PlaceHolder, c)
         kws = set(c.type.split())
         kws.add("fade")
         c.type = " ".join(kws)
         return c
 
-    @staticmethod
-    def unfade_commit(c: PlaceHolder) -> PlaceHolder:  # Commit
+    def unfade_commit(self, c: PlaceHolder | str) -> PlaceHolder:  # Commit
+        if type(c) is str:
+            c = self[c]
+        c = cast(PlaceHolder, c)
         c.type = " ".join(set(c.type.split()) - {"fade"})
         return c
 
     def alter_commits(
         self,
         alter: Callable,
-        start: int | List[str] = 1,
+        start: int | List[str] | str = 1,
         end: int | None = None,
     ):
         """Apply one function to a range of commits, given by either integers or hashes."""
