@@ -20,18 +20,31 @@
 
 % Uses \TitleText, \SubTitleText, \PageNumText.
 % type=bare for non-regular steps with only a blank 'Screen'.
-% type=title for transitions between slides.
+% type=transition for transitions between slides.
 % [type]{progress}{content}
 \NewDocumentCommand{\Step}{ O{} m +m }{
 
 \begin{step}%
 \begin{tikzpicture}
 
+% Tikz's 'z' system is not awesome, so many layers end up very specific :\
+\pgfdeclarelayer{highlight-behind}
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{command-background}
+\pgfdeclarelayer{command-text}
+\pgfsetlayers{
+  highlight-behind,
+  background,
+  main,
+  command-background,
+  command-text
+}
+
 % Whole screen, setting the page size.
 \node[anchor=south west] (Screen) {\tikz{
   \path (0, 0) rectangle (\ScreenWidth, \ScreenHeight)}};
 
-\IfSubStr{#1}{bare}{}{\IfSubStr{#1}{title}{
+\IfSubStr{#1}{bare}{}{\IfSubStr{#1}{transition}{
 
   \IntensiveCoordinates{Screen}{c}{0, .15}
   \node[scale=7, Dark3] at (c) {\TitleText};
@@ -43,20 +56,6 @@
   \path[progress made] (lower) rectangle (mid|-upper);
 
 }{
-
-
-    % Tikz's 'z' system is not awesome, so many layers end up very specific :\
-    \pgfdeclarelayer{highlight-behind}
-    \pgfdeclarelayer{background}
-    \pgfdeclarelayer{command-background}
-    \pgfdeclarelayer{command-text}
-    \pgfsetlayers{
-      highlight-behind,
-      background,
-      main,
-      command-background,
-      command-text
-    }
 
     % Title bar.
     \node[anchor=north] (TitleBar) at (Screen.north) {\tikz{

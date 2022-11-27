@@ -1,4 +1,4 @@
-"""First, single-stepped slide to introduce.
+"""Special single-step slide just used for transitions before regular slides.
 """
 
 from document import Slide
@@ -6,7 +6,7 @@ from modifiers import Constant
 from steps import Step
 
 
-class TitleStep(Step):
+class TransitionStep(Step):
     def parse_body(self):
         input = self.body
         self.content = Constant(input)
@@ -15,6 +15,6 @@ class TitleStep(Step):
         return self.content.render()
 
 
-class TitleSlide(Slide):
+class TransitionSlide(Slide):
     # No animation required.
     pass

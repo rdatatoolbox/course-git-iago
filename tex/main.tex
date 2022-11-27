@@ -59,6 +59,7 @@
   DuckFlames/duck_flames.png,
   DuckShy/duck_shy.png,
   GithubLogo/github_logo.png,
+  GitIcon/git_icon.png,
   GitlabLogo/gitlab_logo.png,
   GitLogo/git_logo.png,
   Hazard/hazard.png,
@@ -109,7 +110,20 @@
 \renewcommand{\TitleText}{<notitle>}
 \renewcommand{\SubTitleText}{<nosubtitle>}
 \renewcommand{\PageNumText}{<nopagenum>}
-\Step[title]{0/0}{
+\Step[bare]{0/0}{
+
+\IntensiveCoordinates{Screen}{c}{0, .4}
+\node[scale=12, Dark4] (git) at (c) {\sf \textbf{git}};
+\node[below=8 of git, scale=6, Dark4] (fs) {\textbf{from scratch}};
+\node[below=12 of fs] (logo) {\PicGitIcon{9cm}{!}};
+
+} % ENDSLIDE
+
+% SLIDE Transition
+\renewcommand{\TitleText}{<notitle>}
+\renewcommand{\SubTitleText}{<nosubtitle>}
+\renewcommand{\PageNumText}{<nopagenum>}
+\Step[transition]{0/0}{
 } % ENDSLIDE
 
 % SLIDE Clients
