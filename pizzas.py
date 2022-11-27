@@ -306,13 +306,13 @@ class PizzasSlide(Slide):
         STEP()
 
         # Rewinding !
-        command.on().text = r"git \gkw{checkout} 45a5b65"
+        command.on().text = r"git \gkw{switch} -d 45a5b65"
         STEP()
 
         repo.highlight("HEAD")
         STEP()
 
-        repo.checkout_detached("45a5b65")
+        repo.switch_detached("45a5b65")
         STEP()
 
         f_readme.mod = d_readme.mod = "m"
@@ -331,7 +331,7 @@ class PizzasSlide(Slide):
         repo.hi_off("HEAD")
         STEP()
 
-        command.on().text = r"git \gkw{checkout} d1e8c8c"
+        command.on().text = r"git \gkw{switch} -d d1e8c8c"
         repo.highlight("HEAD")
         STEP()
 
@@ -339,7 +339,7 @@ class PizzasSlide(Slide):
         d_margherita.off()
         d_readme.clear()
         d_readme.insert_lines(readme_text[0])
-        repo.checkout_detached("d1e8c8c")
+        repo.switch_detached("d1e8c8c")
         STEP()
 
         repo.hi_off("HEAD")
@@ -354,10 +354,10 @@ class PizzasSlide(Slide):
         repo.hi_off()
         STEP()
 
-        command.on().text = "git checkout 17514f2"
+        command.on().text = "git switch -d 17514f2"
         STEP()
 
-        command.on().text = r"git checkout \ghi{main}"
+        command.on().text = r"git switch \ghi{main}"
         repo.highlight("main")
         STEP()
 
@@ -366,7 +366,7 @@ class PizzasSlide(Slide):
         d_margherita.on()
         d_regina.on().reset()
         d_readme.insert_lines(readme_text[1], 2)
-        repo.checkout_branch("main")
+        repo.switch_branch("main")
         STEP()
 
         repo.hi_off("main")

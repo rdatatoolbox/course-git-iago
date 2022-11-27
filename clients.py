@@ -38,6 +38,7 @@ class ClientsSlide(Slide):
             rstudio,
             github,
             gitlab,
+            codeberg,
             arrows,
             highlight,
         ) = [m.off() for m in step.list]
@@ -54,6 +55,7 @@ class ClientsSlide(Slide):
 
         github.on()
         gitlab.on()
+        codeberg.on()
         STEP()
 
         arrows.on()

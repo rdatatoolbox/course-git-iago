@@ -73,7 +73,7 @@ class Repo(TextModifier):
         # The currently checked out branch, if any. There must be one if repo is empty.
         self.branch: PlaceHolder | None = new_label("main")
 
-        self.checkout_branch(self.branch.name)
+        self.switch_branch(self.branch.name)
 
         # Highlighting.
         self.hi_square = HighlightSquare.new("", "").off()  # Filled on render.
@@ -331,7 +331,7 @@ class Repo(TextModifier):
                     pass
         return self
 
-    def checkout_detached(self, hash: str) -> "Repo":
+    def switch_detached(self, hash: str) -> "Repo":
         self.branch = None
         # Add HEAD to the labels.
         head = self.head
@@ -347,7 +347,7 @@ class Repo(TextModifier):
         head.ref = hash
         return self
 
-    def checkout_branch(self, name: str) -> "Repo":
+    def switch_branch(self, name: str) -> "Repo":
         # Remove "HEAD" from the labels and make it point to the branch.
         branch = self[name]
         self.branch = branch

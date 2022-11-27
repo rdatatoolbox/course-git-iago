@@ -97,12 +97,12 @@ class StagingSlide(Slide):
         next_commit = repo.add_commit("I", nohash, "Next commit.")
 
         def repo_down():
-            repo.checkout_detached(last_commit.hash)
+            repo.switch_detached(last_commit.hash)
             repo.fade_commit(next_commit).hash = nohash
 
         def repo_up(new_hash: str):
             repo.unfade_commit(next_commit).hash = new_hash
-            repo.checkout_detached(next_commit.hash)
+            repo.switch_detached(next_commit.hash)
 
         repo_down()
 
