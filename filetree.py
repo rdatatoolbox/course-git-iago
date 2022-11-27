@@ -28,7 +28,7 @@ class FileTree(TextModifier):
     def __init__(self, input: str):
         intro, files = input.split("{\n", 1)
         self.intro = AnonymousPlaceHolder(
-            r"\FileTree[<anchor>][<name>]{<location>}", "parse", intro
+            r"\FileTree[<name>]{<location>}", "parse", intro
         )
         files = files.rsplit("}", 1)[0]
         self.list = FileTreeLines.parse(files)

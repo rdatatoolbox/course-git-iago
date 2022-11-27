@@ -85,54 +85,53 @@
 }}
 
 % Chain files together, like commits in the repo.
-% [anchor][name]{location}{type/mod/name/filename list}
+% Location given is the one of the first file (icon center).
+% [name]{location}{type/mod/name/filename list}
 \NewDocumentCommand{\FileTree}{ O{north west} O{files} m m }{
 
   % Update this global variable so that files icons, names, signs etc.
   % can be aliased with (filetreename-nodename) in addition to just (nodename).
   \def\LatestFileTree{#2}
 
-  \AutomaticCoordinates{filetreeloc}{#3}
-  \node[anchor=#1] (#2) at (filetreeloc) {\tikz[remember picture]{%
-    \foreach \type/\mod/\name/\filename [count=\i, remember=\name as \lastname]
-             in {#4}{\ifcsempty{filename}{}{%
-      \ifnumcomp{\i}{=}{1}{
-        % Keep track of current icon position.
-        \coordinate (current) at (0, 0);
-        \FileLine[\type][\mod]{current}{\name}{\filename}
-      }{
-        \coordinate[below=\FileSpacing of current] (current);
-        % type with:
-        %   'stepin' to enter into last folder.
-        %   'connect' to append sibling into currently 'stepped in' folder.
-        % TODO: 'step out' and continuing outer line within sub-subfolders.
-        \IfSubStr{\type}{stepin}{
-          \coordinate[right=\IntoFileTreeSpacing of current] (current);
-        }{}
-        \FileLine[\type][\mod]{current}{\name}{\filename}
-        \IfSubStr{\type}{stepin}{%
-          % First parenting line within the folder.
-          \coordinate[below=2 of \lastname-icon.south] (s);
-        }{\IfSubStr{\type}{connect}{%
-          % Assumes an 'anchor' already exists.
-          \coordinate (s) at (anchor);
-        }{}}
-        \ifboolexpr{ test {\IfSubStr{\type}{stepin}}
-                  or test {\IfSubStr{\type}{connect}} }{
-          % Draw the actual line, creating 'anchor' for next time.
-          \coordinate[left=3 of \name-icon.west] (e);
-          \coordinate (anchor) at (s|-e);
-          % Style whole angle for '+' and '-' modes, otherwise only the tick.
-          \ifboolexpr{ test {\ifdefstring{\mod}{+}}
-                    or test {\ifdefstring{\mod}{-}}}{
-            \draw[file tree line, \mod] (s) -- (anchor) -- (e);
-          }{
-            \draw[file tree line] (s) -- (anchor);
-            \draw[file tree line, \mod] (anchor) -- (e);
-          }
-        }{}
-      }
-    }}
-  }};
+  \AutomaticCoordinates{#2}{#3}
+  \foreach \type/\mod/\name/\filename [count=\i, remember=\name as \lastname]
+           in {#4}{\ifcsempty{filename}{}{%
+    \ifnumcomp{\i}{=}{1}{
+      % Keep track of current icon position.
+      \coordinate (current) at (#2);
+      \FileLine[\type][\mod]{current}{\name}{\filename}
+    }{
+      \coordinate[below=\FileSpacing of current] (current);
+      % type with:
+      %   'stepin' to enter into last folder.
+      %   'connect' to append sibling into currently 'stepped in' folder.
+      % TODO: 'step out' and continuing outer line within sub-subfolders.
+      \IfSubStr{\type}{stepin}{
+        \coordinate[right=\IntoFileTreeSpacing of current] (current);
+      }{}
+      \FileLine[\type][\mod]{current}{\name}{\filename}
+      \IfSubStr{\type}{stepin}{%
+        % First parenting line within the folder.
+        \coordinate[below=2 of \lastname-icon.south] (s);
+      }{\IfSubStr{\type}{connect}{%
+        % Assumes an 'anchor' already exists.
+        \coordinate (s) at (anchor);
+      }{}}
+      \ifboolexpr{ test {\IfSubStr{\type}{stepin}}
+                or test {\IfSubStr{\type}{connect}} }{
+        % Draw the actual line, creating 'anchor' for next time.
+        \coordinate[left=3 of \name-icon.west] (e);
+        \coordinate (anchor) at (s|-e);
+        % Style whole angle for '+' and '-' modes, otherwise only the tick.
+        \ifboolexpr{ test {\ifdefstring{\mod}{+}}
+                  or test {\ifdefstring{\mod}{-}}}{
+          \draw[file tree line, \mod] (s) -- (anchor) -- (e);
+        }{
+          \draw[file tree line] (s) -- (anchor);
+          \draw[file tree line, \mod] (anchor) -- (e);
+        }
+      }{}
+    }
+  }}
 
 }

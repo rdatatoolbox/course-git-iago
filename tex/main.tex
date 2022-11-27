@@ -8,6 +8,7 @@
 
 \usepackage[english]{babel}
 \usepackage[utf8]{inputenc}
+\usepackage{amssymb}
 \usepackage{droidsansmono}
 \usepackage{mathptmx}
 \usepackage[T1]{fontenc}
@@ -168,7 +169,7 @@
 \renewcommand{\PageNumText}{2}
 \Step[]{2/5}{
 
-  \FileTree[north west][files]{-1, 1}{
+  \FileTree[files]{-1, 1}{
     folder/+/root/rootfolder,
   }
 
@@ -176,7 +177,7 @@
     +/{One line},
   }
 
-  \Repo[south west][repo][simple][1]{Canvas.south west}{}{}
+  \Repo[repo][simple][1]{-1, -1}{}{}
 
   \Command[base][][.5][5][]{0, 0}{git init}
 
@@ -245,7 +246,7 @@
 }}
 \Step[]{3/5}{
 
-\Repo[south west][repo][simple][1]{-1, -.76}{}{}
+\Repo[repo][simple][1]{-1, -1}{}{}
 
 \MakeArea[.17, -.9]{Blue1}{Blue3}{last}{in Commit}
 \MakeArea{Purple1}{Purple3}{editor}{\hspace{-.2em}\it<in editor>}
@@ -262,7 +263,7 @@
 \node[machine label, right=2 of editor.east] {in RAM};
 
 \IntensiveCoordinates{last}{c}{.35, 0}
-\FileTree[base west][unit-tree]{c}{file/0/filenode/filename.ext}
+\FileTree[unit-tree]{c}{file/0/filenode/filename.ext}
 
 \SwitchArrow[.49][.35][1][0]{left}{last}{editor}{<keyboard>}
 \SwitchArrow[.54][.35][1][0]{left}{editor}{modified}{<ctrl-S>}
@@ -291,11 +292,11 @@
 }
 \Step[]{4/5}{
 
-  \FileTree[north west][myfiles]{-1, 1}{
+  \FileTree[myfiles]{-1, 1}{
     folder/+/root/rootfolder,
   }
 
-  \FileTree[north west][theirfiles]{-1, 1}{
+  \FileTree[theirfiles]{.55, 1}{
     folder/+/root/rootfolder,
   }
 
@@ -305,13 +306,13 @@
     \node[opacity=.15] (theirmachine) at (+.7, -.6) {\PicTheirMachine{75mm}{!}};
   \end{pgfonlayer}\end{scope}
 
-  \Repo[south west][mine][mixed][1]{-1, -1}{}{}
+  \Repo[mine][mixed][1]{-1, -1}{}{}
 
 
-  \Repo[base][remote][mixed][1]{.1, .08}{}{}
+  \Repo[remote][mixed][1]{-1, -1}{}{}
 
 
-  \Repo[base][theirs][mixed][1]{.55, -1}{}{}
+  \Repo[theirs][mixed][1]{-1, -1}{}{}
 
 } % ENDSLIDE
 

@@ -65,6 +65,8 @@ class StagingSlide(Slide):
         file = step.file.off()
         diff = step.diff.off()
 
+        repo.intro.location = "-.82, -.73"
+
         areas = (
             # l.e.m.s.n.
             last,
@@ -90,16 +92,17 @@ class StagingSlide(Slide):
 
         # Zoomed baby repo.
         repo._render_labels = False
+        nohash = "???????"
         last_commit = repo.add_commit("I", "a03a2bb", "One commit.")
-        next_commit = repo.add_commit("I", "???????", "Next commit.")
+        next_commit = repo.add_commit("I", nohash, "Next commit.")
 
         def repo_down():
             repo.checkout_detached(last_commit.hash)
-            repo.fade_commit(next_commit).hash = "?" * len(next_commit.hash)
+            repo.fade_commit(next_commit).hash = nohash
 
         def repo_up(new_hash: str):
-            repo.checkout_detached(next_commit.hash)
             repo.unfade_commit(next_commit).hash = new_hash
+            repo.checkout_detached(next_commit.hash)
 
         repo_down()
 
@@ -147,7 +150,7 @@ class StagingSlide(Slide):
 
         # Initial commit.
         x_left = -0.3
-        y_mid = -0.4
+        y_mid = 0.15
         l_readme = copy(file, "last", "README.md", (x_left, y_mid))
         x_right = 0.25
         l_margherita = copy(file, "last", "margherita.md", (x_right, y_mid))
@@ -180,10 +183,12 @@ class StagingSlide(Slide):
         STEP()
 
         ctrls.labeled = "0"
+        STEP()
+
         neq = step.add_epilog(
             Constant(
                 r"""
-                \draw[line width=1.5, -Stealth, Dark3,
+                \draw[line width=1.5, -Stealth, m,
                       shorten <=2*\CommitRadius mm,
                       shorten >=45mm]
                   (a03a2bb) -- (modified.west)
@@ -208,17 +213,18 @@ class StagingSlide(Slide):
         what = step.add_epilog(
             AnonymousPlaceHolder(
                 r"\AutomaticCoordinates{c}{<location>}" + "\n"
-                r"\node[scale=4, Dark3] at (c) {\bf <text>};",
+                r"\node[scale=4, <color>] at (c) {\bf <text>};",
                 "new",
                 text=r"\texttimes",
                 location="-.25, .30",
+                color= "Red3",
             )
         )
         STEP()
 
         commit.off()
-        what.location = "stage"
         what.text = "???"
+        what.location = "stage"
         STEP()
 
         what.off()
@@ -263,12 +269,15 @@ class StagingSlide(Slide):
 
         # Commit.
         commit.on()
+        what.on().text, what.color = r"\checkmark", "Green5"
+        what.location = "right=9 of n"
         STEP()
 
-        fade_after("next", "347beda")
-        n_readme = copy(s_readme, "next", (x_left, -0.17), mod="0")
-        y_up = 0.10
-        y_down = -0.60
+        what.off()
+        fade_after("next", "4b87875")
+        n_readme = copy(s_readme, "next", (x_left, 0.25), mod="0")
+        y_up = 0.63
+        y_down = -0.07
         n_regina = copy(s_regina, "next", (x_right, y_up), mod="0")
         n_margherita = copy(l_margherita, "next", (x_right, y_down), mod="0")
         commit.labeled = "0"
@@ -279,10 +288,15 @@ class StagingSlide(Slide):
         stage.text = r"\bf Stage"
         STEP()
 
+        # Summarize.
+        for a in forwards:
+            a.on().labeled = "1"
+        add.text = r"\$ git \gkw{add}"
+        STEP()
+
         # Rewind.
         stage.text = "Stage"
-        for a in forwards:
-            a.off().labeled = "1"
+        [a.off() for a in forwards]
         for a in "nsme":
             for f in "readme regina margherita".split():
                 varname = f"{a}_{f}"
@@ -310,7 +324,7 @@ class StagingSlide(Slide):
         m_regina.on()
         m_todo = copy(e_todo, "modified")
         m_pdf = copy(e_todo, "modified", "result.pdf", mod="+").off()
-        for f, y in zip((m_regina, m_todo, m_pdf), (0.35, -0.25, -0.85)):
+        for f, y in zip((m_regina, m_todo, m_pdf), (0.88, 0.28, -0.32)):
             f.location = str((x_right, y)).strip("()")
         STEP()
 
@@ -359,10 +373,12 @@ class StagingSlide(Slide):
         s_regina.on()
         STEP()
 
+        add.labeled = "0"
+        add.offset = add_offset_safe[0]  # Don't pop, still useful once.
+        STEP()
+
         # Commit only the right files.
         commit.on()
-        add.offset = add_offset_safe[0]  # Don't pop, still useful once.
-        add.labeled = "0"
         fade_after("next", "4b87875")
         [f.on() for f in (n_readme, n_regina, n_margherita)]
         STEP()
@@ -421,14 +437,16 @@ class StagingSlide(Slide):
         add.offset = add_offset_all
         fade_after("stage")
         s_readme.on().location = m_readme.location
-        s_regina.on().location = str((x_right, -0.2)).strip("()")
+        s_regina.on().location = str((x_right, 0.25)).strip("()")
         s_gitignore = copy(m_gitignore, "stage")
         diff.intro.location = diff.intro.location.replace("modified", "stage")
         STEP()
 
-        # And finally commit without the undesired files.
         add.offset = add_offset_safe.pop()
         add.labeled = "0"
+        STEP()
+
+        # And finally commit without the undesired files.
         commit.on()
         fade_after("next", "e790b0c")
         n_gitignore = copy(s_gitignore, "next", mod="0")
@@ -465,13 +483,11 @@ class StagingSlide(Slide):
             f.filename = "myfile.ext"
         l_margherita.off()
         keyboard.on()
+        ctrlz.on()
         last_commit.hash = "310dafc"
         fade_after("editor")
         l_readme.on()
         e_readme.on().location = l_readme.location
-        STEP()
-
-        ctrlz.on()
         STEP()
 
         ctrls.on()

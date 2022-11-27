@@ -48,6 +48,8 @@ class PizzasSlide(Slide):
         # regularly copied into actually recorded steps.
         step = cast(PizzasStep, self.pop_step())
 
+        STEP = lambda: self.add_step(step)
+
         files = step.filetree.clear()
         # There will actually be 3 diffs slots,
         # this original diff will therefore be forked in the epilog.
@@ -55,7 +57,7 @@ class PizzasSlide(Slide):
         repo = step.repo.off()
         command = step.command.off()
 
-        STEP = lambda: self.add_step(step)
+        repo.intro.location = '-.82, -.94'
 
         image = step.add_epilog(
             AnonymousPlaceHolder(
@@ -153,6 +155,8 @@ class PizzasSlide(Slide):
         STEP()
 
         hi_gitfolder.on()
+        safe_loc = repo.intro.location
+        repo.intro.location = "-.73, -.95" # Temporary relocate when empty.
         repo.on()
         repo.hi_on()
         STEP()
@@ -168,6 +172,7 @@ class PizzasSlide(Slide):
         c = repo.add_commit("I", "d1e8c8c", "First commit, the intent.")
         hi_gitfolder.on()
         repo.hi_on(c)
+        repo.intro.location = safe_loc
         STEP()
 
         hi_gitfolder.off()
@@ -236,8 +241,8 @@ class PizzasSlide(Slide):
         f_margherita.mod = d_margherita.mod = "0"
         d_margherita.set_mod("0", 1, -1)
         c = repo.add_commit("I", "45a5b65", "Add note to the Margherita.")
-        hi_gitfolder.on()
         repo.hi_on(c)
+        hi_gitfolder.on()
         STEP()
 
         command.off()

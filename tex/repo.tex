@@ -72,16 +72,16 @@
 %   - simple: all aligned with room for 1 commits chain.
 %   - double: all aligned with room for 2 commits chain.
 %   - mixed: eich message is aligned to its own chain.
-% [anchor][reponame][alignment][opacity]{location}{type/hash/message list}{labels}
-\NewDocumentCommand{\Repo}{ O{center} O{repo} O{simple} O{1} m m +m }{
+% Location given is the one of the first commit (disk center).
+% [reponame][alignment][opacity]{location}{type/hash/message list}{labels}
+\NewDocumentCommand{\Repo}{ O{repo} O{simple} O{1} m m +m }{
 
   % Update this global variable so commits, branches etc.
   % can be aliased with (reponame-nodename) in addition to just (nodename).
-  \def\LatestRepo{#2}
+  \def\LatestRepo{#1}
 
-  \AutomaticCoordinates{repoloc}{#5}
-  \node[anchor=#1] (#2) at (repoloc) {\tikz[remember picture, baseline={(#2)},
-                                            transparency group, opacity=#4]{
+  \AutomaticCoordinates{#1}{#4}
+  \begin{scope}[transparency group, opacity=#3]
     \def\merged{1} % Lower when there are two chains.
     % Vertical/Horizontal commit spacing.
     \tikzmath{
@@ -89,14 +89,13 @@
       \H = \BranchesSpacing;
       \Hoff = 0;
     }
-    \coordinate (#2) at (0, 0);
     % All messages need to be offset by 1 unit if the repo is double
     % so they remain aligned.
-    \ifstrequal{#3}{double}{\tikzmath{ \Hoff = \H; }}{}
-    \foreach \type/\hash/\message [count=\i] in {#6} {\ifcsempty{hash}{}{
+    \ifstrequal{#2}{double}{\tikzmath{ \Hoff = \H; }}{}
+    \foreach \type/\hash/\message [count=\i] in {#5} {\ifcsempty{hash}{}{
       \IfSubStr{\type}{fade}{\begin{scope}[transparency group, opacity=.3]}{}
       \ifnumcomp{\i}{=}{1}{
-        \Commit[\hash][0][\Hoff][\type]{#2}{\hash}{\message}
+        \Commit[\hash][0][\Hoff][\type]{#1}{\hash}{\message}
         % Keep track of last commit on the straight/parallel chain..
         \coordinate (straight) at (\hash);
         \coordinate (parallel) at (\hash); % (but they start merged)
@@ -128,7 +127,7 @@
           \coordinate (straight) at (\hash);
           \tikzmath{ \H = 0; }
         }
-        \ifstrequal{#3}{mixed}{\tikzmath{\Hoff = \H;}}{}
+        \ifstrequal{#2}{mixed}{\tikzmath{\Hoff = \H;}}{}
         \Commit[\type][\H][\Hoff][\type]{\hash}{\hash}{\message}
         \IfSubStr{\type}{A}{%
           \coordinate[below=\CommitRadius + .5*\CommitSpacing of \hash] (c);
@@ -144,9 +143,8 @@
   }}
   % Labels go here, within the embed tikz picture,
   % so they are calculated in the global repo dimensions.
-  #7
-  }};
-
+  #6
+  \end{scope}
 }
 
 % Pick a commit and point label to it.

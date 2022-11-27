@@ -197,13 +197,7 @@ class Document(TextModifier):
         print(f"Compiling {self.texfile}..")
         current_folder = os.getcwd()
         os.chdir(self.build_folder)
-        # Cleanup any previous build.
-        for file in Path(".").rglob(self.genbasename + "*"):
-            if not str(file).endswith(".tex"):
-                file.unlink()
-        # Compile three times so `remember pictures` eventually works.
-        for _ in range(3):
-            assert not os.system(f"lualatex --halt-on-error {self.genbasename}.tex")
+        assert not os.system(f"lualatex --halt-on-error {self.genbasename}.tex")
         os.chdir(current_folder)
 
         print(f"Copy to {output}..")

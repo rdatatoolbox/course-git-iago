@@ -73,7 +73,7 @@ class Repo(TextModifier):
         """Assume it's parsed *empty*."""
         intro, rest = input.split("{}", 1)
         self.intro = AnonymousPlaceHolder(
-            r"\Repo[<anchor>][<name>][<alignment>][<opacity>]{<location>}",
+            r"\Repo[<name>][<alignment>][<opacity>]{<location>}",
             "parse",
             intro,
         )
@@ -227,15 +227,25 @@ class Repo(TextModifier):
 
         # Highlight.
         if not self.commits.list:
+            self.current.off()
             self.hi_square.lower = "HEAD.south west"
             self.hi_square.upper = "main.north east"
             self.hi_square.padding = "2"
-            self.current.off()
         else:
-            self.hi_square.lower = rf"$({self.name}.south west) + (3*\eps, 3*\eps)$"
-            self.hi_square.upper = rf"{self.name}.east |- main.north"
-            self.hi_square.padding = "5"
             self.current.on().hash = self.branch.ref if self.branch else self.head.ref
+            # Square highlight needs identifier of the first commit,
+            # and east coordinate of the longest message.
+            # TODO: 'main' is not always the northest label north coordinate.
+            longest = self.commits[0]
+            first = longest.hash
+            for commit in self.commits:
+                if len(longest.message) < len(commit.message):
+                    longest = commit
+            longest = longest.hash
+            self.hi_square.lower = rf"{first}-hash.south west"
+            self.hi_square.upper = rf"{longest}-message.east |- main.north"
+            self.hi_square.padding = "3"
+
 
     def move_branch(self, name: str, hash: str) -> "Repo":
         # Essentially relocating it to the correct list of labels.

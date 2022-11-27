@@ -238,8 +238,8 @@ class ConflictsSlide(Slide):
         STEP()
 
         # On-sided change.
-        capricciosa = r"- __Capricciosa__: `./capricciosa.md`"
-        right.insert_lines(capricciosa, "+", 5).mod = "m"
+        siciliana = r"- __Siciliana__: `./siciliana.md`"
+        right.insert_lines(siciliana, "+", 8).mod = "m"
         message.on().text = "change on one side"
         STEP()
 
@@ -251,7 +251,7 @@ class ConflictsSlide(Slide):
         from_on()
         STEP()
 
-        merged.mark_lines(5)
+        merged.mark_lines(8)
         merged.reset()
         from_off()
         STEP()
@@ -270,7 +270,7 @@ class ConflictsSlide(Slide):
         calzone = r"- __Calzone__: `./calzone.md`"
         marinara = r"- __Marinara__: `./marinara.md`"
         left.insert_lines(calzone, "+", 5).mod = "m"
-        right.insert_lines(marinara, "+", 8).mod = "m"
+        right.insert_lines(marinara, "+", 7).mod = "m"
         message.on().text = "change on both sides"
         STEP()
 
@@ -281,11 +281,11 @@ class ConflictsSlide(Slide):
         noconflict_on()
         STEP()
 
-        merged.on().populate(left).insert_lines(marinara, "+", 9)
+        merged.on().populate(left).insert_lines(marinara, "+", 8)
         from_on()
         STEP()
 
-        merged.mark_lines([5, 9])
+        merged.mark_lines([5, 8])
         merged.reset()
         from_off()
         STEP()
@@ -309,7 +309,7 @@ class ConflictsSlide(Slide):
         left.mod = "m"
         STEP()
 
-        _, _, hi_margherita, _ = right.on().replace_in_line(8, r"g()erita", "h")
+        _, _, hi_margherita, _ = right.on().replace_in_line(7, r"g()erita", "h")
         right.mod = "m"
         STEP()
 
@@ -324,10 +324,10 @@ class ConflictsSlide(Slide):
         from_on()
         STEP()
 
-        merged.erase_lines(9, 10)
+        merged.erase_lines(8, 9)
         merged.erase_lines(3, 4)
         merged.insert_lines(hi_eat, 3)
-        merged.insert_lines(hi_margherita, 8)
+        merged.insert_lines(hi_margherita, 7)
         from_off()
         merged.reset()
         STEP()
