@@ -7,6 +7,7 @@ from typing import Iterable, List, Tuple, cast
 
 from modifiers import (
     AnonymousPlaceHolder,
+    Constant,
     ListBuilder,
     MakePlaceHolder,
     PlaceHolder,
@@ -29,13 +30,15 @@ class DiffedFile(TextModifier):
             "parse",
             intro,
         )
-        lines = lines.rsplit("}", 1)[0]
+        # Assume it's parsed without epilog.
+        lines = lines.rsplit("}{}", 1)[0]
         self.lines = DiffLines.parse(lines)
+        self.internal_epilog = Constant("")
 
     @staticmethod
     def new(**kwargs) -> "DiffedFile":
         """Create empty diffed file."""
-        model = "\\Diff[{mod}][{anchor}][{name}][{linespacing}]{{{location}}}{{{filename}}}{{\n}}"
+        model = "\\Diff[{mod}][{anchor}][{name}][{linespacing}]{{{location}}}{{{filename}}}{{\n}}{{}}"
         return DiffedFile(model.format(**kwargs))
 
     @property
@@ -65,7 +68,14 @@ class DiffedFile(TextModifier):
 
     @render_method
     def render(self) -> str:
-        return self.intro.render() + "{\n" + self.lines.render() + "}\n"
+        return (
+            self.intro.render()
+            + "{\n"
+            + self.lines.render()
+            + "}{\n"
+            + self.internal_epilog.render()
+            + "}\n"
+        )
 
     @staticmethod
     def latex_escape(input: str) -> str:

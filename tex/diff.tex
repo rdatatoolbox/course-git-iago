@@ -78,8 +78,8 @@
 % Phantom icon, useful for alignment.
 \newcommand{\PhantomSign}{\phantom{\usebox{\PlusBox}}}
 
-% [mode][anchor][name][line spacing]{location}{name}{mod/lines}
-\NewDocumentCommand{\Diff}{ O{0} O{center} O{file} O{5} m m m }{
+% [mode][anchor][name][line spacing]{location}{name}{mod/lines}{epilog}
+\NewDocumentCommand{\Diff}{ O{0} O{center} O{file} O{5} m m m +m }{
   % Not exactly the corner we expect, but at least the one of first line.
 
   \AutomaticCoordinates{#3}{#5}
@@ -141,6 +141,11 @@
         {\ifdefstring{\sign}{+}{\Plus}
         {\ifdefstring{\sign}{-}{\Minus}{}}}}}};
     }}
+
+  % Epilog commands to be executed within the context of this local picture.
+  % TODO: no sub-tikz should be used,
+  % but this would need to reposition all diffed files.
+  #8
 
   }};
 

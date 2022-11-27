@@ -457,11 +457,13 @@ class ConflictsSlide(Slide):
         pic.anchor = "north"
         pic.height = "10cm"
         pic.location = "below = 10 of left.south"
+        think_safe = pic.copy()
         STEP()
 
         pic.which = "Relief"
         merged.erase_lines(3, 7)
         merged.insert_lines(r"A\dhi{n amazing} su\dhi{r}prise of the dev team", "c", 3)
+        relief_safe = pic.copy()
         STEP()
 
         pic.off()
@@ -533,7 +535,8 @@ class ConflictsSlide(Slide):
         to_off()
         merged.off()
         pic.on().which = "Skull"
-        pic.location = ".0, .3"
+        pic.location = ".0, .28"
+        skull_safe = pic.copy()
         par_off("semantic")
         semantic.off().color = c
         lexical.off()
@@ -565,13 +568,14 @@ class ConflictsSlide(Slide):
         STEP()
 
         message.on().text = "QUIZZ!"
+        # QUIZZ: NONCONFLICT example
         message.location = "$(lexical)!.5!(semantic)$"
         underline.off()
         par_off()
         STEP()
 
         message.off()
-        left.replace_in_line(5, "(thirst)", "crave")
+        left.replace_in_line(5, "(thirst)", "craave")
         right[11].mod = "-"
         left.mod = right.mod = "m"
         STEP()
@@ -579,6 +583,34 @@ class ConflictsSlide(Slide):
         par_on("none")
         STEP()
 
+        _, _, hi_crave, _ = merged.on().replace_in_line(5, "(thirst)", "craave")
+        merged[12].mod = "-"
+        from_on()
+        STEP()
+
+        merged.erase_lines(5, 6)
+        merged.insert_lines(hi_crave, 5)
+        merged.pop(11)
+        from_off()
+        # TODO: make this an actual feature of Diffs.
+        phantom_line = merged.internal_epilog = Constant(
+            r"\coordinate[below=2.5 of line-10.base west] (c);" + "\n"
+            r"\draw[Blue1, line width=1] (c) -- (c -| line-10.east);"
+        )
+        STEP()
+
+        reset()
+        left.internal_epilog = phantom_line
+        right.internal_epilog = phantom_line
+        to_on()
+        STEP()
+
+        to_off()
+        merged.off()
+        STEP()
+
+        # QUIZZ: LEXICAL CONFLICT example
+        phantom_line.off()
         par_off()
         merged.populate(safe)
         reset()
@@ -590,6 +622,39 @@ class ConflictsSlide(Slide):
         par_on("lexical")
         STEP()
 
+        from_on()
+        conflict = r"""
+            <<<<<<< HEAD
+            __Base:__ Sour cream
+            =======
+            __Base:__ Sour Cream
+            >>>>>>> github/main
+            """
+        merged.pop(7)
+        merged.on().insert_lines(conflict, "c", 7).mod = "c"
+        par_off("lexical")
+        STEP()
+
+        from_off()
+        pic.__dict__.update(think_safe.__dict__)
+        STEP()
+
+        merged.erase_lines(7, 11)
+        merged.insert_lines("__Base:__ Sour Cream", 7).mark_lines(7)
+        pic.__dict__.update(relief_safe.__dict__)
+        STEP()
+
+        to_on()
+        reset()
+        pic.off()
+        STEP()
+
+        merged.off()
+        to_off()
+        [pars["lexical"][i].on() for i in (0, 1)]
+        STEP()
+
+        # QUIZZ: SEMANTIC CONFLICT example
         par_off()
         merged.populate(safe)
         reset()
@@ -601,6 +666,27 @@ class ConflictsSlide(Slide):
         par_on("semantic")
         STEP()
 
+        from_on()
+        merged.on().populate(right)
+        STEP()
+
+        from_off()
+        merged.pop(3)
+        merged.mark_lines(3, 4).set_mod("0", 3, 4)
+        STEP()
+
+        to_on()
+        reset()
+        STEP()
+
+        merged.off()
+        to_off()
+        pic.__dict__.update(skull_safe.__dict__)
+        pars["semantic"][2].off()
+        STEP()
+
+        # QUIZZ: BOTH CONFLICTS example
+        pic.off()
         par_off()
         merged.populate(safe)
         reset()
@@ -614,9 +700,27 @@ class ConflictsSlide(Slide):
         pars["semantic"][0].on()
         STEP()
 
-        # Git catches conflict that is both semantic and lexical.
-        par_off("both")
+        from_on()
+        conflict = r"""
+            <<<<<<< HEAD
+            - Sweet garlic
+            =======
+            - Garlic, pepper or anything spicy
+            >>>>>>> github/main
+            """
+        merged.on().pop(9)
+        merged.insert_lines(conflict, "c", 9).mod = "c"
+        par_off()
+        STEP()
+
+        from_off()
         pic.height = "10cm"
+        (think := step.add_epilog(pic.copy()).on()).which = "Think"
+        think.anchor = "south west"
+        think.location = "-.87, -.9"
+        STEP()
+
+        # Essentially relating to how humans work together :')
         (shy := step.add_epilog(pic.copy()).on()).which = "DuckShy"
         shy.anchor = "north west"
         shy.location = "-.75, .71"
@@ -625,11 +729,8 @@ class ConflictsSlide(Slide):
         flames.location = ".99, .91"
         STEP()
 
-        (think := step.add_epilog(pic.copy()).on()).which = "Think"
-        think.anchor = "south west"
-        think.location = "-.87, -.9"
-        STEP()
-
+        merged.off()
+        par_on()
         (relief := step.add_epilog(pic.copy()).on()).which = "Relief"
         relief.anchor = "south east"
         relief.location = ".95, -.9"

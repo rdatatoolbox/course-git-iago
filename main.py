@@ -94,6 +94,6 @@ for slide in doc.slides:
         step.intro.progress = f"{i_step}/{n_steps}"
         i_step += 1
 
-doc.generate_tex("Title")
+doc.generate_tex()
 
 doc.compile("res.pdf")

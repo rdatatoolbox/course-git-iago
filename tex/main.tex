@@ -189,7 +189,7 @@
 
   \Diff[m][north east][diff][5]{1, 1}{file.ext}{
     +/{One line},
-  }
+  }{}
 
   \Repo[repo][simple][1]{-1, -1}{}{}
 
@@ -292,7 +292,7 @@
 
 \Diff[+][north east][gitignore][8]{left=3 of editor.north west}{.gitignore}{
   +/{\# Files to ignore:},
-}
+}{}
 
 } % ENDSLIDE
 
@@ -373,15 +373,15 @@
 
 \Diff[m][north west][left][8]{-1, .8}{MY\_VERSION}{
   0/{my line},
-}
+}{}
 
 \Diff[m][north east][right][8]{1, .8}{THEIR\_VERSION}{
   0/{their line},
-}
+}{}
 
 \Diff[0][north][merge][8]{$(left.north)!.5!(right.north)$}{MERGED\_VERSION}{
   0/{merged line},
-}
+}{}
 
 \AutomaticCoordinates{c}{Canvas.center}
 \node[scale=\LargeScale, Dark4] (message) at (c) {\bf message};
