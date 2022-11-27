@@ -18,64 +18,80 @@
   progress remaining/.style={fill=Yellow1},
 }
 
-% Uses \TitleText, \SubTitleText, \PageNumText
-% {progress}{content}
-\NewDocumentCommand{\Step}{ m +m }{
+% Uses \TitleText, \SubTitleText, \PageNumText.
+% type=bare for non-regular steps with only a blank 'Screen'.
+% type=title for transitions between slides.
+% [type]{progress}{content}
+\NewDocumentCommand{\Step}{ O{} m +m }{
 
 \begin{step}%
 \begin{tikzpicture}
 
-  % Tikz's 'z' system is not awesome, so many layers end up very specific :\
-  \pgfdeclarelayer{highlight-behind}
-  \pgfdeclarelayer{background}
-  \pgfdeclarelayer{command-background}
-  \pgfdeclarelayer{command-text}
-  \pgfsetlayers{
-    highlight-behind,
-    background,
-    main,
-    command-background,
-    command-text
-  }
+% Whole screen, setting the page size.
+\node[anchor=south west] (Screen) {\tikz{
+  \path (0, 0) rectangle (\ScreenWidth, \ScreenHeight)}};
 
-  % Set off global structure first.
+\IfSubStr{#1}{bare}{}{\IfSubStr{#1}{title}{
 
-  % Whole screen, setting the page size.
-  \node[anchor=south west] (Screen) {\tikz{
-    \path (0, 0) rectangle (\ScreenWidth, \ScreenHeight)}};
+  \IntensiveCoordinates{Screen}{c}{0, .15}
+  \node[scale=7, Dark3] at (c) {\TitleText};
 
-  % Title bar.
-  \node[anchor=north] (TitleBar) at (Screen.north) {\tikz{
-    \fill[Dark3] (0, 0) rectangle (\ScreenWidth, \TitleBarHeight);}};
-
-  % Title.
-  \node[Light2, anchor=base west, scale=\TitleScale,
-        right=10 of TitleBar.west] (Title) {\bf \TitleText};
-
-  % SubTitle.
-  \node[Light2, anchor=base east, scale=\SubTitleScale,
-        left=10 of TitleBar.east] (SubTitle) {\SubTitleText};
-
-  % Page number.
-  \node[Dark4, inner sep=5, anchor=south east, scale=\PageNumScale]
-    (PageNum) at (Screen.south east) {\bf \PageNumText};
-
-  % Progress bar,
-  % fix vertical borders white pixel lines with epsilon shifts.
-  \coordinate (upper) at
-    ($(TitleBar.south east) + (-\eps, \ProgressHeight)$);
-  \coordinate[right=\eps of TitleBar.south west] (lower);
+  \IntensiveCoordinates{Screen}{lower}{-.7, -.005}
+  \IntensiveCoordinates{Screen}{upper}{+.7, +.005}
   \path[progress remaining] (lower) rectangle (upper);
-  \coordinate[left=(1-#1)*\ScreenWidth of upper] (upper);
-  \path[progress made] (lower) rectangle (upper);
+  \coordinate (mid) at ($(lower)!#2!(upper)$);
+  \path[progress made] (lower) rectangle (mid|-upper);
 
-  % The "Canvas" refers to only the white area reserved for actual drawing,
-  % minus a short margin.
-  \coordinate (offset) at (\CanvasMargin, \CanvasMargin);
-  \node[anchor=south west] at (offset) (Canvas) {\tikz{
-    \path (offset) rectangle ($(TitleBar.south east) - (offset)$);}};
+}{
 
-  #2
+
+    % Tikz's 'z' system is not awesome, so many layers end up very specific :\
+    \pgfdeclarelayer{highlight-behind}
+    \pgfdeclarelayer{background}
+    \pgfdeclarelayer{command-background}
+    \pgfdeclarelayer{command-text}
+    \pgfsetlayers{
+      highlight-behind,
+      background,
+      main,
+      command-background,
+      command-text
+    }
+
+    % Title bar.
+    \node[anchor=north] (TitleBar) at (Screen.north) {\tikz{
+      \fill[Dark3] (0, 0) rectangle (\ScreenWidth, \TitleBarHeight);}};
+
+    % Title.
+    \node[Light2, anchor=base west, scale=\TitleScale,
+          right=10 of TitleBar.west] (Title) {\bf \TitleText};
+
+    % SubTitle.
+    \node[Light2, anchor=base east, scale=\SubTitleScale,
+          left=10 of TitleBar.east] (SubTitle) {\SubTitleText};
+
+    % Page number.
+    \node[Dark4, inner sep=5, anchor=south east, scale=\PageNumScale]
+      (PageNum) at (Screen.south east) {\bf \PageNumText};
+
+    % Progress bar,
+    % fix vertical borders white pixel lines with epsilon shifts.
+    \coordinate (upper) at
+      ($(TitleBar.south east) + (-\eps, \ProgressHeight)$);
+    \coordinate[right=\eps of TitleBar.south west] (lower);
+    \path[progress remaining] (lower) rectangle (upper);
+    \coordinate[left=(1-#2)*\ScreenWidth of upper] (upper);
+    \path[progress made] (lower) rectangle (upper);
+
+    % The "Canvas" refers to only the white area reserved for actual drawing,
+    % minus a short margin.
+    \coordinate (offset) at (\CanvasMargin, \CanvasMargin);
+    \node[anchor=south west] at (offset) (Canvas) {\tikz{
+      \path (offset) rectangle ($(TitleBar.south east) - (offset)$);}};
+
+}}
+
+#3
 
 \end{tikzpicture}%
 \end{step}

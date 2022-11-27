@@ -104,12 +104,19 @@
 % so whitespace and comments are not always insignificant.
 % Just use it as a stub so python scripts can bootstrap and generate steps.
 
+% SLIDE Title
+\renewcommand{\TitleText}{<notitle>}
+\renewcommand{\SubTitleText}{<nosubtitle>}
+\renewcommand{\PageNumText}{<nopagenum>}
+\Step[title]{0/0}{
+} % ENDSLIDE
+
 % SLIDE Clients
-\renewcommand{\TitleText}{Introduction}
-\renewcommand{\SubTitleText}{Git and git clients}
+\renewcommand{\TitleText}{Git Clients}
+\renewcommand{\SubTitleText}{Use the tools you prefer}
 \renewcommand{\PageNumText}{1}
 \newlength{\U}
-\Step{1/5}{
+\Step[]{1/5}{
   \begin{scope}[inner sep=10]
     \setlength{\U}{75mm}
     \tikzmath{
@@ -157,9 +164,9 @@
 
 % SLIDE Pizzas
 \renewcommand{\TitleText}{The Pizzas Repository}
-\renewcommand{\SubTitleText}{Crafting your first commits}
+\renewcommand{\SubTitleText}{Crafting your First Commits}
 \renewcommand{\PageNumText}{2}
-\Step{2/5}{
+\Step[]{2/5}{
 
   \FileTree[north west][files]{-1, 1}{
     folder/+/root/rootfolder,
@@ -176,8 +183,8 @@
 } % ENDSLIDE
 
 % SLIDE Staging
-\renewcommand{\TitleText}{Recording a Commit}
-\renewcommand{\SubTitleText}{The whole process}
+\renewcommand{\TitleText}{Constructing a Commit}
+\renewcommand{\SubTitleText}{The Whole Process}
 \renewcommand{\PageNumText}{3}
 \tikzmath{
   \CommitSpacingSafe = \CommitSpacing;
@@ -236,7 +243,7 @@
   \end{pgfonlayer}
   }
 }}
-\Step{3/5}{
+\Step[]{3/5}{
 
 \Repo[south west][repo][simple][1]{-1, -.76}{}{}
 
@@ -275,14 +282,14 @@
 } % ENDSLIDE
 
 % SLIDE Remote
-\renewcommand{\TitleText}{Collaborating}
-\renewcommand{\SubTitleText}{Working with a remote}
+\renewcommand{\TitleText}{Share Your Project}
+\renewcommand{\SubTitleText}{Creating a Remote Repository}
 \renewcommand{\PageNumText}{4}
 \tikzmath{
   % \CommitSpacing = \CommitSpacingSafe; % DEBUG while selecting only this slide.
   \CommitSpacing = 11;
 }
-\Step{4/5}{
+\Step[]{4/5}{
 
   \FileTree[north west][myfiles]{-1, 1}{
     folder/+/root/rootfolder,
@@ -309,14 +316,14 @@
 } % ENDSLIDE
 
 % SLIDE Conflicts
-\renewcommand{\TitleText}{Resolving Conflicts}
-\renewcommand{\SubTitleText}{What a ``conflict'' means}
+\renewcommand{\TitleText}{Resolve Conflicts}
+\renewcommand{\SubTitleText}{What a ``Conflict'' Means}
 \renewcommand{\PageNumText}{5}
 \tikzset{
   zone/.style={scale=\LargeScale, Dark4},
   zone code/.style={scale=2.3},
 }
-\Step{5/5}{
+\Step[]{5/5}{
 
 \AutomaticCoordinates{low}{-.34, -.95}
 \AutomaticCoordinates{up}{+.34, +.95}

@@ -259,7 +259,7 @@ class RemoteSlide(Slide):
 
         pic_their.on()
         my_opacity()
-        SPLIT("Collaborate", None, "Working with another person")
+        SPLIT("Collaborate", "Collaborate", "You're not Alone.")
 
         # Cloning on their side.
         command_side("right")
@@ -441,7 +441,7 @@ class RemoteSlide(Slide):
         STEP()
 
         their_opacity(1)
-        SPLIT("Forking", None, "Synchronous modifications")
+        SPLIT("Forking", None, "When you Diverge")
 
         for repo in (my_repo, remote, their_repo):
             repo.fade_commits(1, 4)
@@ -673,7 +673,7 @@ class RemoteSlide(Slide):
         left.intro.location = "-.9, -.9"
         left.intro.alignment = "double"
         left.left_labels.add("github/main")
-        SPLIT("Merging", "Merge and Rebase", "Integrating diverging works together")
+        SPLIT("Merging", "Merge and Rebase", "Two Git Philosophies")
 
         merge_title = step.add_prolog(
             AnonymousPlaceHolder(
@@ -871,7 +871,7 @@ class RemoteSlide(Slide):
         their_repo.intro.location = "+.52875, -.95"
         their_pointer.start = ".75, -.4"
         their_pointer.end = ".25, .1"
-        SPLIT("PropagateMerge", "Sharing integrated work", "(Merge style)")
+        SPLIT("PropagateMerge", "Share integrated work", "(Merge style)")
 
         # Merge.
         (mc := my_command).on().text = r"git \gkw{merge} github/main"
@@ -959,7 +959,7 @@ class RemoteSlide(Slide):
         their_repo.intro.location = "+.5495, -.95"
         their_pointer.start = ".75, -.4"
         their_pointer.end = ".25, .1"
-        SPLIT("PropagateRebase", "Sharing integrated work", "(Rebase style)")
+        SPLIT("PropagateRebase", "Share integrated work", "(Rebase style)")
 
         # Rebase.
         (mc := my_command).on().text = r"git \gkw{rebase} github/main"

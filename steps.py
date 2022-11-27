@@ -1,7 +1,7 @@
 """Modifiers concerned with individual slides and their very concrete content.
 """
 
-from modifiers import TextModifier
+from modifiers import TextModifier, AnonymousPlaceHolder
 
 
 class Step(TextModifier):
@@ -12,13 +12,11 @@ class Step(TextModifier):
     """
 
     def __init__(self, input: str):
-        prefix = r"\Step{"
-        assert input.startswith(prefix)
-        input = input.removeprefix(prefix).strip()
-        self.progress, input = input.split("}{", 1)
-        input = input.strip()
-        assert input.endswith("}")
-        self.body = input.removesuffix("}")
+        intro, body = input.split("{\n", 1)
+        self.intro = AnonymousPlaceHolder(r"\Step[<type>]{<progress>}", "parse", intro)
+        body = body.strip()
+        assert body.endswith("}")
+        self.body = body.removesuffix("}")
         # Responsibility to the kids to parse further.
         self.parse_body()
 
@@ -33,9 +31,8 @@ class Step(TextModifier):
         and it should stay within the command.
         """
         return (
-            r"\Step{"
-            + self.progress
-            + "}{\n"
+            self.intro.render()
+            + "{\n"
             + (
                 "\n".join(m.render() for m in self._prolog)
                 if hasattr(self, "_prolog")

@@ -240,8 +240,11 @@ class Slide(TextModifier):
         """Assume there is only one step during parsing."""
         self._document = document
         self.name = name
-        prefix = r"\Step{"
-        head, body = input.split(prefix)
+        # Split on \Step command but preserve options.
+        prefix = re.compile(r"\\Step(\[.*?\])?{")
+        head, options, body = (
+            cast(str, "" if b is None else b) for b in prefix.split(input, 1)
+        )
         self.header = SlideHeader.parse(head)
         # Match name against Step type names to find the correct type.
         found = False
@@ -254,7 +257,9 @@ class Slide(TextModifier):
             raise RuntimeError(
                 f"Could not match name {repr(self.name)} with a subclass of `Step`."
             )
-        self.steps = [cast(Step, cast(Callable, StepType)(prefix + body))]
+        self.steps = [
+            cast(Step, cast(Callable, StepType)(r"\Step" + options + "{" + body))
+        ]
 
     def copy(self):
         """Don't copy backref to the document,

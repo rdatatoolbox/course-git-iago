@@ -430,7 +430,7 @@ class StagingSlide(Slide):
         add.offset = add_offset_safe.pop()
         add.labeled = "0"
         commit.on()
-        fade_after("next", "50c121a")
+        fade_after("next", "e790b0c")
         n_gitignore = copy(s_gitignore, "next", mod="0")
         n_readme.location = s_readme.location
         [f.on() for f in (n_regina, n_readme, n_margherita)]
@@ -465,7 +465,7 @@ class StagingSlide(Slide):
             f.filename = "myfile.ext"
         l_margherita.off()
         keyboard.on()
-        last_commit.hash = "b30be75"
+        last_commit.hash = "310dafc"
         fade_after("editor")
         l_readme.on()
         e_readme.on().location = l_readme.location
@@ -485,7 +485,7 @@ class StagingSlide(Slide):
         STEP()
 
         commit.on()
-        fade_after("next", "2f4920d")
+        fade_after("next", "c451c98")
         n_readme.on().location = s_readme.location
         STEP()
 
