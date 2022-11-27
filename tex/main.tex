@@ -58,12 +58,15 @@
   Diavola/diavola.jpg,
   DuckFlames/duck_flames.png,
   DuckShy/duck_shy.png,
+  Formation/Formation_Recherche_Reproductible.png,
+  FRBCESAB/FRB-CESAB.jpg,
   GithubLogo/github_logo.png,
   GitIcon/git_icon.png,
   GitlabLogo/gitlab_logo.png,
   GitLogo/git_logo.png,
   Hazard/hazard.png,
   Heart/heart.jpg,
+  ISEM/ISEM.png,
   Margherita/margherita.png,
   Marinara/marinara.jpg,
   Matrix/matrix.jpeg,
@@ -116,6 +119,32 @@
 \node[scale=12, Dark4] (git) at (c) {\sf \textbf{git}};
 \node[below=8 of git, scale=6, Dark4] (fs) {\textbf{from scratch}};
 \node[below=12 of fs] (logo) {\PicGitIcon{9cm}{!}};
+
+\IntensiveCoordinates{Screen}{c}{-.99, -.99}
+\node[anchor=south west] (cesab) at (c) {\PicFRBCESAB{!}{7cm}};
+\IntensiveCoordinates{Screen}{c}{+.97, 0}
+\node[anchor=east] (isem) at (cesab -| c) {\PicISEM{!}{3cm}};
+
+\IntensiveCoordinates{Screen}{c}{-.95, +.97}
+\node[anchor=north west] (form) at (c) {\PicFormation{5cm}{!}};
+
+\IntensiveCoordinates{form}{c}{1, .3}
+\node[scale=3, right=5 of c, anchor=base west, Dark2] (form-name)
+  {Bonnes pratiques pour une recherche reproductible en écologie numérique.};
+\node[scale=3, below=13 of form-name.base west, anchor=base west, Dark2]
+  {Montpellier, 28 novembre 2022};
+
+\node[scale=3.5, above=13 of isem.north east, anchor=base east, Dark3]
+  {Iago Bonnici};
+
+\begin{pgfonlayer}{background}%
+  \coordinate[below=5 of form.south] (pad);
+  \coordinate (epspad) at (2*\eps, 2*\eps);
+  \coordinate (loweps) at ($(Screen.south west) + (epspad)$);
+  \coordinate (upeps) at ($(Screen.north east) - (epspad)$);
+  \fill[Light2] (loweps|-pad) rectangle (upeps);
+  \draw[Light5, line width=1] (loweps|-pad) -- (upeps|-pad);
+\end{pgfonlayer}
 
 } % ENDSLIDE
 
