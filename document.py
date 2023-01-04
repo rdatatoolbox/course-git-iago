@@ -348,7 +348,7 @@ def FindPlaceHolder(name: str) -> Tuple[type, PlaceHolderBuilder[PlaceHolder]]:
         r"((?:{.*?}\s*)*)"  # Positional arguments names.
         r"\\NewDocumentCommand{\\" + name + "}"  # Command name.
         r"{\s*((?:O{.*?}\s*)*)"  # Optional argumens values.
-        r"((?:m\s*)*)}"  # Mandatory arguments (no actual information except number).
+        r"((?:\+?m\s*)*)}"  # Mandatory arguments (no actual information except number).
     )
     # Less generic form with newcommand and only positional arguments.
     needle_nc = re.compile(
@@ -369,7 +369,7 @@ def FindPlaceHolder(name: str) -> Tuple[type, PlaceHolderBuilder[PlaceHolder]]:
             # Extract all information from the match.
             onames, pnames, ovalues, pnumber = m.groups()
             pnumber = len(l := pnumber.strip().split())
-            assert set(l) == {"m"}
+            assert set(l).issubset({"m", "+m"})
 
         elif m := needle_nc.search(content):
             found = True

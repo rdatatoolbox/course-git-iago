@@ -23,10 +23,10 @@ class DiffedFile(TextModifier):
     """One chain of diffed lines."""
 
     def __init__(self, input: str):
-        """First line is an intensive coordinate supposed to locate the first Diff."""
+        """Position with coordinate of first line (base west)."""
         intro, lines = input.split("{\n", 1)
         self.intro = AnonymousPlaceHolder(
-            r"\Diff[<mod>][<anchor>][<name>][<linespacing>]{<location>}{<filename>}",
+            r"\Diff[<mod>][<name>][<linespacing>]{<location>}{<filename>}",
             "parse",
             intro,
         )
@@ -38,7 +38,7 @@ class DiffedFile(TextModifier):
     @staticmethod
     def new(**kwargs) -> "DiffedFile":
         """Create empty diffed file."""
-        model = "\\Diff[{mod}][{anchor}][{name}][{linespacing}]{{{location}}}{{{filename}}}{{\n}}{{}}"
+        model = "\\Diff[{mod}][{name}][{linespacing}]{{{location}}}{{{filename}}}{{\n}}{{}}"
         return DiffedFile(model.format(**kwargs))
 
     @property
@@ -64,6 +64,14 @@ class DiffedFile(TextModifier):
     def set_filename(self, filename: str, mod="0") -> "DiffedFile":
         self.intro.filename = filename
         self.intro.mod = mod
+        return self
+
+    @property
+    def location(self) -> str:
+        return self.intro.location
+
+    def set_location(self, location: str) -> "DiffedFile":
+        self.intro.location = location
         return self
 
     @render_method
@@ -226,3 +234,18 @@ class DiffedFile(TextModifier):
 
     def unmark_all(self) -> "DiffedFile":
         return self.unmark_lines(1, -1)
+
+
+# Unfortunately, diff files items cannot be positionned with global anchors
+# because of tikz limitations.
+# Here is a small utility to ease their relative positionning
+# when stacking them top down.
+def below_diff(anchor: str, vshift: float, hshift: float, name: str) -> Constant:
+    return Constant(
+        dedent(
+            rf"""
+            \coordinate[below={vshift} of {anchor}-last-line.base west] ({name});
+            \coordinate[right={hshift} of {name}] ({name});
+            """
+        )
+    )

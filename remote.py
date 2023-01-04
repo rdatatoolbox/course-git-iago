@@ -7,11 +7,12 @@ from diffs import DiffedFile
 from document import Slide
 from filetree import FileTree
 from modifiers import (
-    PlaceHolder,
     AnonymousPlaceHolder,
+    Constant,
     ConstantBuilder,
     ListBuilder,
     ListOf,
+    PlaceHolder,
     Regex,
 )
 from repo import Command, RemoteArrow, RemoteRepoLabel, Repo
@@ -59,7 +60,7 @@ class RemoteSlide(Slide):
         self,
         pizzas_repo: Repo,
         pizzas_files: FileTree,
-        pizzas_diffs: List[DiffedFile],
+        pizzas_diffs: List[DiffedFile | Constant],
     ):
 
         # Use this dynamical step as a workspace for edition,

@@ -2,10 +2,10 @@
 
 from typing import List, Tuple, cast
 
-from diffs import DiffedFile
+from diffs import DiffedFile, below_diff
 from document import Slide
 from filetree import FileTree
-from modifiers import AnonymousPlaceHolder
+from modifiers import AnonymousPlaceHolder, Constant
 from repo import Command, Repo
 from steps import Step
 
@@ -42,7 +42,7 @@ class PizzasStep(Step):
 class PizzasSlide(Slide):
     """Animate pizzas slide so it reproduces the small git history."""
 
-    def animate(self) -> Tuple[Repo, FileTree, List[DiffedFile]]:
+    def animate(self) -> Tuple[Repo, FileTree, List[DiffedFile | Constant]]:
 
         # Use this dynamical step as a workspace for edition,
         # regularly copied into actually recorded steps.
@@ -57,7 +57,7 @@ class PizzasSlide(Slide):
         repo = step.repo.off()
         command = step.command.off()
 
-        repo.intro.location = '-.82, -.94'
+        repo.intro.location = "-.82, -.94"
 
         image = step.add_epilog(
             AnonymousPlaceHolder(
@@ -132,7 +132,11 @@ class PizzasSlide(Slide):
             .set_name("diff1")
             .set_filename(f_readme.filename)
             .insert_lines(readme_text[0])
+            .set_location(".29, .85")
         )
+        diff_stack_vspace = 25
+        diff2_shift = 38.5
+        diff3_shift = 26.5
         STEP()
 
         image.off()
@@ -156,7 +160,7 @@ class PizzasSlide(Slide):
 
         hi_gitfolder.on()
         safe_loc = repo.intro.location
-        repo.intro.location = "-.73, -.95" # Temporary relocate when empty.
+        repo.intro.location = "-.73, -.95"  # Temporary relocate when empty.
         repo.on()
         repo.hi_on()
         STEP()
@@ -183,13 +187,16 @@ class PizzasSlide(Slide):
         # Adding Margherita
         command.off()
         f_margherita = files.append("margherita.md")
+        diff2_loc = step.add_epilog(
+            below_diff("diff1", diff_stack_vspace, diff2_shift, "diff2")
+        )
         d_margherita = (
             step.add_epilog(diff.copy().clear())
             .set_name("diff2")
             .set_filename(f_margherita.filename)
             .insert_lines(margherita_text[0])
+            .set_location("diff2")
         )
-        d_margherita.intro.location = "below=8 of diff1.south east"
         image.on().file = "Margherita"
         image.width = "17.5cm"
         STEP()
@@ -253,13 +260,16 @@ class PizzasSlide(Slide):
         # Adding Regina.
         d_readme.insert_lines(readme_text[1], 2)
         f_regina = files.append("regina.md")
+        diff3_loc = step.add_epilog(
+            below_diff("diff2", diff_stack_vspace, diff3_shift, "diff3")
+        )
         d_regina = (
             step.add_epilog(diff.copy().clear())
             .set_name("diff3")
             .set_filename(f_regina.filename)
             .insert_lines(regina_text[0])
+            .set_location("diff3")
         )
-        d_regina.intro.location = d_margherita.intro.location.replace("diff1", "diff2")
         image.on().file = "Regina"
         STEP()
 
@@ -366,4 +376,4 @@ class PizzasSlide(Slide):
         image.on().file = "VariousPizzas"
         STEP()
 
-        return repo, files, [d_readme, d_margherita, d_regina]
+        return repo, files, [d_readme, diff2_loc, d_margherita, diff3_loc, d_regina]

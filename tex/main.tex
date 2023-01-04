@@ -21,6 +21,7 @@
 \usepackage{tikz}%
   \usetikzlibrary{math}
   \usetikzlibrary{positioning}
+  \usetikzlibrary{fit}
   \usetikzlibrary{calc}
   \usetikzlibrary{arrows.meta}
   \usetikzlibrary{intersections}
@@ -187,7 +188,7 @@
     folder/+/root/rootfolder,
   }
 
-  \Diff[m][north east][diff][5]{1, 1}{file.ext}{
+  \Diff[m][diff][5]{1, 1}{file.ext}{
     +/{One line},
   }{}
 
@@ -290,7 +291,7 @@
 \SwitchArrow[.80][.19][1][25]{right}{modified}{last}{\$ git reset \CommandHighlight{Red1}{--hard}}
 \SwitchArrow[.60][.35][1][1]{right}{editor}{last}{<ctrl-Z>}
 
-\Diff[+][north east][gitignore][8]{left=3 of editor.north west}{.gitignore}{
+\Diff[+][gitignore][8]{left=58 of editor.west}{.gitignore}{
   +/{\# Files to ignore:},
 }{}
 
@@ -347,39 +348,42 @@
 \coordinate (mid) at ($(up)!.5!(low)$);
 \coordinate (bottom) at (low-|mid);
 
-\path[fill=Blue1, draw=Blue3, line width=2, fill opacity=1] (low) rectangle (up);
+\begin{pgfonlayer}{background}
 
-\path[fill=Brown1, draw=Brown3, line width=2, fill opacity=0.5]
-  (lexical) ellipse (63 and 70);
+  \path[fill=Blue1, draw=Blue3, line width=2, fill opacity=1]
+    (low) rectangle (up);
+  \path[fill=Brown1, draw=Brown3, line width=2, fill opacity=0.5]
+    (lexical) ellipse (63 and 70);
+  \path[fill=Purple1, draw=Purple3, line width=2, fill opacity=0.5]
+    (semantic) ellipse (63 and 70);
 
-\path[fill=Purple1, draw=Purple3, line width=2, fill opacity=0.5]
-  (semantic) ellipse (63 and 70);
+  \node[zone, anchor=south, above=27 of bottom] (line) {no conflicts};
+  \node[zone, below=3 of line] (line) {\it (happy zone)};
+  \node[zone, below=1 of line, Green5] (line) {\rotatebox{-90}{\Code{:)}}};
 
-\node[zone, anchor=south, above=27 of bottom] (line) {no conflicts};
-\node[zone, below=3 of line] (line) {\it (happy zone)};
-\node[zone, below=1 of line, Green5] (line) {\rotatebox{-90}{\Code{:)}}};
+  \node[zone, below=25 of lexical] (line) {\bf lexical conflicts};
+  \node[zone code, below=3 of line] (line) {\Code{>> git conflicts <<}};
+  \node[zone, below=1 of line, Red4] (line) {\rotatebox{-90}{\Code{:(}}};
 
-\node[zone, below=25 of lexical] (line) {\bf lexical conflicts};
-\node[zone code, below=3 of line] (line) {\Code{>> git conflicts <<}};
-\node[zone, below=1 of line, Red4] (line) {\rotatebox{-90}{\Code{:(}}};
+  \node[zone, above=44 of semantic] (line) {\bf semantic conflicts};
+  \node[zone code, below=3 of line] (line) {\Code{>> git sees not <<}};
+  \node[zone, below=-2 of line, Red4] (line) {\rotatebox{-90}{\Code{:(}}};
 
-\node[zone, above=44 of semantic] (line) {\bf semantic conflicts};
-\node[zone code, below=3 of line] (line) {\Code{>> git sees not <<}};
-\node[zone, below=-2 of line, Red4] (line) {\rotatebox{-90}{\Code{:(}}};
+  \node[zone code] at ($(lexical)!.55!(semantic)$) (line) {\Code{>>git's got your back<<}};
+  \node[zone, below=3 of line] (line) {\it (happy zone)};
+  \node[zone, below=1 of line, Green5] (line) {\rotatebox{-90}{\Code{:)}}};
 
-\node[zone code] at ($(lexical)!.55!(semantic)$) (line) {\Code{>>git's got your back<<}};
-\node[zone, below=3 of line] (line) {\it (happy zone)};
-\node[zone, below=1 of line, Green5] (line) {\rotatebox{-90}{\Code{:)}}};
+\end{pgfonlayer}
 
-\Diff[m][north west][left][8]{-1, .8}{MY\_VERSION}{
+\Diff[m][left][8]{-.98, .75}{MY\_VERSION}{
   0/{my line},
 }{}
 
-\Diff[m][north east][right][8]{1, .8}{THEIR\_VERSION}{
+\Diff[m][right][8]{.38, .75}{THEIR\_VERSION}{
   0/{their line},
 }{}
 
-\Diff[0][north][merge][8]{$(left.north)!.5!(right.north)$}{MERGED\_VERSION}{
+\Diff[0][merge][8]{-.29, .75}{MERGED\_VERSION}{
   0/{merged line},
 }{}
 

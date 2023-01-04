@@ -48,6 +48,7 @@ class Arrow(TextModifier):
 
     @render_method
     def render(self) -> str:
+        self.origin
         return dedent(
             "\n"
             + r"""
@@ -65,19 +66,37 @@ class Arrow(TextModifier):
 
 
 class ConflictsStep(Step):
+
+    bg_prefix = r"\begin{pgfonlayer}{background}" + "\n"
+    bg_suffix = "\n" + r"\end{pgfonlayer}"
+
     def parse_body(self):
         input = self.body
         chunks = input.split("\n\n")
         it = iter(chunks)
         self.coordinates = Constant(next(it))
-        zone = (r"\\path.*\[fill=(.*?),.*?opacity=(.*?)\].*", "color opacity")
-        self.noconflict_zone = Regex(next(it), *zone)
-        self.lexical_zone = Regex(next(it), *zone)
-        self.semantic_zone = Regex(next(it), *zone)
+
+        assert next(it).strip() == self.bg_prefix.strip()
+
+        zone = (r"\s*\\path.*\[fill=(.*?),.*?opacity=(.*?)\].*", "color opacity")
+        zones = next(it).strip() + "\n"
+        zones = (z + ";" for z in zones.split(";\n") if z)
+        self.noconflict_zone = Regex(next(zones), *zone)
+        self.lexical_zone = Regex(next(zones), *zone)
+        self.semantic_zone = Regex(next(zones), *zone)
+        try:
+            while some := next(zones):
+                assert not some
+        except StopIteration:
+            pass
+
         self.paragraphs = {
             name: [Constant(l) for l in next(it).split("\n")]
             for name in ("none", "lexical", "semantic", "both")
         }
+
+        assert next(it).strip() == self.bg_suffix.strip()
+
         self.diff_left = DiffedFile(next(it))
         self.diff_right = DiffedFile(next(it))
         self.diff_merge = DiffedFile(next(it))
@@ -94,19 +113,30 @@ class ConflictsStep(Step):
             pass
 
     def render_body(self) -> str:
+        zones = Constant(
+            "\n".join(
+                z.render()
+                for z in [
+                    self.noconflict_zone,
+                    self.lexical_zone,
+                    self.semantic_zone,
+                ]
+            )
+        )
+        pars = [
+            Constant("\n".join(l.render() for l in lines))
+            for lines in self.paragraphs.values()
+        ]
         return "\n\n".join(
             m.render()
             for m in [
                 self.coordinates,
-                self.noconflict_zone,
-                self.lexical_zone,
-                self.semantic_zone,
+                Constant(self.bg_prefix),
+                zones,
             ]
+            + pars
             + [
-                Constant("\n".join(l.render() for l in lines))
-                for lines in self.paragraphs.values()
-            ]
-            + [
+                Constant(self.bg_suffix),
                 self.diff_left,
                 self.diff_right,
                 self.diff_merge,
@@ -134,8 +164,10 @@ class ConflictsSlide(Slide):
         )
         message = step.message.off()
         underline = cast(Constant, message.underline)
-        from_left = step.add_epilog(Arrow("left.north", 0.5, "merge.north", 0)).off()
-        from_right = step.add_epilog(Arrow("right.north", 0.5, "merge.north", 1)).off()
+        from_left = step.add_epilog(Arrow("left.north", 0.45, "merge.north", 0.1)).off()
+        from_right = step.add_epilog(
+            Arrow("right.north", 0.55, "merge.north", 0.9)
+        ).off()
         to_left = step.add_epilog(Arrow("merge.south", 0.3, "left.south", 0.7)).off()
         to_right = step.add_epilog(Arrow("merge.south", 0.7, "right.south", 0.3)).off()
 
@@ -400,7 +432,7 @@ class ConflictsSlide(Slide):
         STEP()
 
         pic.on().which = "Heart"
-        pic.location = "below=15 of right.south"
+        pic.location = "below=15 of right-content"
         pic.anchor = "north"
         pic.height = "8cm"
         STEP()
@@ -442,8 +474,8 @@ class ConflictsSlide(Slide):
 
         pic.on().which = "OMG"
         pic.height = "8cm"
-        pic.location = ".0, -1"
-        pic.anchor = "south"
+        pic.location = "below=12 of merge-content"
+        pic.anchor = "north"
         STEP()
 
         pic.off()
@@ -456,7 +488,7 @@ class ConflictsSlide(Slide):
         pic.on().which = "Think"
         pic.anchor = "north"
         pic.height = "10cm"
-        pic.location = "below = 10 of left.south"
+        pic.location = "below=15 of left-content"
         think_safe = pic.copy()
         STEP()
 
@@ -723,10 +755,10 @@ class ConflictsSlide(Slide):
         # Essentially relating to how humans work together :')
         (shy := step.add_epilog(pic.copy()).on()).which = "DuckShy"
         shy.anchor = "north west"
-        shy.location = "-.75, .71"
+        shy.location = "-.76, .78"
         (flames := step.add_epilog(pic.copy()).on()).which = "DuckFlames"
         flames.anchor = "north east"
-        flames.location = ".99, .91"
+        flames.location = ".99, .98"
         STEP()
 
         merged.off()
