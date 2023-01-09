@@ -174,7 +174,9 @@ class Document(TextModifier):
             if not current_slide or slide != current_slide:
                 if current_slide and res.endswith("-"):
                     res += str(previous_step)
-                res += f"\n  {slide}: {step}"
+                res += "\n  " + (
+                    f"{slide}: {step}" if slide != "Transition" else f"→ {step}"
+                )
                 current_slide = slide
                 previous_step = step
             else:

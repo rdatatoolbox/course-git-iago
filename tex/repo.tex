@@ -45,6 +45,16 @@
   url hi/.style={url, fill=Yellow1},
 }
 
+\newsavebox{\Lock}
+\savebox{\Lock}{\tikz[baseline={(4.5, 1.6)}]{
+  \tikzmath{ \W=8; \H=8; \h=6; }
+  \fill[Dark3, rounded corners=7] (0, 0) rectangle (\W, \h);
+  \draw[Dark3, rounded corners=6, line width=5]
+    (.25*\W, 0.5*\H) rectangle (.75*\W, \H);
+  \fill[Light4, rounded corners=2] (.25*\W, .28*\h) rectangle (.75*\W, .74*\h);
+  \draw[Dark3, line width=2] (.5*\W, .35*\h) -- +(0, .33*\h);
+}}
+
 % Draw one commit with hash and message, use [offset] to align with 2 branches.
 % [type][hash-offset][message-offset][type]{location}{hash}{message}
 \NewDocumentCommand{\Commit}{ O{} O{0} O{0} O{} m m m }{
@@ -138,7 +148,7 @@
           \def\merged{1}
         }{}
     }
-    \coordinate (last) at (\hash);
+    \coordinate[alias=#1-last] (last) at (\hash);
     \IfSubStr{\type}{fade}{\end{scope}}{}
   }}
   % Labels go here, within the embed tikz picture,
@@ -157,6 +167,8 @@
 % (Useful when eg. HEAD is pointing to a branch.)
 % If local arrow start is 'noarrow', there is no pointer.
 % (Useful on empty repos or to stick origin/main to main.)
+% Special text '<branch>-lock' is interpreted to produce a lock icon,
+% with the same positionning logic as other labels.
 % [name][anchor][style]{ref}{offset}{start}{text}
 \NewDocumentCommand{\Label}{ O{unnamed} O{base} O{} m m m m }{
 
@@ -165,7 +177,13 @@
    {\coordinate[right=#5 of #4] (c);}}
    {\coordinate (c) at ($(#4) + (#5)$);}
 
-  \node[label #3, anchor=#2, alias=\LatestRepo-#1, name path=rec] (#1) at (c) {\Code{#7}};
+  \IfSubStr{#1}{-lock}{%
+    \node[inner sep=4, anchor=#2, alias=\LatestRepo-#1, inner sep=4]
+      (#1) at (c) {\usebox{\Lock}};
+  }{
+    \node[label #3, anchor=#2, alias=\LatestRepo-#1, name path=rec]
+      (#1) at (c) {\Code{#7}};
+  }
 
   \IfSubStr{#3}{hi}{%
     \HighlightSquareRing[1]{#1}
@@ -174,28 +192,30 @@
   }
 
   \ifstrequal{#6}{noarrow}{}{
-        \IfSubStr{#4}{base}{
-          % Assume we're pointing to another label, horizontally.
-          \IfSubStr{#4}{west}{
-            \coordinate (s) at ($(#1.base east) + (-.5, #6)$);
-          }{
-            \coordinate (s) at ($(#1.base west) + (+.5, #6)$);
-          }
-          \coordinate[above=#6 of #4] (e);
-          \draw[label #3, shorten >=0] (s) -- (e);
-        }{
-          % Assume we're pointing to a commit.
-          \begin{scope}[local to=#1]
-            \coordinate (s) at (#6);
-          \end{scope}
-          % Calculate intersection to correctly clip the arrow.
-          \path[name path=arrow] (s) -- (#4);
-          \path[name intersections={of=rec and arrow, by=cross}];
-          \draw[label #3, shorten >=\CommitArrowShorten mm] (cross) -- (#4);
-        }
+    \IfSubStr{#4}{base}{
+      % Assume we're pointing to another label, horizontally.
+      \IfSubStr{#4}{west}{
+        \coordinate (s) at ($(#1.base east) + (-.5, #6)$);
+      }{
+        \coordinate (s) at ($(#1.base west) + (+.5, #6)$);
+      }
+      \coordinate[above=#6 of #4] (e);
+      \draw[label #3, shorten >=0] (s) -- (e);
+    }{
+      % Assume we're pointing to a commit.
+      \coordinate (s) at ($(#1.base west) + (#6)$);
+      % Calculate intersection to correctly clip the arrow.
+      \path[name path=arrow] (s) -- (#4);
+      \path[name intersections={of=rec and arrow, by=cross}];
+      \draw[label #3, shorten >=\CommitArrowShorten mm] (cross) -- (#4);
+    }
   }
 
 }
+
+% WARNING: \Branch, \RemoteBranch, \Head
+% are left here to ease direct use within LaTeX,
+% but the python code directly generates \Label commands now.
 % Basic branch label.
 % [anchor][style]{ref}{offset}{start}{name}
 \NewDocumentCommand{\Branch}{ O{base} O{} m m m m }{
@@ -211,6 +231,7 @@
 \NewDocumentCommand{\Head}{ O{base} O{} m m m }{
   \Label[HEAD][#1][#2=Purple4]{#3}{#4}{#5}{HEAD}
 }
+
 % Highlight current commit.
 % {hash}
 \newcommand{\HighlightCommit}[1]{

@@ -49,6 +49,7 @@ conflicts.animate()
     pizzas,
     stage,
     remote,
+    notalone,
     collaborate,
     fork,
     fusion,
@@ -69,6 +70,8 @@ doc.slides = [
     stage,
     ts("Share Your Project Online"),
     remote,
+    ts("You're Not Alone"),
+    notalone,
     ts("Collaborate"),
     collaborate,
     ts("Collaboration Divergence"),
@@ -94,6 +97,6 @@ for slide in doc.slides:
         step.intro.progress = f"{i_step}/{n_steps}"
         i_step += 1
 
-doc.generate_tex()
+doc.generate_tex(1, 166)
 
 doc.compile("res.pdf")
