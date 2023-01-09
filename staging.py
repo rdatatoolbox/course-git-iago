@@ -405,11 +405,12 @@ class StagingSlide(Slide):
         reset.off().__dict__.update(reset_safe.__dict__)
         fade_after("modified")
         [f.off() for f in (s_readme, s_regina)]
+        ctrls.off().labeled = "1"
+        keyboard.off()
         STEP()
 
         # Create gitignore.
-        ctrls.off().labeled = "1"
-        keyboard.labeled = "1"
+        keyboard.on().labeled = "1"
         e_gitignore = copy(e_regina, "editor", ".gitignore")
         e_readme.location = str((x_left, y_up)).strip("()")
         e_gitignore.location = str((x_left, y_down)).strip("()")

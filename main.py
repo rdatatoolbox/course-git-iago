@@ -8,11 +8,12 @@ from typing import Tuple, cast
 from clients import ClientsSlide
 from conflicts import ConflictsSlide
 from document import Document
+from modifiers import Constant
 from pizzas import PizzasSlide
 from remote import RemoteSlide
 from staging import StagingSlide
-from transition import TransitionSlide
 from title import TitleSlide
+from transition import TransitionSlide
 
 main_tex = Path("tex", "main.tex")
 with open(main_tex, "r") as file:
@@ -49,6 +50,7 @@ conflicts.animate()
     pizzas,
     stage,
     remote,
+    notalone,
     collaborate,
     fork,
     fusion,
@@ -69,7 +71,9 @@ doc.slides = [
     stage,
     ts("Share Your Project Online"),
     remote,
-    ts("Collaborate"),
+    ts("You're Not Alone"),
+    notalone,
+    (coll := ts("Collaborate")),
     collaborate,
     ts("Collaboration Divergence"),
     fork,
@@ -81,7 +85,7 @@ doc.slides = [
     propagate_rebase,
 ]
 
-# Setup page numbers and progress.
+# Setup slides numbers and progress.
 total = len(doc.slides)
 n_steps = sum(len(slide.steps) for slide in doc.slides)
 i_slide = 1
@@ -94,6 +98,16 @@ for slide in doc.slides:
         step.intro.progress = f"{i_step}/{n_steps}"
         i_step += 1
 
-doc.generate_tex()
+# Small fun on this specific transition.
+step = coll.steps[0].copy() # (here so the progress bar does not move during transition)
+step.add_epilog(
+    Constant(
+        r"\AutomaticCoordinates{c}{0, -.45}" + "\n"
+        r"\node at (c) {\PicContact{!}{12cm}};",
+    )
+)
+coll.add_step(step)
+
+doc.generate_tex(116, 171)
 
 doc.compile("res.pdf")

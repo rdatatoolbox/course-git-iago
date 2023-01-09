@@ -120,12 +120,12 @@ class RemoteSlide(Slide):
         url.highlight = ""
         command = step.add_epilog(Command("0, 0", "-"))
 
-        def command_side(side: str):
+        def command_side(side: str, crit=0.35):
             if side == "left":
-                command.start = "$(command)!.35!(Canvas.south west)$"
+                command.start = f"$(command)!{crit}!(Canvas.south west)$"
                 command.end = ".3"
             elif side == "right":
-                command.start = "$(command)!.35!(Canvas.south east)$"
+                command.start = f"$(command)!{crit}!(Canvas.south east)$"
                 command.end = ".7"
             else:
                 raise ValueError(f"Pick either left or right, not {repr(side)}.")
@@ -138,7 +138,7 @@ class RemoteSlide(Slide):
 
         my_pointer = step.add_epilog(
             RemoteArrow(
-                "$($(mine-HEAD.east)!.5!(mine-main.west)$) + (6, 10)$",
+                "above right=25 and 10 of mine-last.east",
                 "remote-HEAD.south west",
                 name="github",
                 highlight="-hi",
@@ -169,7 +169,6 @@ class RemoteSlide(Slide):
         my_repo.hi_on("main")
         STEP()
 
-        remote.hi_off("main")
         remote.populate(pizzas_repo)
         remote.intro.location = remote_location_safe
         my_flow.end = "left=5 of remote-45a5b65-hash.north west"
@@ -179,6 +178,7 @@ class RemoteSlide(Slide):
         STEP()
 
         [remote.hi_off(c) for c in remote.commits]
+        remote.hi_off("main")
         my_repo.hi_off("main")
         command.off()
         my_flow.off()
@@ -196,25 +196,71 @@ class RemoteSlide(Slide):
         hi_git.off()
         STEP()
 
-        # Local commit: Diavola.
+        # Not alone.
         pic = step.add_epilog(
             AnonymousPlaceHolder(
                 r"\AutomaticCoordinates{c}{<location>}" + "\n"
                 r"\node[anchor=<anchor>] (pizza) at (c)"
                 r" {\Pic<which>{<width>}{<height>}};",
                 "new",
-                which="Diavola",
-                location=".5, -.5",
+                which="NotAlone",
+                location=".5, -.55",
                 anchor="center",
                 width="!",
                 height="10cm",
             )
         )
+        STEP()
+
+        SPLIT("NotAlone", "Maintain Your Project", "You're Not Alone.")
+
+        remote.hi_on("main")
+        STEP()
+
+        # Protect main branch.
+        remote.lock_branch("main")
+        STEP()
+
+        remote.hi_off("main")
+        STEP()
+
+        # New pizza: Diavola.
+        pic.which = "Diavola"
         my_diavola = my_files.append("diavola.md", mod="+")
         (my_readme := my_files["readme"]).mod = "m"
         STEP()
 
-        pic.off()
+        pic.which = "NotAlone"
+        STEP()
+
+        # Create dedicated branch.
+        command.on().text = r"git \gkw{branch} dev"
+        command.location = "0, -.08"
+        command_side('left', .25)
+        STEP()
+
+        my_repo.add_branch("dev", "17514f2")
+        my_repo.hi_on("dev")
+        STEP()
+
+        command.off()
+        my_repo.hi_off("dev")
+        STEP()
+
+        command.on().text = r"git checkout \ghi{dev}"
+        my_repo.hi_on("dev")
+        my_repo.hi_on("HEAD")
+        STEP()
+
+        my_repo.checkout_branch("dev")
+        STEP()
+
+        my_repo.hi_off("dev")
+        my_repo.hi_off("HEAD")
+        command.off()
+        STEP()
+
+        # New local commit.
         command.on().text = "git commit"
         STEP()
 
@@ -226,6 +272,8 @@ class RemoteSlide(Slide):
         STEP()
 
         my_repo.hi_off(c)
+        STEP()
+
         remote.hi_on("main")
         my_repo.hi_on("github/main")
         STEP()
@@ -235,30 +283,102 @@ class RemoteSlide(Slide):
         STEP()
 
         # Pushing new commit to remote.
-        command.on().text = r"git \gkw{push} github main"
-        command.location = "0, -.20"
+        command.on().text = r"git \gkw{push} github \ghi{dev}"
         STEP()
 
         my_flow.on()
-        my_repo.hi_on("main")
-        remote.hi_on("main")
+        my_repo.hi_on("dev")
         STEP()
 
+        remote.add_branch("dev", "17514f2")
+        # Fake on remote, because HEAD remains pointed to main.
+        remote.checkout_branch("dev")
         c = remote.add_commit(c.copy())
+        remote.checkout_branch("main")
         remote.hi_on(c)
-        remote.hi_off("main")
-        my_repo.remote_to_branch("github/main")
+        remote.hi_on("dev")
+        my_repo.add_remote_branch("github/dev")
         STEP()
 
         remote.hi_off(c)
-        my_repo.hi_off("main")
-        my_repo.hi_on("github/main")
+        my_repo.hi_off("dev")
+        remote.hi_off("dev")
         my_flow.off()
         command.off()
         STEP()
 
-        my_repo.hi_off("github/main")
+        my_repo.hi_on("github/dev")
+        remote.hi_on("dev")
         STEP()
+
+        my_repo.hi_off("github/dev")
+        remote.hi_off("dev")
+        STEP()
+
+        # Stepping `main` forward.
+        command.on().text = r"git checkout \ghi{main}"
+        my_repo.hi_on("main")
+        STEP()
+
+        my_repo.checkout_branch("main")
+        my_diavola.off()
+        STEP()
+
+        command.off()
+        my_repo.hi_off("main")
+        STEP()
+
+        command.on().text = r"git \gkw{merge} dev"
+        my_repo.hi_on("main")
+        STEP()
+
+        my_repo.move_branch("main", c.hash)
+        my_diavola.on()
+        STEP()
+
+        my_repo.hi_off("main")
+        command.off()
+        STEP()
+
+        my_repo.hi_on("github/main")
+        remote.hi_on("main")
+        STEP()
+
+        my_repo.hi_off("github/main")
+        remote.hi_off("main")
+        STEP()
+
+        # Pushing main to remote.
+        command.on().text = r"git push github \ghi{main}"
+        command_side("left", .20)
+        my_repo.hi_on("main")
+        remote.hi_on("main")
+        my_flow.on()
+        STEP()
+
+        remote.move_branch("main", c.hash)
+        my_repo.remote_to_branch("github/main")
+        STEP()
+
+        my_flow.off()
+        my_repo.hi_off("main")
+        remote.hi_off("main")
+        command.off()
+        STEP()
+
+        # Checkout `dev` again.
+        command.on().text = r"git checkout \ghi{dev}"
+        my_repo.hi_on("dev")
+        STEP()
+
+        my_repo.checkout_branch("dev")
+        STEP()
+
+        command.off()
+        my_repo.hi_off("dev")
+        STEP()
+
+        pic.off()
 
         def my_opacity(o=0.3):
             my_repo.intro.opacity = str(o)
@@ -272,7 +392,7 @@ class RemoteSlide(Slide):
 
         pic_their.on()
         my_opacity()
-        SPLIT("Collaborate", "Collaborate", "You're not Alone.")
+        SPLIT("Collaborate", "Collaborate", "You're Not Alone")
 
         # Cloning on their side.
         command_side("right")
