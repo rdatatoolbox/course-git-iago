@@ -52,10 +52,10 @@ conflicts.animate()
     remote,
     notalone,
     collaborate,
-    fork,
-    fusion,
-    propagate_merge,
-    propagate_rebase,
+    # fork,
+    # fusion,
+    # propagate_merge,
+    # propagate_rebase,
     conflicts,
 ) = doc.slides
 
@@ -76,13 +76,13 @@ doc.slides = [
     (coll := ts("Collaborate")),
     collaborate,
     ts("Collaboration Divergence"),
-    fork,
+    # fork,
     ts("Conflicts"),
     conflicts,
     ts("Integrate Diverging Works"),
-    fusion,
-    propagate_merge,
-    propagate_rebase,
+    # fusion,
+    # propagate_merge,
+    # propagate_rebase,
 ]
 
 # Setup slides numbers and progress.
@@ -108,6 +108,6 @@ step.add_epilog(
 )
 coll.add_step(step)
 
-doc.generate_tex("Collaborate", 1, 5)
+doc.generate_tex("Collaborate", 30, -1)
 
 doc.compile("res.pdf")
