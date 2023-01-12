@@ -108,6 +108,6 @@ step.add_epilog(
 )
 coll.add_step(step)
 
-doc.generate_tex(116, 171)
+doc.generate_tex("Collaborate", 1, 5)
 
 doc.compile("res.pdf")
