@@ -25,6 +25,7 @@
   label/.style={line width=1.5, draw, #1, fill=Light3, scale=\CommitScale,
                 inner sep=\LabelIsep, rounded corners, -Stealth},
   label hi/.style={label=#1, fill=Yellow1},
+  label hi ring/.style={label hi=#1}, % Same but with an extra ring.
   %
   repo label/.style={scale=\NormalScale, inner sep=2, draw, Dark3, fill=Light2},
   remote label/.style={repo label, Blue4, fill=Light2},
@@ -56,25 +57,33 @@
 }}
 
 % Draw one commit with hash and message, use [offset] to align with 2 branches.
-% [type][hash-offset][message-offset][type]{location}{hash}{message}
-\NewDocumentCommand{\Commit}{ O{} O{0} O{0} O{} m m m }{
-  \coordinate[alias=\LatestRepo-#6] (#6) at (#5);
-  \path[commit] (#6) circle (\CommitRadius);
+% [type][hash-offset][message-offset][type][index]{location}{hash}{message}
+\NewDocumentCommand{\Commit}{ O{} O{0} O{0} O{} O{0} m m m }{
+  \coordinate[alias=\LatestRepo-#7,
+              alias=#5,
+              alias=\LatestRepo-#5] (#7) at (#6);
+  \path[commit] (#7) circle (\CommitRadius);
 
   % Hash.
   \node[scale=\CommitScale, anchor=base east, hash,
-        alias=\LatestRepo-#6-hash] (#6-hash)
-    at ($(#6) - (\CommitRadius + \CommitMargins + #2, -\CommitBaseHeight)$)
-    {\Code{#6}};
+        alias=\LatestRepo-#7-hash,
+        alias=#5-hash,
+        alias=\LatestRepo-#5-hash,
+        ] (#7-hash)
+    at ($(#7) - (\CommitRadius + \CommitMargins + #2, -\CommitBaseHeight)$)
+    {\Code{#7}};
 
   % Message.
   \node[scale=\CommitScale, anchor=base west, Dark4,
-        alias=\LatestRepo-#6-message] (#6-message)
-    at ($(#6) + (\CommitRadius + \CommitMargins - #2 + #3, \CommitBaseHeight)$)
-    {\Code{#7}};
+        alias=\LatestRepo-#7-message,
+        alias=#5-message,
+        alias=\LatestRepo-#5-message,
+        ] (#7-message)
+    at ($(#7) + (\CommitRadius + \CommitMargins - #2 + #3, \CommitBaseHeight)$)
+    {\Code{#8}};
 
   \IfSubStr{#4}{hi}{\IfSubStr{#4}{fade}{\def\op{.2}}{\def\op{1}}}{\def\op{0}}
-  \HighlightSquare[.8][\op]{#6-message.south west}{#6-message.north east}
+  \HighlightSquare[.8][\op]{#7-message.south west}{#7-message.north east}
 }
 
 % Chain commits together.
@@ -105,7 +114,7 @@
     \foreach \type/\hash/\message [count=\i] in {#5} {\ifcsempty{hash}{}{
       \IfSubStr{\type}{fade}{\begin{scope}[transparency group, opacity=.3]}{}
       \ifnumcomp{\i}{=}{1}{
-        \Commit[\hash][0][\Hoff][\type]{#1}{\hash}{\message}
+        \Commit[\hash][0][\Hoff][\type][1]{#1}{\hash}{\message}
         % Keep track of last commit on the straight/parallel chain..
         \coordinate (straight) at (\hash);
         \coordinate (parallel) at (\hash); % (but they start merged)
@@ -138,7 +147,7 @@
           \tikzmath{ \H = 0; }
         }
         \ifstrequal{#2}{mixed}{\tikzmath{\Hoff = \H;}}{}
-        \Commit[\type][\H][\Hoff][\type]{\hash}{\hash}{\message}
+        \Commit[\type][\H][\Hoff][\type][\i]{\hash}{\hash}{\message}
         \IfSubStr{\type}{A}{%
           \coordinate[below=\CommitRadius + .5*\CommitSpacing of \hash] (c);
           \draw[commit arrow] (parallel)
@@ -149,6 +158,8 @@
         }{}
     }
     \coordinate[alias=#1-last] (last) at (\hash);
+    \node also[alias=last-hash, alias=#1-last-hash] (\hash-hash);
+    \node also[alias=last-message, alias=#1-last-message] (\hash-message);
     \IfSubStr{\type}{fade}{\end{scope}}{}
   }}
   % Labels go here, within the embed tikz picture,
@@ -185,7 +196,7 @@
       (#1) at (c) {\Code{#7}};
   }
 
-  \IfSubStr{#3}{hi}{%
+  \IfSubStr{#3}{ring}{
     \HighlightSquareRing[1]{#1}
   }{
     \HighlightSquareRing[1][0]{#1} % Phantom to not shift when highlighting.

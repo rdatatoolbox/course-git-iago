@@ -173,8 +173,8 @@ class RemoteSlide(Slide):
 
         remote.populate(pizzas_repo)
         remote.intro.location = remote_location_safe
-        my_flow.end = "left=5 of remote-45a5b65-hash.north west"
-        my_pointer.end = "above left=4 and 5 of remote-d1e8c8c-hash.south west"
+        my_flow.end = "left=5 of remote-2-hash.north west"
+        my_pointer.end = "above left=4 and 5 of remote-1-hash.south west"
         [remote.hi_on(c) for c in remote.commits]
         my_repo.add_remote_branch(f"{website}/main")
         STEP()
@@ -323,7 +323,7 @@ class RemoteSlide(Slide):
         STEP()
 
         my_repo.checkout_branch("main")
-        my_diavola.off()
+        my_files.pop(my_diavola)
         STEP()
 
         command.off()
@@ -335,7 +335,7 @@ class RemoteSlide(Slide):
         STEP()
 
         my_repo.move_branch("main", c.hash)
-        my_diavola.on()
+        my_files.append(my_diavola)
         STEP()
 
         my_repo.hi_off("main")
@@ -626,7 +626,6 @@ class RemoteSlide(Slide):
         their_opacity(1)
         STEP()
 
-        return  # TEMP while adding branches.
         SPLIT("Forking", None, "When you Diverge")
 
         for repo in (my_repo, remote, their_repo):
@@ -635,10 +634,12 @@ class RemoteSlide(Slide):
 
         for repo in (my_repo, remote, their_repo):
             repo.trim(4)
-        remote.intro.location = "-.05" + y_up_repos
-        their_repo.intro.location = ".60" + y_down_repos
-        my_pointer.start = "$(mine-main.north west) + (-5, 10)$"
-        their_pointer.start = "$(theirs-main.north east) + (5, 10)$"
+        remote.intro.location = "-.10" + y_up_repos
+        their_repo.intro.location = ".40" + y_down_repos
+        my_pointer.start = "above right=25 and 10 of mine-last"
+        my_pointer.end = "left=5 of remote-1-hash.south west"
+        their_pointer.start = "above right=25 and 50 of theirs-last"
+        their_pointer.end = "right=5 of remote-1-message.south east"
         for p in (my_pointer, their_pointer):
             p.end = p.end.replace("d1e8c8c", remote.commits[0].hash)
         STEP()
@@ -675,10 +676,10 @@ class RemoteSlide(Slide):
         del command
         my_command.location = "-.07, -.29"
         their_command.location = "+.07, -.40"
-        my_command.start = f"$({website}/main.north east) + (10, 10)$"
-        their_command.start = "theirs-636694f-hash.west |- HEAD.north"
+        my_command.start = "above right=20 and 80 of mine-last"
+        their_command.start = "above left=8 and 25 of theirs-last"
         my_command.end = ".23"
-        their_command.end = ".78"
+        their_command.end = ".65"
         STEP()
 
         files_4 = ("my_calzone", "my_readme", "their_marinara", "their_readme")
@@ -709,105 +710,101 @@ class RemoteSlide(Slide):
             eval(f + "_hi").off()
         STEP()
 
-        # Cannot both push at the same time.
-        my_command.on().text = f"git push {website} main"
-        their_command.on().text = "git push origin main"
-        my_command.start = "right=30 of mine-main.north east"
-        my_command.location = "-.07, -.28"
+        # Both push at the same time.
+        my_command.on().text = f"git push {website} dev"
+        their_command.on().text = "git push origin alien"
+        my_command.start = "above right=10 and 70 of mine-last"
+        my_command.location = "-.08, -.28"
+        their_command.location = "+.05, -.40"
         STEP()
 
-        my_command.style = "error"
-        their_command.style = "ok"
-        STEP()
-
-        # Their commit is pushed.
-        my_command.off().style = ""
+        my_pointer.style = "hi"
         their_pointer.style = "hi"
-        their_repo.hi_on("main")
-        remote.hi_on("main")
-        their_flow.on().start = "$(theirs-main.north east) + (10, 20)$"
-        their_flow.end = "right=25 of remote-636694f"
+        my_repo.hi_on("dev")
+        remote.hi_on("dev")
+        their_repo.hi_on("alien")
+        remote.hi_on("alien")
+        my_flow.on().end = "left=5 of remote-last-hash.north west"
+        their_flow.on().end = "right=5 of remote-last-message.north east"
+        their_flow.start = "above right=30 and 15 of theirmachine.north"
         STEP()
 
-        c_marinara = remote.add_commit(c_marinara.copy())
-        their_repo.remote_to_branch("origin/main")
-        remote.hi_on(c_marinara)
-        their_repo.hi_off("main")
-        remote.hi_off("main")
+        remote.checkout_branch("alien")
+        (c_marinara := remote.add_commit(c_marinara.copy())).type = "Y"
+        remote.hi_on(c_marinara.hash)
+        remote.checkout_branch("dev")
+        remote.add_commit(c_calzone.copy())
+        remote.hi_on(c_calzone.hash)
+        remote.checkout_branch("main")
+        my_repo.remote_to_branch(f"{website}/dev")
+        their_repo.remote_to_branch("origin/alien")
         STEP()
 
-        remote.hi_off(c_marinara)
-        their_command.off().style = ""
         my_command.off()
-        their_flow.off()
-        their_pointer.style = ""
-        STEP()
-
-        # My commit cannot be pushed anymore.
-        my_command.on()
-        my_command.location = ".0, -.35"
-        my_command.end = ".1"
-        my_repo.hi_on("main")
-        remote.hi_on("main")
-        my_pointer.style = "hi"
-        STEP()
-
-        my_command.style = "error"
-        STEP()
-
-        my_command.off().style = ""
-        my_repo.hi_off("main")
-        remote.hi_off("main")
-        my_pointer.style = ""
-        STEP()
-
-        # Fetching their commits.
-        their_opacity()
-        STEP()
-
-        my_command.on().text = rf"git \gkw{{fetch}} {website}"
-        STEP()
-
-        my_flow.on().start = "left=5 of remote-0fcd744-hash.west"
-        my_flow.end = "$(mine-4ac80b2-hash.north east) + (15, 40)$"
-        my_flow.bend = "30"
-        my_pointer.style = "hi"
-        remote.hi_on("main")
-        my_repo.hi_on(f"{website}/main")
-        STEP()
-
-        c_marinara = my_repo.add_commit(c_marinara.copy(), _branch=f"{website}/main")
-        my_repo.hi_on(c_marinara)
-        my_repo["4ac80b2"].type = "Y"
-        my_pointer.start = f"above=5 of mine-{website}/main.north"
-        remote.hi_off("main")
-        my_pointer.style = ""
-        STEP()
-
-        my_repo.hi_off(f"{website}/main")
-        my_repo.hi_off(c_marinara)
-        my_command.off()
+        their_command.off()
         my_flow.off()
+        their_flow.off()
+        my_repo.hi_off("dev")
+        their_repo.hi_off("alien")
+        my_pointer.style = ""
+        their_pointer.style = ""
+        remote.hi_off("dev")
+        remote.hi_off("alien")
+        remote.hi_off(c_calzone.hash)
+        remote.hi_off(c_marinara.hash)
         STEP()
 
         pic.on().which = "OMG"
         pic.anchor = "center"
         pic.location = "+.02, -.5"
         pic.height = "9cm"
+        my_opacity()
+        their_opacity()
+        STEP()
+
+        # Fetching their commits.
+        pic.off()
+        my_opacity(1)
+        STEP()
+
+        my_command.on().text = rf"git \gkw{{fetch}} {website}"
+        my_command.location = "-.06, -.20"
+        my_command.start = "above right=45 and 80 of mine-2"
+        STEP()
+
+        my_flow.on().start = "left=5 of remote-3-hash.west"
+        my_flow.end = "above right=68 and 30 of mine-2-hash"
+        my_flow.bend = "30"
+        my_flow.side = "right"
+        my_pointer.style = "hi"
+        remote.hi_on("alien")
+        my_repo.hi_on(f"{website}/alien")
+        STEP()
+
+        my_repo.add_commit(c_marinara.copy(), i=2, _branch=f"{website}/alien")
+        my_repo.hi_on(c_marinara.hash)
+        # The ring clashes with commit highlight.
+        my_repo.hi_off(f"{website}/alien")
+        my_repo.hi_on(f"{website}/alien", False)
+        STEP()
+
+        remote.hi_off("alien")
+        my_pointer.style = ""
+        my_repo.hi_off(f"{website}/alien", False) # Remove the ring correctly.
+        my_repo.hi_off(c_marinara.hash)
+        my_command.off()
+        my_flow.off()
         STEP()
 
         # Navigating from ours to theirs and back.
-        pic.off()
-        STEP()
-
         my_readme_hi.on()
         my_calzone_hi.on()
         my_repo.hi_on("HEAD")
         STEP()
 
-        my_command.on().text = rf"git checkout \ghi{{{website}/main}}"
+        my_command.on().text = rf"git checkout \ghi{{{website}/alien}}"
         my_command.anchor = "base west"
-        my_command.location = f"$({website}/main.north east) + (15, 10)$"
+        my_command.location = "above right=45 and 80 of mine-last"
         my_command.end = "30mm"
         STEP()
 
@@ -818,8 +815,8 @@ class RemoteSlide(Slide):
         my_marinara_hi = my_files.highlight("marinara")
         STEP()
 
-        my_command.on().text = r"git checkout \ghi{main}"
-        my_repo.checkout_branch("main")
+        my_command.on().text = r"git checkout \ghi{dev}"
+        my_repo.checkout_branch("dev")
         my_files.pop(my_marinara)
         my_marinara_hi.off()
         my_files.append(my_calzone)
@@ -830,13 +827,6 @@ class RemoteSlide(Slide):
         my_readme_hi.off()
         my_command.off()
         my_repo.hi_off("HEAD")
-        STEP()
-
-        my_command.on().text = f"git push {website} main"
-        my_command.style = "error"
-        STEP()
-
-        my_command.off().style = ""
         STEP()
 
         pic.on().which = "NowWhat"
@@ -868,6 +858,7 @@ class RemoteSlide(Slide):
         left.intro.location = "-.65, -.8"
         right.intro.location = "+.4, -.8"
         my_command.anchor = their_command.anchor = "center"
+        return  # TEMP while adding branches.
         SPLIT("Integrating", "Merge and Rebase", "Two Git Philosophies")
 
         merge_title = step.add_prolog(

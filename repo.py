@@ -208,7 +208,7 @@ class Repo(TextModifier):
             for i, item in enumerate(left):  # (iterate from east to west)
                 # The first one is positionned wrt current commit.
                 if i == 0:
-                    if (head:=item) is self.head and not self.detached:
+                    if (head := item) is self.head and not self.detached:
                         head.anchor = "base east"
                         head.ref = right[0].name + ".base west"
                         head.offset = "10"
@@ -216,7 +216,7 @@ class Repo(TextModifier):
                     else:
                         item.anchor = "base east"
                         item.offset = "137:10"
-                        n = len(item.name) # to calculate ideal arrow start.
+                        n = len(item.name)  # to calculate ideal arrow start.
                         item.start = f"{3.7*n}, 4"
                         item.ref = commit.hash
                     continue
@@ -346,19 +346,21 @@ class Repo(TextModifier):
     def add_commit(
         self,
         *args,
+        i: int | None = None,  # Possibly insert not in last position.
         # Specify the branch is supposed to move along, defaulting to self.branch.
         # Use empty string to not move any branch.
         _branch: str | None = None,
         **kwargs,
     ) -> PlaceHolder:  # Commit
+        i = len(self.commits) if i is None else i
         if len(args) == 1 and not kwargs:
             commit = args[0]
-            commit = self.commits.append(commit)
+            commit = self.commits.insert(i, commit)
         else:
-            commit = self.commits.append(*args, **kwargs)
+            commit = self.commits.insert(i, *args, **kwargs)
         hash = commit.hash
 
-        self.labels.append([])
+        self.labels.insert(i, [])
 
         # Interpret the branch to be moved along.
         if _branch is None:
@@ -432,7 +434,12 @@ class Repo(TextModifier):
             f"to set remote branch {repr(remote_branch)} on."
         )
 
-    def highlight(self, name: str | PlaceHolder | bool = True, on=True) -> "Repo":
+    def highlight(
+        self,
+        name: str | PlaceHolder | bool = True,
+        on=True,
+        ring=True,
+    ) -> "Repo":
         """Highlight the given label/commit, or the whole repo if none is given.
         repo.highlight()
         repo.highlight(False)
@@ -452,7 +459,7 @@ class Repo(TextModifier):
             commit.type = " ".join(words)
         else:
             s = label.style
-            i = "hi="
+            i = "hi ring=" if ring else "hi="
             o = "="
             if i in s and not on:
                 label.style = s.replace(i, o)
@@ -460,23 +467,23 @@ class Repo(TextModifier):
                 label.style = s.replace(o, i)
         return self
 
-    def hi_on(self, label: str | PlaceHolder | None = None) -> "Repo":
+    def hi_on(self, label: str | PlaceHolder | None = None, ring=True) -> "Repo":
         """Simplified version so we can just:
         repo.hi_on()
         repo.hi_on('main')
         """
         if label is None:
-            return self.highlight(True)
-        return self.highlight(label, True)
+            return self.highlight(True, ring)
+        return self.highlight(label, True, ring)
 
-    def hi_off(self, label: str | PlaceHolder | None = None) -> "Repo":
+    def hi_off(self, label: str | PlaceHolder | None = None, ring=True) -> "Repo":
         """Simplified version so we can just:
         repo.hi_off()
         repo.hi_off('main')
         """
         if label is None:
-            return self.highlight(False)
-        return self.highlight(label, False)
+            return self.highlight(False, ring)
+        return self.highlight(label, False, ring)
 
     def populate(self, repo: "Repo") -> "Repo":
         """Import all commits from another repo."""

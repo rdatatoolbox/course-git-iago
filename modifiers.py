@@ -462,15 +462,18 @@ class ListOf(Generic[TM], TextModifier):
         self.tail = tail
 
     def append(self, *args, **kwargs) -> TM:
-        # Append direct children if needed..
+        return self.insert(len(self.list), *args, **kwargs)
+
+    def insert(self, i, *args, **kwargs) -> TM:
+        # Insert direct children if needed..
         if len(args) == 1 and not kwargs and isinstance(tm := args[0], TextModifier):
             assert isinstance(tm, self.builder.built_type)
             tm = cast(TM, tm)
-            self.list.append(tm)
+            self.list.insert(i, tm)
             return tm
         # .. or create them.
         new = self.builder.new(*args, **kwargs)
-        self.list.append(new)
+        self.list.insert(i, new)
         return new
 
     def clear(self) -> Self:
