@@ -149,8 +149,13 @@ class Repo(TextModifier):
         # The idea is to fill 'left' and 'right'
         # with the correctly parametrized modifiers,
         # and then only they will be chained to each other.
+        two_chains = False
         for (i_commit, (commit, labels)) in enumerate(zip(self.commits, self.labels)):
             last_commit = i_commit == len(self.labels) - 1
+            if "Y" in commit.type.split():
+                two_chains = True
+            if "A" in commit.type.split():
+                two_chains = False
             if not labels:
                 continue
 
@@ -239,8 +244,13 @@ class Repo(TextModifier):
                         branch.offset = "45:13"
                         branch.start = "4.5, 2"
                     else:
-                        branch.offset = "39:11"
-                        branch.start = "2, 3.3"
+                        if two_chains and "I" in commit.type.split():
+                            # Shift right a little so it does not cover the arrow.
+                            branch.offset = "15.5, 6.5"
+                            branch.start = "2, 2"
+                        else:
+                            branch.offset = "36:11"
+                            branch.start = "2, 3.3"
                     continue
                 previous = right[i - 1]
                 item.ref = previous.name + ".base east"
@@ -553,3 +563,19 @@ class Repo(TextModifier):
                 self.branch not in labels
             )  # Don't trim the branch checked out though.
         return self
+
+    def pop_commit(self, c: int | str) -> PlaceHolder:  # Commit
+        """Either index by location or hash.
+        """
+        if type(c) is str:
+            i = None
+            for i, commit in enumerate(self.commits):
+                if commit.hash == c:
+                    break
+            assert i
+        elif type(c) is int:
+            i = c
+        else:
+            assert False # Type error.
+        self.labels.pop(i)
+        return self.commits.list.pop(i)

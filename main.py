@@ -53,7 +53,7 @@ conflicts.animate()
     notalone,
     collaborate,
     fork,
-    # fusion,
+    fusion,
     # propagate_merge,
     # propagate_rebase,
     conflicts,
@@ -80,7 +80,7 @@ doc.slides = [
     ts("Conflicts"),
     conflicts,
     ts("Integrate Diverging Works"),
-    # fusion,
+    fusion,
     # propagate_merge,
     # propagate_rebase,
 ]
@@ -108,6 +108,6 @@ step.add_epilog(
 )
 coll.add_step(step)
 
-doc.generate_tex("Forking")
+doc.generate_tex("Integrate")
 
 doc.compile("res.pdf")

@@ -7,10 +7,10 @@
   \CommitMargins = 5;
   \CommitBaseHeight = -2;
   \CommitSpacing = 11;
-  \BranchesSpacing = 8;
+  \BranchesSpacing = 9;
   \LabelIsep = 2;
   \CommitArrowShorten = \CommitRadius + 2;
-  \LabelArrowShorten = \CommitRadius + 2;
+  \LabelArrowShorten = \CommitRadius + 1.5;
   \CommandScale = 3.5;
   \CommandPad = 2;
 }
@@ -39,9 +39,11 @@
   command text/.style={scale=\CommandScale, Dark4},
   command text error/.style={command text, Red2},
   command text ok/.style={command text, Green5},
+  command text fade/.style={command text, opacity=0.2},
   command box/.style={draw=Dark3, fill=Light4, line width=2.5},
   command box error/.style={command box, draw=Red2, fill=Light3},
   command box ok/.style={command box, draw=Green5, fill=Light3},
+  command box fade/.style={command box, opacity=0.2},
   url/.style={fill=Light2},
   url hi/.style={url, fill=Yellow1},
 }
@@ -83,7 +85,7 @@
     {\Code{#8}};
 
   \IfSubStr{#4}{hi}{\IfSubStr{#4}{fade}{\def\op{.2}}{\def\op{1}}}{\def\op{0}}
-  \HighlightSquare[.8][\op]{#7-message.south west}{#7-message.north east}
+  \HighlightSquare[.4][\op]{#7-message.south west}{#7-message.north east}
 }
 
 % Chain commits together.
@@ -218,7 +220,7 @@
       % Calculate intersection to correctly clip the arrow.
       \path[name path=arrow] (s) -- (#4);
       \path[name intersections={of=rec and arrow, by=cross}];
-      \draw[label #3, shorten >=\CommitArrowShorten mm] (cross) -- (#4);
+      \draw[label #3, shorten >=\LabelArrowShorten mm] (cross) -- (#4);
     }
   }
 
