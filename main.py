@@ -54,8 +54,8 @@ conflicts.animate()
     collaborate,
     fork,
     fusion,
-    # propagate_merge,
-    # propagate_rebase,
+    propagate_merge,
+    propagate_rebase,
     conflicts,
 ) = doc.slides
 
@@ -81,8 +81,8 @@ doc.slides = [
     conflicts,
     ts("Integrate Diverging Works"),
     fusion,
-    # propagate_merge,
-    # propagate_rebase,
+    propagate_merge,
+    propagate_rebase,
 ]
 
 # Setup slides numbers and progress.
@@ -108,6 +108,6 @@ step.add_epilog(
 )
 coll.add_step(step)
 
-doc.generate_tex("Integrate")
+doc.generate_tex()
 
 doc.compile("res.pdf")

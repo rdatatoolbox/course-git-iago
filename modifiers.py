@@ -40,6 +40,9 @@ class TextModifier(object):
     def copy(self) -> Self:
         return deepcopy(self)
 
+    def become(self, other):
+        self.__dict__ = deepcopy(other.__dict__)
+
     def on(self, on=True) -> Self:
         """Make rendered."""
         self._rendered = on

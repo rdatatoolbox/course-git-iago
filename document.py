@@ -142,7 +142,11 @@ class Document(TextModifier):
             # Look for a specific range of steps, starting count from first slide.
             if (sstop := start) is None:
                 # Only one desired.
-                selection = range(sstart - 1, sstart)
+                selection = (
+                    range(sstart - 1, sstart)
+                    if sstart > 0
+                    else range(sstart, sstart + 1)
+                )
             elif sstop == -1:
                 # Render for current to the end.
                 selection = range(

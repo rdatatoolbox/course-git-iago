@@ -6,18 +6,10 @@ from typing import List, cast
 from diffs import DiffedFile
 from document import Slide
 from filetree import FileTree
-from modifiers import (
-    AnonymousPlaceHolder,
-    Constant,
-    ConstantBuilder,
-    ListBuilder,
-    ListOf,
-    PlaceHolder,
-    Regex,
-)
+from modifiers import (AnonymousPlaceHolder, Constant, ConstantBuilder,
+                       ListBuilder, ListOf, PlaceHolder, Regex)
 from repo import Command, RemoteArrow, RemoteRepoLabel, Repo
 from steps import Step
-
 
 Images = ListBuilder(ConstantBuilder, "\n", head=False, tail=True)
 
@@ -870,13 +862,12 @@ class RemoteSlide(Slide):
         left = step.add_prolog(my_repo.copy()).on()
         left.intro.name = "left"
         left.intro.alignment = "double"
-        left.left_labels.add(web_main)
         right = step.add_prolog(left.copy()).off()
         right.intro.name = "right"
         left.intro.location = "-.65, -.8"
         right.intro.location = "+.4, -.8"
         my_command.anchor = their_command.anchor = "center"
-        SPLIT("Integrate", "Merge and Rebase", "Two Git Philosophies")
+        SPLIT("Fusion", "Merge and Rebase", "Two Git Philosophies")
 
         merge_title = step.add_prolog(
             AnonymousPlaceHolder(
@@ -904,12 +895,12 @@ class RemoteSlide(Slide):
         l.start, l.end, l.aperture = "-.35, -.11", ".3", "6"
         l.location = ".0, .2"
         left_safe = left.copy()
-        left.hi_on("HEAD")
+        left.hi_on(["HEAD", web_alien])
         STEP()
 
         left.add_commit("A", "007e53f", f"Merge {web_alien} into dev.")
         left.hi_on("007e53f")
-        left.hi_off("HEAD")
+        left.hi_off(["HEAD", web_alien])
         STEP()
 
         left_command.off()
@@ -930,20 +921,22 @@ class RemoteSlide(Slide):
 
         # Rebase
         right_command = step.add_epilog(left_command.copy()).on()
-        (r := right_command).text = rf"git \gkw{{rebase}} \ghi{{dev}}"
+        (r := right_command).text = rf"git \gkw{{rebase}} \ghi{{{web_alien}}}"
         r.start, r.end, r.aperture = ".20, -.15", ".55", "5"
         right_safe = right.copy()
-        right.hi_on("HEAD")
+        right.hi_on(["HEAD", web_alien])
         STEP()
+        right.hi_off(["HEAD", web_alien])
 
         a = right["4ac80b2"]
         b = right.add_commit("I", "a136a71", a.message)
-        [right.hi_on(c.hash) for c in (a, b)]
-        right.hi_off("HEAD")
+        right.fade_commit(a, "shade")
+        right.hi_on(b.hash)
         STEP()
+        right.hi_off(b.hash)
+        right.unfade_commit(a, "shade")
 
         right_command.off()
-        [right.hi_off(c.hash) for c in (a, b)]
         STEP()
 
         # Push.
@@ -955,7 +948,9 @@ class RemoteSlide(Slide):
         STEP()
 
         right_command.off().style = ""
+        right.hi_off(web_dev)
         STEP()
+        right.hi_on(web_dev)
 
         right_command.on().text = rf"git push \gkw{{--force}} {website} \ghi{{dev}}"
         STEP()
@@ -1002,9 +997,7 @@ class RemoteSlide(Slide):
         both = (left, right)
         c = None
         for r in both:
-            c = r.add_commit(
-                "I", "9549b2a", "Add Napoletana.", _branch=web_alien
-            )
+            c = r.add_commit("I", "9549b2a", "Add Napoletana.", _branch=web_alien)
         c = cast(PlaceHolder, c)
         left.hi_on(c.hash)
         STEP()
@@ -1032,16 +1025,15 @@ class RemoteSlide(Slide):
         left_command.on().text = rf"git \gkw{{merge}} \ghi{{{web_alien}}}"
         left_command.location = ".0, .50"
         left_command.start = "-.35, .15"
-        left.hi_on("HEAD")
+        left.hi_on(["HEAD", web_alien])
         STEP()
+        left.hi_off(["HEAD", web_alien])
 
         c = left.add_commit("A", "cbcce18", f"Merge {web_alien} into dev.")
         left.hi_on(c)
-        left.hi_off()
-        left.hi_off("HEAD")
         STEP()
-
         left.hi_off(c)
+
         left_command.off()
         STEP()
 
@@ -1058,27 +1050,30 @@ class RemoteSlide(Slide):
         STEP()
 
         # Rebase 2 commits.
-        right_command.on().text = rf"git \gkw{{rebase}} \ghi{{{web_main}}}"
+        right_command.on().text = rf"git \gkw{{rebase}} \ghi{{{web_alien}}}"
         right_command.location = left_command.location
         right_command.end = ".6"
         right_command.start = ".18, .15"
-        right.hi_on("HEAD")
+        right.hi_on(["HEAD", web_alien])
         STEP()
+        right.hi_off(["HEAD", web_alien])
 
         a = right["4ac80b2"]
         b = right.fade_commit("8dd46ef")
         c = right.add_commit("I", "a03a2bb", a.message)
-        [right.hi_on(k.hash) for k in (a, c)]
-        right.hi_off("HEAD")
+        right.hi_on(c)
+        right.fade_commit(a, "shade")
         STEP()
+        right.unfade_commit(a, "shade")
+        right.hi_off(c)
 
-        [right.hi_off(k.hash) for k in (a, c)]
         c = right.add_commit("I", "4a6ebf4", b.message)
-        [right.hi_on(k.hash) for k in (b, c)]
-        right.hi_on(c.hash)
+        right.hi_on(c)
+        right.fade_commit(b, "shade")
         STEP()
+        right.unfade_commit(b, "shade")
+        right.hi_off(c)
 
-        [right.hi_off(k.hash) for k in (b, c)]
         right_command.off()
         STEP()
 
@@ -1119,8 +1114,6 @@ class RemoteSlide(Slide):
         left_command.off()
         STEP()
 
-        return # TEMP while adding branches
-
         # Now back to our three-way repos to propagate the merge.
         for m in (left, right, merge_title, rebase_title):
             m.off()
@@ -1142,74 +1135,91 @@ class RemoteSlide(Slide):
         for r in (my_repo, remote, their_repo):
             r.intro.alignment = "double"
             repos_safe.append(r.copy())
-        my_repo.left_labels.add(web_main)
-        my_repo.intro.location = "-.72" + y_down_repos
-        their_repo.intro.location = ".47" + y_down_repos
         my_pointer.start = "-.72, -.4"
         their_pointer.start = ".75, -.4"
-        # their_pointer.end = ".25, .1"
         SPLIT("PropagateMerge", "Share integrated work", "(Merge style)")
 
+        # Save for later rewinding.
+        safe = [r.copy() for r in (my_repo, remote, their_repo)]
+
         # Merge.
-        (mc := my_command).on().text = rf"git \gkw{{merge}} {web_main}"
+        (mc := my_command).on().text = rf"git \gkw{{merge}} \ghi{{{web_alien}}}"
         mc.location, mc.start, mc.end = "0, -.2", "-.3, -.5", ".3"
+        [my_repo.hi_on(r) for r in ("HEAD", web_alien)]
         STEP()
 
-        c = my_repo.add_commit("A", "5d3fd0b", "Merge commit.")
-        my_repo.hi_on(c)
+        [my_repo.hi_off(r) for r in ("HEAD", web_alien)]
+        c_merge = my_repo.add_commit("A", "5d3fd0b", "Merge commit.")
+        my_repo.hi_on(c_merge)
         my_pointer.start = "-.6, -.2"
         my_files.append(my_marinara)
         [m.on() for m in (my_marinara_hi, my_calzone_hi, my_readme_hi)]
         STEP()
 
-        my_repo.hi_off(c)
+        my_repo.hi_off(c_merge)
         my_command.off()
         [m.off() for m in (my_marinara_hi, my_calzone_hi, my_readme_hi)]
         STEP()
 
         # Push merge commit to remote.
-        my_command.on().text = f"git push {website} main"
-        my_command.location = "0, -.15"
+        my_command.on().text = f"git push {website} dev"
+        my_command.location = "-.01, -.15"
+        [r.hi_on("dev") for r in (my_repo, remote)]
+        my_pointer.style = "hi"
         STEP()
 
         (mf := my_flow).on()
         mf.start, mf.end = "-.70, -.2", mf.start
         mf.side = "left"
-        remote.clear().populate(my_repo)
-        my_repo.remote_to_branch(web_main)
-        my_repo.left_labels.remove(web_main)
-        [remote.hi_on(h) for h in ["4ac80b2", "5d3fd0b"]]
+        remote.checkout_branch("dev")
+        remote.add_commit(c_merge)
+        remote.checkout_branch("main")
+        my_repo.remote_to_branch(web_dev)
+        [remote.hi_on(k.hash) for k in [c_merge]]
+        [r.hi_off("dev") for r in (my_repo, remote)]
+        my_pointer.style = ""
         STEP()
 
         my_command.off()
         my_flow.off()
-        [remote.hi_off(h) for h in ["4ac80b2", "5d3fd0b"]]
+        [remote.hi_off(k.hash) for k in [c_merge]]
         STEP()
 
         # Pull merge commit on their side.
         their_opacity(1)
-        (tc := their_command).on().text = r"git \gkw{pull} origin main"
+        (tc := their_command).on().text = r"git \gkw{pull} origin dev"
         tc.location = my_command.location
-        tc.start, tc.end = "$(theirs-0fcd744-hash.north west) + (-5, 5)$", ".6"
+        tc.start, tc.end = ".15, -.38", ".6"
+        their_pointer.style = "hi"
+        remote.hi_on("dev")
+        their_repo.hi_on("origin/dev")
+        their_repo.hi_on("HEAD")
         STEP()
 
         (tf := their_flow).on()
         tf.start, tf.end = (
-            "right=17 of website.center",
-            "left=10 of marinara-icon.west",
+            "remote-last-message.south east",
+            "left=15 of calzone-icon.west",
         )
+        tf.bend = "25"
         tf.side = "left"
-        their_repo.clear().populate(remote)
-        their_repo.add_remote_branch("origin/main")
-        [their_repo.hi_on(h) for h in ["4ac80b2", "5d3fd0b"]]
-        their_pointer.start = ".70, -.25"
+        their_repo.add_commit(c_calzone, i=2)
+        their_repo.move_branch("origin/dev", c_calzone.hash)
+        their_repo.add_commit(c_merge)
+        their_repo.move_branch("origin/dev", c_merge.hash)
+        their_pointer.start = ".60, -.23"
+        [their_repo.hi_on(k.hash) for k in [c_calzone, c_merge]]
         their_calzone = their_files.append(my_calzone)
         their_calzone_hi = their_files.highlight("calzone")
         [m.on() for m in (their_marinara_hi, their_calzone_hi, their_readme_hi)]
+        remote.hi_off("dev")
+        their_repo.hi_off("origin/dev")
+        their_repo.hi_off("HEAD")
+        their_pointer.style = ""
         STEP()
 
         [m.off() for m in (their_marinara_hi, their_calzone_hi, their_readme_hi)]
-        [their_repo.hi_off(h) for h in ["4ac80b2", "5d3fd0b"]]
+        [their_repo.hi_off(k.hash) for k in [c_calzone, c_merge]]
         their_flow.off()
         their_command.off()
         STEP()
@@ -1227,78 +1237,88 @@ class RemoteSlide(Slide):
         for r, s in zip((my_repo, remote, their_repo), repos_safe):
             r.intro.alignment = "double"
             r.intro.alignment = "mixed"
-            r.clear().populate(s)
+            r.become(s)
         their_opacity()
-        my_repo.left_labels.add(web_main)
-        my_repo.add_remote_branch(web_main)
-        my_repo.move_branch("main", "4ac80b2")
-        their_repo.add_remote_branch("origin/main")
         my_files.pop("marinara")
         their_files.pop("calzone")
-        my_pointer.start = f"above=15 of {web_main}.north east"
+        my_pointer.start = "above right=10 and -10 of mymachine"
         their_pointer.start = ".75, -.4"
         their_pointer.end = ".25, .1"
         SPLIT("PropagateRebase", "Share integrated work", "(Rebase style)")
 
         # Rebase.
-        (mc := my_command).on().text = rf"git \gkw{{rebase}} {web_main}"
+        (mc := my_command).on().text = rf"git \gkw{{rebase}} \ghi{{{web_alien}}}"
         mc.location = "0, -.25"
         mc.start, mc.end = "-.20, -.5", ".4"
+        [my_repo.hi_on(r) for r in ("HEAD", web_alien)]
         STEP()
+        [my_repo.hi_off(r) for r in ("HEAD", web_alien)]
 
-        c = my_repo["4ac80b2"]
-        my_repo.fade_commit(c)
-        my_repo.hi_on(c)
-        c = my_repo.add_commit("I", "394e864", c.message)
-        my_repo.hi_on(c)
-        my_pointer.start = "above=5 of mine-HEAD.north east"
+        c_calzone = my_repo["4ac80b2"]
+        c_rebased = my_repo.add_commit("I", "394e864", c_calzone.message)
         my_files.append(my_marinara)
         [m.on() for m in (my_marinara_hi, my_calzone_hi, my_readme_hi)]
+        my_repo.fade_commit(c_calzone, "shade")
+        my_repo.hi_on(c_rebased)
         STEP()
-
-        my_repo.commits.list.pop(2)
-        my_repo.labels.pop(2)
-        STEP()
-
-        my_repo.hi_off(c)
-        my_command.off()
+        my_repo.hi_off(c_rebased)
+        my_repo.unfade_commit(c_calzone, "shade")
         [m.off() for m in (my_marinara_hi, my_calzone_hi, my_readme_hi)]
+
+        my_command.off()
         STEP()
 
         # Push rebased commit to remote.
-        my_command.on().text = f"git push {website} main"
+        my_command.on().text = rf"git push \gkw{{--force}} {website} \ghi{{dev}}"
+        my_command.location = ".1, -.20"
+        [r.hi_on("dev") for r in (my_repo, remote)]
+        my_pointer.style = "hi"
         STEP()
 
+        [r.hi_off("dev") for r in (my_repo, remote)]
+        my_pointer.style = ""
         my_flow.on()
-        c = remote.add_commit(c.copy())
-        remote.hi_on(c)
-        my_repo.remote_to_branch(web_main)
-        my_repo.left_labels.remove(web_main)
+        remote.checkout_branch("dev")
+        remote.add_commit(c_rebased)
+        remote.checkout_branch("main")
+        my_repo.remote_to_branch(web_dev)
+        [r.fade_commit(c_calzone.hash) for r in (remote, my_repo)]
+        [remote.hi_on(k.hash) for k in [c_rebased]]
         STEP()
 
-        remote.hi_off(c)
-        my_flow.off()
         my_command.off()
+        my_flow.off()
+        [remote.hi_off(k.hash) for k in [c_rebased]]
+        STEP()
+
+        my_repo.pop_commit(2)
+        remote.pop_commit(2)
         STEP()
 
         # Pull rebased commit on their side.
         their_opacity(1)
-        their_command.on().text = r"git \gkw{pull} origin main"
-        their_command.location = my_command.location
+        their_command.on().text = r"git \gkw{pull} origin \ghi{{dev}}"
+        their_command.location = "0, -.20"
+        remote.hi_on("dev")
+        their_repo.hi_on("origin/dev")
+        their_pointer.style = "hi"
         STEP()
+        their_pointer.style = ""
+        remote.hi_off("dev")
+        their_repo.hi_off("origin/dev")
 
         their_flow.on()
-        their_pointer.start = ".7, -.35"
-        c = their_repo.add_commit(c.copy())
-        their_repo.hi_on(c)
-        their_repo.remote_to_branch("origin/main")
+        their_flow.start = "remote-last-message.south"
+        c_rebased = their_repo.add_commit(c_rebased)
+        their_repo.move_branch("origin/dev", c_rebased.hash)
         their_calzone = their_files.append(my_calzone)
         their_calzone_hi = their_files.highlight("calzone")
+        their_repo.hi_on(c_rebased)
         [m.on() for m in (their_marinara_hi, their_calzone_hi, their_readme_hi)]
         STEP()
-
         [m.off() for m in (their_marinara_hi, their_calzone_hi, their_readme_hi)]
-        their_repo.hi_off(c)
+        their_repo.hi_off(c_rebased)
+
         their_flow.off()
         their_command.off()
         STEP()

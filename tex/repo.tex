@@ -84,7 +84,14 @@
     at ($(#7) + (\CommitRadius + \CommitMargins - #2 + #3, \CommitBaseHeight)$)
     {\Code{#8}};
 
-  \IfSubStr{#4}{hi}{\IfSubStr{#4}{fade}{\def\op{.2}}{\def\op{1}}}{\def\op{0}}
+  \IfSubStr{#4}{shade}{
+    \def\op{0.3}}{
+    \IfSubStr{#4}{hi}{
+      \IfSubStr{#4}{fade}{
+        \def\op{.2}}
+        {\def\op{1}}}
+      {\def\op{0}}
+  }
   \HighlightSquare[.4][\op]{#7-message.south west}{#7-message.north east}
 }
 

@@ -4,15 +4,9 @@
 from typing import Callable, Dict, Iterable, List, Set, cast
 
 from document import FindPlaceHolder, HighlightSquare
-from modifiers import (
-    AnonymousPlaceHolder,
-    Builder,
-    ListBuilder,
-    MakePlaceHolder,
-    PlaceHolder,
-    TextModifier,
-    render_method,
-)
+from modifiers import (AnonymousPlaceHolder, Builder, ListBuilder,
+                       MakePlaceHolder, PlaceHolder, TextModifier,
+                       render_method)
 
 CommitModifier, Commit = MakePlaceHolder("Commit", r"<type>/<hash>/{<message>}")
 
@@ -149,13 +143,25 @@ class Repo(TextModifier):
         # The idea is to fill 'left' and 'right'
         # with the correctly parametrized modifiers,
         # and then only they will be chained to each other.
-        two_chains = False
+        two_chains = False  # Raise when there are two open parallel commit chains.
+        second_chain = (
+            False  # Raise when this leads to the second arrow being locally drawn.
+        )
         for (i_commit, (commit, labels)) in enumerate(zip(self.commits, self.labels)):
             last_commit = i_commit == len(self.labels) - 1
             if "Y" in commit.type.split():
                 two_chains = True
             if "A" in commit.type.split():
                 two_chains = False
+                second_chain = False
+            if two_chains:
+                # Go check further whether there is actually a second commit.
+                second_chain = False
+                for further_commit in self.commits[i_commit + 1 :]:
+                    tp = further_commit.type.split()
+                    if any(t in tp for t in ("H", "A")):
+                        second_chain = True
+                        break
             if not labels:
                 continue
 
@@ -176,6 +182,8 @@ class Repo(TextModifier):
                         remaining.remove(branch)
                         if branch.name in self.locks:
                             left.insert(len(left) - 1, self.locks[branch.name])
+                        if self.branch is branch:
+                            left.append(self.head)
                         for remote in labels:
                             if remote.name.endswith("/" + branch.name):
                                 left.append(remote)
@@ -229,8 +237,21 @@ class Repo(TextModifier):
                 previous = left[i - 1]
                 item.ref = previous.name + ".base west"
                 item.anchor = "base east"
-                item.offset = "0" if "-lock" in item.name else "2"
-                item.start = "noarrow"
+                # Special-case head, because it's different whether attached.
+                if self.head is (head := item):
+                    if i == 0:
+                        pass  # Already handled.
+                    else:
+                        if self.detached:  #! NOT UPDATED AFTER COPY-PASTE.
+                            head.offset = "156:20"  #!
+                            head.anchor = "center"  #!
+                            head.start = ".5,0"  #!
+                        else:
+                            head.offset = "5"
+                            head.start = "2"
+                else:
+                    item.offset = "0" if "-lock" in item.name else "2"
+                    item.start = "noarrow"
 
             for i, item in enumerate(right):
                 # The first is positioned wrt current commit.
@@ -244,7 +265,7 @@ class Repo(TextModifier):
                         branch.offset = "45:13"
                         branch.start = "4.5, 2"
                     else:
-                        if two_chains and "I" in commit.type.split():
+                        if second_chain and "I" in commit.type.split():
                             # Shift right a little so it does not cover the arrow.
                             branch.offset = "15.5, 6.5"
                             branch.start = "2, 2"
@@ -364,7 +385,7 @@ class Repo(TextModifier):
     ) -> PlaceHolder:  # Commit
         i = len(self.commits) if i is None else i
         if len(args) == 1 and not kwargs:
-            commit = args[0]
+            commit = args[0].copy()
             commit = self.commits.insert(i, commit)
         else:
             commit = self.commits.insert(i, *args, **kwargs)
@@ -477,22 +498,38 @@ class Repo(TextModifier):
                 label.style = s.replace(o, i)
         return self
 
-    def hi_on(self, label: str | PlaceHolder | None = None, ring=True) -> "Repo":
+    def hi_on(
+        self,
+        label: str | List[str] | PlaceHolder | None = None,
+        ring=True,
+    ) -> "Repo":
         """Simplified version so we can just:
         repo.hi_on()
         repo.hi_on('main')
         """
+        if isinstance(labels := label, list):
+            [self.hi_on(lab) for lab in labels]
+            return self
         if label is None:
             return self.highlight(True, ring)
+        label = cast(str, label)
         return self.highlight(label, True, ring)
 
-    def hi_off(self, label: str | PlaceHolder | None = None, ring=True) -> "Repo":
+    def hi_off(
+        self,
+        label: str | List[str] | PlaceHolder | None = None,
+        ring=True,
+    ) -> "Repo":
         """Simplified version so we can just:
         repo.hi_off()
         repo.hi_off('main')
         """
+        if isinstance(labels := label, list):
+            [self.hi_off(lab) for lab in labels]
+            return self
         if label is None:
             return self.highlight(False, ring)
+        label = cast(str, label)
         return self.highlight(label, False, ring)
 
     def populate(self, repo: "Repo") -> "Repo":
@@ -516,20 +553,20 @@ class Repo(TextModifier):
             end = len(self.commits)
         yield from self.commits.list[start:end]
 
-    def fade_commit(self, c: PlaceHolder | str) -> PlaceHolder:  # Commit
+    def fade_commit(self, c: PlaceHolder | str, kw="fade") -> PlaceHolder:  # Commit
         if type(c) is str:
             c = self[c]
         c = cast(PlaceHolder, c)
         kws = set(c.type.split())
-        kws.add("fade")
+        kws.add(kw)
         c.type = " ".join(kws)
         return c
 
-    def unfade_commit(self, c: PlaceHolder | str) -> PlaceHolder:  # Commit
+    def unfade_commit(self, c: PlaceHolder | str, kw="fade") -> PlaceHolder:  # Commit
         if type(c) is str:
             c = self[c]
         c = cast(PlaceHolder, c)
-        c.type = " ".join(set(c.type.split()) - {"fade"})
+        c.type = " ".join(set(c.type.split()) - {kw})
         return c
 
     def alter_commits(
@@ -565,8 +602,7 @@ class Repo(TextModifier):
         return self
 
     def pop_commit(self, c: int | str) -> PlaceHolder:  # Commit
-        """Either index by location or hash.
-        """
+        """Either index by location or hash."""
         if type(c) is str:
             i = None
             for i, commit in enumerate(self.commits):
@@ -576,6 +612,6 @@ class Repo(TextModifier):
         elif type(c) is int:
             i = c
         else:
-            assert False # Type error.
+            assert False  # Type error.
         self.labels.pop(i)
         return self.commits.list.pop(i)
