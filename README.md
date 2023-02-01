@@ -41,7 +41,7 @@ then find your result in the newly created `./res.pdf` file.
 - Merge or Rebase.
 
 In particular, there is no mention made of:
-- branches (I mean, branches with different names to collaborate with)
+- GUI clients interfaces
 - submodules
 - advanced git utilities like cherry-pick, interactive rebase, hooks, *etc.*
 
@@ -63,7 +63,7 @@ is that animation of every slide can be written in the following form:
 - `./conflicts.py`
 - *etc.*
 
-There is one such file per slide,
+There is one such file per "slide pattern",
 and the purpose of all these files
 is to parse one particular section
 of the current stub file found at..
@@ -113,7 +113,7 @@ to produce one adequate version of the code,
 with *e.g.* correctly updated style, positionning, textual content *etc.*
 `TextModifier` objects can contain each other as attributes,
 and they are rendered recursively.
-The root of the modifiers tree is the a `Document` value
+The root of the modifiers tree is the `Document` value
 whose definition can be found at:
 
 - `./document.py`
@@ -143,7 +143,7 @@ and you can navigate to the failed assertion
 to make an attempt to figure which assumption/invariant has not been met.  
 If it's LaTeX, the message is rarely helpful,
 but you can open the `./tex/generated_steps.tex` file
-and figure out what went wrong during the rendering stage.
+and prune it until you figure out what went wrong during the rendering stage.
 
 There is also fragility in the sense that
 there is no guarantee whatsoever
@@ -156,18 +156,23 @@ Since compilation is long,
 you can choose to only generate particular sections of the slideshow
 by using the corresponding slides names and/or numbers
 as special arguments to `doc.generate_tex()` in `main.py`.
-For example, `doc.generate_tex(5, 9)` will only generate pages 5 to 9 (included)
-and `doc.generated_steps("Conflicts")` will only generate pages
-for the "Conflicts" slide.
+For example, `doc.generate_tex(5, 9)`
+will only generate pages 5 to 9 (included),
+`doc.generated_steps("Conflicts")`
+will only generate pages for the "Conflicts" slide
+and `doc.generated_steps("Conflicts", 5, 9)`
+will only generated pages from the 5th to the 9th within the "Conflicts" slide.
 
 ---
 
 This is it, happy hacking if you ever even *wish* to get in there,
-and I hope that the future is bright with (better) constructive,
+and I hope that [the future] is bright with (better) constructive,
 open-source slideshow animation software..
 
 .. hm. I actually have a few ideas about that.. stay tuned.. maybe? I guess?
 
 ---
+
+[the future]: https://xkcd.com/2730/
 
 <p xmlns:cc="http://creativecommons.org/ns#" >This work is licensed under <a href="http://creativecommons.org/licenses/by-nc-sa/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">Attribution-NonCommercial-ShareAlike 4.0 International<img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1"><img style="height:22px!important;margin-left:3px;vertical-align:text-bottom;" src="https://mirrors.creativecommons.org/presskit/icons/sa.svg?ref=chooser-v1"></a></p>
