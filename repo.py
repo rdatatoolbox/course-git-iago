@@ -500,7 +500,7 @@ class Repo(TextModifier):
 
     def hi_on(
         self,
-        label: str | List[str] | PlaceHolder | None = None,
+        label: str | PlaceHolder | List[str | PlaceHolder] | None = None,
         ring=True,
     ) -> "Repo":
         """Simplified version so we can just:
@@ -517,7 +517,7 @@ class Repo(TextModifier):
 
     def hi_off(
         self,
-        label: str | List[str] | PlaceHolder | None = None,
+        label: str | PlaceHolder | List[str | PlaceHolder] | None = None,
         ring=True,
     ) -> "Repo":
         """Simplified version so we can just:

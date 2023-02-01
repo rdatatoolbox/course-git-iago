@@ -127,7 +127,7 @@ class RemoteSlide(Slide):
 
         command_side("left")
         command.location = "0, -.20"
-        command.on().text = rf"git \gkw{{remote add}} {website} <url>"
+        command.on().text = rf"git \gkw{{remote add}} \ghi{{{website}}} <url>"
         STEP()
 
         my_pointer = step.add_epilog(
@@ -152,6 +152,11 @@ class RemoteSlide(Slide):
         command.location = "0, -.25"
         STEP()
 
+        command.on().text = rf"git \gkw{{push}} \ghi{{{website}}} main"
+        my_pointer.style = "hi"
+        STEP()
+        my_pointer.style = ""
+
         my_flow = step.add_epilog(
             RemoteArrow(
                 "$(mine-HEAD.north east) + (5, 10)$",
@@ -159,6 +164,7 @@ class RemoteSlide(Slide):
                 bend="30",
             )
         )
+        command.on().text = rf"git \gkw{{push}} {website} \ghi{{main}}"
         remote.hi_on("main")
         my_repo.hi_on("main")
         STEP()
@@ -284,21 +290,19 @@ class RemoteSlide(Slide):
         my_flow.on()
         my_repo.hi_on("dev")
         STEP()
+        my_repo.hi_off("dev")
 
         remote.add_branch("dev", "17514f2")
         # Fake on remote, because HEAD remains pointed to main.
         remote.checkout_branch("dev")
         c = remote.add_commit(c.copy())
         remote.checkout_branch("main")
-        remote.hi_on(c)
-        remote.hi_on("dev")
+        remote.hi_on(["dev", c])
         web_dev = f"{website}/dev"
         my_repo.add_remote_branch(web_dev)
         STEP()
+        remote.hi_off(["dev", c])
 
-        remote.hi_off(c)
-        my_repo.hi_off("dev")
-        remote.hi_off("dev")
         my_flow.off()
         command.off()
         STEP()
@@ -313,26 +317,28 @@ class RemoteSlide(Slide):
 
         # Stepping `main` forward.
         command.on().text = r"git checkout \ghi{main}"
-        my_repo.hi_on("main")
+        my_repo.hi_on(["HEAD", "main"])
         STEP()
+        my_repo.hi_off(["HEAD", "main"])
 
         my_repo.checkout_branch("main")
         my_files.pop(my_diavola)
         STEP()
 
         command.off()
-        my_repo.hi_off("main")
         STEP()
 
         command.on().text = r"git \gkw{merge} dev"
-        my_repo.hi_on("main")
+        my_repo.hi_on(["HEAD", "dev"])
         STEP()
+        my_repo.hi_off(["HEAD", "dev"])
 
         my_repo.move_branch("main", c.hash)
         my_files.append(my_diavola)
+        my_repo.hi_on("main")
         STEP()
-
         my_repo.hi_off("main")
+
         command.off()
         STEP()
 
@@ -347,19 +353,41 @@ class RemoteSlide(Slide):
         # Pushing main to remote.
         command.on().text = rf"git push {website} \ghi{{main}}"
         command_side("left", 0.20)
-        my_repo.hi_on("main")
         remote.hi_on("main")
         my_flow.on()
+        my_repo.hi_on("main")
         STEP()
+        my_repo.hi_off("main")
 
         remote.move_branch("main", c.hash)
         my_repo.remote_to_branch(web_main)
         STEP()
 
         my_flow.off()
-        my_repo.hi_off("main")
         remote.hi_off("main")
         command.off()
+        STEP()
+
+        ballons = step.add_epilog(
+            Constant(
+                r"""
+                \begin{scope}[local to=pizza, every path/.style={fill=Light1}]
+                  \path (.1, .35) circle [x radius=.12, y radius=.12] node (a){};
+                  \path (.65, .40) circle [x radius=.13, y radius=.10] node (b){};
+                  \path (.7, -.20) circle [x radius=.17, y radius=.14] node (c){};
+                  \path (.0, .12) node (a'){} -- ($(a')!1!6:(a)$) -- ($(a')!1!-6:(a)$) -- cycle;
+                  \path (.55, .20) node (b'){} -- ($(b')!1!4:(b)$) -- ($(b')!1!-4:(b)$) -- cycle;
+                  \path (.6, -.45) node (c'){} -- ($(c')!1!8:(c)$) -- ($(c')!1!-8:(c)$) -- cycle;
+                  \node[scale=3, Red3] (a) at (a) {\bf !!};
+                  \node[scale=2, Red3] (b) at (b) {\vphantom{p}\bf \`o.\'o};
+                  \node[scale=3, Red3] (c) at (c) {\bf <3<3};
+                \end{scope}
+                """
+            )
+        )
+        STEP()
+
+        ballons.off()
         STEP()
 
         # Checkout `dev` again.
@@ -488,9 +516,11 @@ class RemoteSlide(Slide):
         # They push their commit on the shared repo.
         command.on().text = r"git push \ghi{origin} alien"
         command.location, command.end = "-.04, -.07", ".5"
-        their_pointer.style = "hi"
         their_repo.hi_on("alien")
+        their_pointer.style = "hi"
         STEP()
+        their_pointer.style = ""
+        their_repo.hi_off("alien")
 
         f = their_flow.on()
         f.start, f.end = f.end, f.start
@@ -506,11 +536,9 @@ class RemoteSlide(Slide):
         their_repo.add_remote_branch("origin/alien")
         STEP()
 
-        their_pointer.style = ""
         remote.hi_off(c)
         remote.hi_off("alien")
         command.off()
-        their_repo.hi_off("alien")
         their_flow.off()
         STEP()
 
@@ -579,28 +607,28 @@ class RemoteSlide(Slide):
 
         # Merging their commit.
         command.on().text = rf"git \gkw{{merge}} {web_alien}"
-        my_repo.hi_on("dev")
+        my_repo.hi_on(["HEAD", web_alien])
         STEP()
+        my_repo.hi_off(["HEAD", web_alien])
 
         my_repo.move_branch("dev", c.hash)
         my_repo.checkout_branch("dev")
         my_files.append(my_siciliana).mod = "+"
         my_readme.mod = "m"
+        my_repo.hi_on("dev")
         STEP()
+        my_repo.hi_off("dev")
 
         command.off()
         hi_readme.off()
         my_readme.mod = "0"
         my_siciliana.mod = "0"
-        my_repo.hi_off("dev")
         STEP()
 
         # Pushing the merge.
         command.on().text = rf"git \gkw{{push}} {website} \ghi{{dev}}"
         my_repo.hi_on("dev")
-        my_repo.hi_on(web_dev)
         remote.hi_on("dev")
-        my_pointer.style = "hi"
         f = my_flow.on()
         f.start, f.end = f.end, f.start
         f.side = "left"
@@ -613,9 +641,7 @@ class RemoteSlide(Slide):
         command.off()
         my_flow.off()
         my_repo.hi_off("dev")
-        my_repo.hi_off(web_dev)
         remote.hi_off("dev")
-        my_pointer.style = ""
         STEP()
 
         their_opacity(1)
@@ -717,12 +743,13 @@ class RemoteSlide(Slide):
         my_command.style = "fade"
         STEP()
 
-        their_pointer.style = "hi"
         their_repo.hi_on("alien")
         remote.hi_on("alien")
         their_flow.on().end = "right=5 of remote-last-message.north east"
         their_flow.start = "above right=30 and 15 of theirmachine.north"
+        their_pointer.style = "hi"
         STEP()
+        their_pointer.style = ""
 
         remote.checkout_branch("alien")
         (c_marinara := remote.add_commit(c_marinara.copy()))
@@ -736,16 +763,17 @@ class RemoteSlide(Slide):
         remote.hi_off("alien")
         remote.hi_off(c_marinara.hash)
         their_command.style = "fade"
-        their_pointer.style = ""
         my_command.style = "ok"
+        my_flow.on().end = "left=5 of remote-3-hash.north west"
         step.bump_epilog(my_command)
-        STEP()
-
+        remote.hi_on("dev")
         my_pointer.style = "hi"
         my_repo.hi_on("dev")
-        my_flow.on().end = "left=5 of remote-3-hash.north west"
+        STEP()
+        my_repo.hi_off("dev")
+        my_pointer.style = ""
+
         remote.checkout_branch("dev")
-        remote.hi_on("dev")
         remote.add_commit(c_calzone.copy(), i=2).type = "Y"
         remote.hi_on(c_calzone.hash)
         remote.checkout_branch("main")
@@ -785,7 +813,6 @@ class RemoteSlide(Slide):
         my_flow.end = "above right=68 and 30 of mine-2-hash"
         my_flow.bend = "30"
         my_flow.side = "right"
-        my_pointer.style = "hi"
         remote.hi_on("alien")
         my_repo.hi_on(web_alien)
         STEP()
@@ -799,7 +826,6 @@ class RemoteSlide(Slide):
         STEP()
 
         remote.hi_off("alien")
-        my_pointer.style = ""
         my_repo.hi_off(web_alien, False)  # Remove the ring correctly.
         my_repo.hi_off(c_marinara.hash)
         my_command.off()
@@ -899,12 +925,12 @@ class RemoteSlide(Slide):
         STEP()
 
         left.add_commit("A", "007e53f", f"Merge {web_alien} into dev.")
-        left.hi_on("007e53f")
+        left.hi_on(["007e53f", "dev"])
         left.hi_off(["HEAD", web_alien])
         STEP()
+        left.hi_off(["007e53f", "dev"])
 
         left_command.off()
-        left.hi_off("007e53f")
         STEP()
 
         # Push.
@@ -931,9 +957,9 @@ class RemoteSlide(Slide):
         a = right["4ac80b2"]
         b = right.add_commit("I", "a136a71", a.message)
         right.fade_commit(a, "shade")
-        right.hi_on(b.hash)
+        right.hi_on([b, "dev"])
         STEP()
-        right.hi_off(b.hash)
+        right.hi_off([b, "dev"])
         right.unfade_commit(a, "shade")
 
         right_command.off()
