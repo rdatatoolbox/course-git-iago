@@ -38,7 +38,9 @@ class DiffedFile(TextModifier):
     @staticmethod
     def new(**kwargs) -> "DiffedFile":
         """Create empty diffed file."""
-        model = "\\Diff[{mod}][{name}][{linespacing}]{{{location}}}{{{filename}}}{{\n}}{{}}"
+        model = (
+            "\\Diff[{mod}][{name}][{linespacing}]{{{location}}}{{{filename}}}{{\n}}{{}}"
+        )
         return DiffedFile(model.format(**kwargs))
 
     @property
@@ -92,9 +94,12 @@ class DiffedFile(TextModifier):
         input = input.replace("#", r"\#")
         return input
 
-    def line_index(self, i=-1) -> int:
-        """Convert from natural line indexing to python index."""
-        return len(self.lines) - 1 if i == -1 else i - 1
+    def line_index(self, i: int = -1) -> int:
+        """Convert from natural line indexing to python index.
+        -1 means 'last', and 0 means 'after last'.
+        """
+        n = len(self.lines)
+        return n + i if i <= 0 else i - 1
 
     def line_index_range(self, start=1, end: int | None = None) -> Tuple[int, int]:
         """Convert from natural line range to python index:
@@ -154,7 +159,7 @@ class DiffedFile(TextModifier):
         self,
         input: str | PlaceHolder | List[PlaceHolder],
         mod: str | int = "0",
-        index=-1,
+        index: int = 0,
     ) -> "DiffedFile":
         r"""Construct the lines list from raw text.
         Input is stripped, unless it starts with \n\n in which case \n is kept.
@@ -170,7 +175,7 @@ class DiffedFile(TextModifier):
             lines = cast(List[PlaceHolder], input)
 
         if type(mod) is int:
-            assert index == -1  # Don't provide two indices.
+            assert index == 0  # Don't provide two indices.
             index = mod
             mod = "0"
         mod = cast(str, mod)
