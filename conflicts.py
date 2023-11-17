@@ -672,7 +672,7 @@ class ConflictsSlide(Slide):
         STEP()
 
         merged.erase_lines(7, 11)
-        merged.insert_lines("__Base:__ Sour Cream", 7).mark_lines(7)
+        merged.insert_lines("__Base:__ Sour cream", 7).mark_lines(7)
         pic.__dict__.update(relief_safe.__dict__)
         STEP()
 

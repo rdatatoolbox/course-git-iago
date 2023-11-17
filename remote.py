@@ -275,14 +275,6 @@ class RemoteSlide(Slide):
         my_repo.hi_off(c)
         STEP()
 
-        remote.hi_on("main")
-        my_repo.hi_on(web_main)
-        STEP()
-
-        remote.hi_off("main")
-        my_repo.hi_off(web_main)
-        STEP()
-
         # Pushing new commit to remote.
         command.on().text = rf"git \gkw{{push}} {website} \ghi{{dev}}"
         STEP()
@@ -440,6 +432,7 @@ class RemoteSlide(Slide):
         [their_repo.hi_on(c) for c in their_repo.commits]
         their_files.on()
         their_files.populate(my_files)
+        their_files["pizzas"].filename = "Pizzas"
         command.start = "above=10 of HEAD.west"
         their_files.all_mod("+")
         their_repo.add_remote_branch("origin/main")
@@ -450,18 +443,6 @@ class RemoteSlide(Slide):
         their_flow.off()
         command.off()
         their_files.all_mod("0")
-        STEP()
-
-        their_pointer.style = "hi"
-        their_repo.hi_on("origin/main")
-        their_repo.hi_on("origin/dev")
-        hi_their_git = their_files.highlight("git")
-        STEP()
-
-        their_pointer.style = ""
-        hi_their_git.off()
-        their_repo.hi_off("origin/main")
-        their_repo.hi_off("origin/dev")
         STEP()
 
         my_opacity(1)

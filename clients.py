@@ -46,6 +46,8 @@ class ClientsSlide(Slide):
         STEP()
 
         console.on()
+        STEP()
+
         vscode.on()
         rstudio.on()
         STEP()
