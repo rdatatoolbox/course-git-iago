@@ -249,12 +249,12 @@ class RemoteSlide(Slide):
         my_repo.hi_off("dev")
         STEP()
 
-        command.on().text = r"git checkout \ghi{dev}"
+        command.on().text = r"git switch \ghi{dev}"
         my_repo.hi_on("dev")
         my_repo.hi_on("HEAD")
         STEP()
 
-        my_repo.checkout_branch("dev")
+        my_repo.switch_branch("dev")
         STEP()
 
         my_repo.hi_off("dev")
@@ -287,9 +287,9 @@ class RemoteSlide(Slide):
 
         remote.add_branch("dev", "17514f2")
         # Fake on remote, because HEAD remains pointed to main.
-        remote.checkout_branch("dev")
+        remote.switch_branch("dev")
         c = remote.add_commit(c.copy())
-        remote.checkout_branch("main")
+        remote.switch_branch("main")
         remote.hi_on(["dev", c])
         web_dev = f"{rem}/dev"
         my_repo.add_remote_branch(web_dev)
@@ -309,12 +309,12 @@ class RemoteSlide(Slide):
         STEP()
 
         # Stepping `main` forward.
-        command.on().text = r"git checkout \ghi{main}"
+        command.on().text = r"git switch \ghi{main}"
         my_repo.hi_on(["HEAD", "main"])
         STEP()
         my_repo.hi_off(["HEAD", "main"])
 
-        my_repo.checkout_branch("main")
+        my_repo.switch_branch("main")
         my_files.pop(my_diavola)
         STEP()
 
@@ -383,12 +383,12 @@ class RemoteSlide(Slide):
         ballons.off()
         STEP()
 
-        # Checkout `dev` again.
-        command.on().text = r"git checkout \ghi{dev}"
+        # Switch to `dev` again.
+        command.on().text = r"git switch \ghi{dev}"
         my_repo.hi_on("dev")
         STEP()
 
-        my_repo.checkout_branch("dev")
+        my_repo.switch_branch("dev")
         STEP()
 
         command.off()
@@ -462,12 +462,12 @@ class RemoteSlide(Slide):
         STEP()
 
         # New branch on their side.
-        command.on().text = r"git checkout \gkw{-b} \ghi{alien}"
+        command.on().text = r"git switch \gkw{-c} \ghi{alien}"
         command.start = "left=2 of HEAD.south west"
         command.end = ".6"
         their_repo.add_branch("alien", c.hash)
         their_repo.hi_on("alien")
-        their_repo.checkout_branch("alien")
+        their_repo.switch_branch("alien")
         STEP()
 
         command.off()
@@ -509,9 +509,9 @@ class RemoteSlide(Slide):
         f.side = "right"
         f.bend = "20"
         remote.add_branch("alien", remote.head.ref)
-        remote.checkout_branch("alien")
+        remote.switch_branch("alien")
         c = remote.add_commit(c.copy())
-        remote.checkout_branch("main")
+        remote.switch_branch("main")
         remote.hi_on(c)
         remote.hi_on("alien")
         their_pointer.start = "above=5 of origin/alien.north"
@@ -556,7 +556,7 @@ class RemoteSlide(Slide):
         my_repo.hi_on("HEAD")
         STEP()
 
-        command.on().text = rf"git checkout \ghi{{{web_alien}}}"
+        command.on().text = rf"git switch -d \ghi{{{web_alien}}}"
         command.anchor = "base west"
         command.location = "$(mine-636694f-message.north east) + (17, 26)$"
         command.start = "right=60 of mine-636694f-message.north east"
@@ -564,17 +564,17 @@ class RemoteSlide(Slide):
         my_repo.hi_on(web_alien)
         STEP()
 
-        my_repo.checkout_detached("636694f")
+        my_repo.switch_detached("636694f")
         (my_siciliana := my_files.append(their_siciliana.copy())).mod = "+"
         hi_siciliana = my_files.highlight("siciliana")
         my_readme.mod = "m"
         hi_readme = my_files.highlight("readme")
         STEP()
 
-        command.on().text = r"git checkout \ghi{dev}"
+        command.on().text = r"git switch \ghi{dev}"
         hi_readme.off()
         hi_siciliana.off()
-        my_repo.checkout_branch("dev")
+        my_repo.switch_branch("dev")
         my_repo.hi_off(web_alien)
         my_repo.hi_on("dev")
         my_files.pop(my_siciliana)
@@ -594,7 +594,7 @@ class RemoteSlide(Slide):
         my_repo.hi_off(["HEAD", web_alien])
 
         my_repo.move_branch("dev", c.hash)
-        my_repo.checkout_branch("dev")
+        my_repo.switch_branch("dev")
         my_files.append(my_siciliana).mod = "+"
         my_readme.mod = "m"
         my_repo.hi_on("dev")
@@ -733,10 +733,10 @@ class RemoteSlide(Slide):
         STEP()
         their_pointer.style = ""
 
-        remote.checkout_branch("alien")
+        remote.switch_branch("alien")
         (c_marinara := remote.add_commit(c_marinara.copy()))
         remote.hi_on(c_marinara.hash)
-        remote.checkout_branch("main")
+        remote.switch_branch("main")
         their_repo.remote_to_branch("origin/alien")
         their_repo.hi_off("alien")
         STEP()
@@ -755,10 +755,10 @@ class RemoteSlide(Slide):
         my_repo.hi_off("dev")
         my_pointer.style = ""
 
-        remote.checkout_branch("dev")
+        remote.switch_branch("dev")
         remote.add_commit(c_calzone.copy(), i=2).type = "Y"
         remote.hi_on(c_calzone.hash)
-        remote.checkout_branch("main")
+        remote.switch_branch("main")
         my_repo.remote_to_branch(web_dev)
         STEP()
 
@@ -820,21 +820,21 @@ class RemoteSlide(Slide):
         my_repo.hi_on("HEAD")
         STEP()
 
-        my_command.on().text = rf"git checkout \ghi{{{web_alien}}}"
+        my_command.on().text = rf"git switch -d \ghi{{{web_alien}}}"
         my_command.anchor = "base west"
         my_command.location = "above right=45 and 80 of mine-last"
         my_command.end = "30mm"
         STEP()
 
-        my_repo.checkout_detached("0fcd744")
+        my_repo.switch_detached("0fcd744")
         my_files.pop(my_calzone)
         my_calzone_hi.off()
         my_marinara = my_files.append("marinara.md")
         my_marinara_hi = my_files.highlight("marinara")
         STEP()
 
-        my_command.on().text = r"git checkout \ghi{dev}"
-        my_repo.checkout_branch("dev")
+        my_command.on().text = r"git switch \ghi{dev}"
+        my_repo.switch_branch("dev")
         my_files.pop(my_marinara)
         my_marinara_hi.off()
         my_files.append(my_calzone)
@@ -1179,9 +1179,9 @@ class RemoteSlide(Slide):
         (mf := my_flow).on()
         mf.start, mf.end = "-.70, -.2", mf.start
         mf.side = "left"
-        remote.checkout_branch("dev")
+        remote.switch_branch("dev")
         remote.add_commit(c_merge)
-        remote.checkout_branch("main")
+        remote.switch_branch("main")
         my_repo.remote_to_branch(web_dev)
         [remote.hi_on(k.hash) for k in [c_merge]]
         [r.hi_off("dev") for r in (my_repo, remote)]
@@ -1286,9 +1286,9 @@ class RemoteSlide(Slide):
         [r.hi_off("dev") for r in (my_repo, remote)]
         my_pointer.style = ""
         my_flow.on()
-        remote.checkout_branch("dev")
+        remote.switch_branch("dev")
         remote.add_commit(c_rebased)
-        remote.checkout_branch("main")
+        remote.switch_branch("main")
         my_repo.remote_to_branch(web_dev)
         [r.fade_commit(c_calzone.hash) for r in (remote, my_repo)]
         [remote.hi_on(k.hash) for k in [c_rebased]]
