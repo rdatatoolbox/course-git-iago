@@ -63,6 +63,7 @@
   GithubLogo/github_logo.png,
   GitIcon/git_icon.png,
   GitlabLogo/gitlab_logo.png,
+  CodebergLogo/codeberg_logo.png,
   GitLogo/git_logo.png,
   Hazard/hazard.png,
   Heart/heart.jpg,
@@ -159,20 +160,27 @@
     \node[below=\boffset of rstudio, scale=\LargeScale]
       {RStudio extension};
 
-    \coordinate (tp) at ($(vscode)!.5!(console)$);
-    \node[anchor=north, below=65 of tp] (github)
+    \node[below=100 of vscode, anchor=south] (github)
       {\PicGithubLogo{1.5\U}{!}};
 
-    \coordinate (tp) at ($(console)!.5!(rstudio)$);
-    \node[anchor=north] (gitlab) at (github -| tp)
+    \node[below=80 of console, anchor=south] (gitlab)
       {\PicGitlabLogo{1.5\U}{!}};
+
+    \node[below=105 of rstudio, anchor=south] (codeberg)
+      {\PicCodebergLogo{1\U}{!}};
 
     \begin{scope}[every path/.style={-Stealth, line width=2, Dark4}]
       \draw (vscode.north) -- (git.west);
       \draw (console.north) -- (git.south);
       \draw (rstudio.north) -- (git.east);
-      \draw (github.north) .. controls +(0, 100) .. (git.south west);
-      \draw (gitlab.north) .. controls +(0, 130) .. (git.south east);
+      \draw ($(github.north east) - (30, 0)$) .. controls +(50, 20)
+        and ($(git.south west) - (40, 25)$) .. (git.south west);
+      \draw ($(gitlab.north west) + (15, 0)$) .. controls +(-25, 20)
+        and ($(git.south west) - (40, 25)$) .. (git.south west);
+      \draw ($(codeberg.north west) - (0, 10)$)
+        .. controls +(-50, 20)
+        and ($(git.south east) + (40, -25)$)
+        .. (git.south east);
     \end{scope}
 
     \HighlightShade{git}
@@ -318,7 +326,7 @@
   }
 
   \begin{scope}[local to=Canvas]\begin{pgfonlayer}{background}
-    \node[opacity=.15] (website) at (0, .5) {\PicGitlabLogo{10cm}{!}};
+    \node[opacity=.15] (website) at (0, .5) {\PicCodebergLogo{8cm}{!}};
     \node[opacity=.15] (mymachine) at (-.7, -.6) {\PicMyMachine{75mm}{!}};
     \node[opacity=.15] (theirmachine) at (+.7, -.6) {\PicTheirMachine{75mm}{!}};
   \end{pgfonlayer}\end{scope}

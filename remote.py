@@ -66,7 +66,8 @@ class RemoteSlide(Slide):
         def SPLIT(*args):
             slide[0] = slide[0].split(*args, step=step)
 
-        website = "gitlab"  # (previously 'github')
+        # Remote name.
+        rem = "berg"  # (previously 'github' then 'gitlab')
 
         my_files = step.myfiles
         their_files = step.theirfiles.off()
@@ -127,14 +128,14 @@ class RemoteSlide(Slide):
 
         command_side("left")
         command.location = "0, -.20"
-        command.on().text = rf"git \gkw{{remote add}} \ghi{{{website}}} <url>"
+        command.on().text = rf"git \gkw{{remote add}} \ghi{{{rem}}} <url>"
         STEP()
 
         my_pointer = step.add_epilog(
             RemoteArrow(
                 "above right=25 and 10 of mine-last.east",
                 "remote-HEAD.south west",
-                name=website,
+                name=rem,
                 highlight="-hi",
             )
         )
@@ -148,11 +149,11 @@ class RemoteSlide(Slide):
         STEP()
 
         # First push.
-        command.on().text = rf"git \gkw{{push}} {website} main"
+        command.on().text = rf"git \gkw{{push}} {rem} main"
         command.location = "0, -.25"
         STEP()
 
-        command.on().text = rf"git \gkw{{push}} \ghi{{{website}}} main"
+        command.on().text = rf"git \gkw{{push}} \ghi{{{rem}}} main"
         my_pointer.style = "hi"
         STEP()
         my_pointer.style = ""
@@ -164,7 +165,7 @@ class RemoteSlide(Slide):
                 bend="30",
             )
         )
-        command.on().text = rf"git \gkw{{push}} {website} \ghi{{main}}"
+        command.on().text = rf"git \gkw{{push}} {rem} \ghi{{main}}"
         remote.hi_on("main")
         my_repo.hi_on("main")
         STEP()
@@ -174,7 +175,7 @@ class RemoteSlide(Slide):
         my_flow.end = "left=5 of remote-2-hash.north west"
         my_pointer.end = "above left=4 and 5 of remote-1-hash.south west"
         [remote.hi_on(c) for c in remote.commits]
-        web_main = f"{website}/main"
+        web_main = f"{rem}/main"
         my_repo.add_remote_branch(web_main)
         STEP()
 
@@ -276,7 +277,7 @@ class RemoteSlide(Slide):
         STEP()
 
         # Pushing new commit to remote.
-        command.on().text = rf"git \gkw{{push}} {website} \ghi{{dev}}"
+        command.on().text = rf"git \gkw{{push}} {rem} \ghi{{dev}}"
         STEP()
 
         my_flow.on()
@@ -290,7 +291,7 @@ class RemoteSlide(Slide):
         c = remote.add_commit(c.copy())
         remote.checkout_branch("main")
         remote.hi_on(["dev", c])
-        web_dev = f"{website}/dev"
+        web_dev = f"{rem}/dev"
         my_repo.add_remote_branch(web_dev)
         STEP()
         remote.hi_off(["dev", c])
@@ -343,7 +344,7 @@ class RemoteSlide(Slide):
         STEP()
 
         # Pushing main to remote.
-        command.on().text = rf"git push {website} \ghi{{main}}"
+        command.on().text = rf"git push {rem} \ghi{{main}}"
         command_side("left", 0.20)
         remote.hi_on("main")
         my_flow.on()
@@ -528,7 +529,7 @@ class RemoteSlide(Slide):
         their_opacity()
         STEP()
 
-        command.on().text = rf"git \gkw{{fetch}} {website}"
+        command.on().text = rf"git \gkw{{fetch}} {rem}"
         command_side("left", 0.20)
         my_pointer.style = "hi"
         STEP()
@@ -539,7 +540,7 @@ class RemoteSlide(Slide):
         f.end = "-.8, -.1"
         f.side = "right"
         f.bend = "20"
-        web_alien = f"{website}/alien"
+        web_alien = f"{rem}/alien"
         my_repo.add_remote_branch(web_alien, "aa0299e")
         c = my_repo.add_commit(c.copy(), _branch=web_alien)
         my_repo.hi_on(c)
@@ -607,7 +608,7 @@ class RemoteSlide(Slide):
         STEP()
 
         # Pushing the merge.
-        command.on().text = rf"git \gkw{{push}} {website} \ghi{{dev}}"
+        command.on().text = rf"git \gkw{{push}} {rem} \ghi{{dev}}"
         my_repo.hi_on("dev")
         remote.hi_on("dev")
         f = my_flow.on()
@@ -713,7 +714,7 @@ class RemoteSlide(Slide):
         STEP()
 
         # Both push at the same time.
-        my_command.on().text = f"git push {website} dev"
+        my_command.on().text = f"git push {rem} dev"
         their_command.on().text = "git push origin alien"
         my_command.start = "above right=10 and 70 of mine-last"
         my_command.location = "-.08, -.28"
@@ -785,7 +786,7 @@ class RemoteSlide(Slide):
         my_opacity(1)
         STEP()
 
-        my_command.on().text = rf"git \gkw{{fetch}} {website}"
+        my_command.on().text = rf"git \gkw{{fetch}} {rem}"
         my_command.location = "-.06, -.20"
         my_command.start = "above right=45 and 80 of mine-2"
         STEP()
@@ -915,7 +916,7 @@ class RemoteSlide(Slide):
         STEP()
 
         # Push.
-        left_command.on().text = rf"git push {website} \ghi{{dev}}"
+        left_command.on().text = rf"git push {rem} \ghi{{dev}}"
         left.hi_on(web_dev)
         STEP()
 
@@ -947,7 +948,7 @@ class RemoteSlide(Slide):
         STEP()
 
         # Push.
-        right_command.on().text = rf"git push {website} \ghi{{dev}}"
+        right_command.on().text = rf"git push {rem} \ghi{{dev}}"
         right.hi_on(web_dev)
         STEP()
 
@@ -959,7 +960,7 @@ class RemoteSlide(Slide):
         STEP()
         right.hi_on(web_dev)
 
-        right_command.on().text = rf"git push \gkw{{--force}} {website} \ghi{{dev}}"
+        right_command.on().text = rf"git push \gkw{{--force}} {rem} \ghi{{dev}}"
         STEP()
 
         right.remote_to_branch(web_dev)
@@ -1045,7 +1046,7 @@ class RemoteSlide(Slide):
         STEP()
 
         # Push
-        left_command.on().text = rf"git push {website} \ghi{{dev}}"
+        left_command.on().text = rf"git push {rem} \ghi{{dev}}"
         left.hi_on(web_dev)
         STEP()
 
@@ -1085,7 +1086,7 @@ class RemoteSlide(Slide):
         STEP()
 
         # Force-push
-        right_command.on().text = rf"git push \gkw{{--force}} {website} \ghi{{dev}}"
+        right_command.on().text = rf"git push \gkw{{--force}} {rem} \ghi{{dev}}"
         right.hi_on(web_dev)
         STEP()
 
@@ -1169,7 +1170,7 @@ class RemoteSlide(Slide):
         STEP()
 
         # Push merge commit to remote.
-        my_command.on().text = f"git push {website} dev"
+        my_command.on().text = f"git push {rem} dev"
         my_command.location = "-.01, -.15"
         [r.hi_on("dev") for r in (my_repo, remote)]
         my_pointer.style = "hi"
@@ -1276,7 +1277,7 @@ class RemoteSlide(Slide):
         STEP()
 
         # Push rebased commit to remote.
-        my_command.on().text = rf"git push \gkw{{--force}} {website} \ghi{{dev}}"
+        my_command.on().text = rf"git push \gkw{{--force}} {rem} \ghi{{dev}}"
         my_command.location = ".1, -.20"
         [r.hi_on("dev") for r in (my_repo, remote)]
         my_pointer.style = "hi"
