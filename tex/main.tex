@@ -15,6 +15,7 @@
 \newfontfamily\DroidSansMono{Droid Sans Mono}
 \newcommand{\Code}[1]{{\DroidSansMono#1}}
 
+\usepackage{soul}
 \usepackage{xstring}
 \usepackage{xkeyval}
 \usepackage{etoolbox}
@@ -173,27 +174,24 @@
 \Step[]{1/5}{
   \begin{scope}[inner sep=10]
     \setlength{\U}{75mm}
-    \tikzmath{
-      \boffset = -5;
-    }
 
     \node[anchor=north, below=5 of Canvas.north] (git)
       {\PicGitLogo{\U}{!}};
 
     \node[anchor=north, below=20 of git] (console)
       {\PicConsoleGit{!}{\U}};
-    \node[below=\boffset of console, scale=\LargeScale]
+    \node[below=-5 of console, scale=\LargeScale] (cl)
       {command-line console};
 
     \node[anchor=east, left=30 of console] (vscode)
       {\PicVSCodeExtension{!}{\U}};
-    \node[below=\boffset of vscode, scale=\LargeScale]
+    \node[scale=\LargeScale, anchor=base west] at (vscode.west |- cl.base)
       {VSCode extension};
 
     \node[anchor=west, right=30 of console] (rstudio)
       {\PicRStudioExtension{!}{\U}};
-    \node[below=\boffset of rstudio, scale=\LargeScale]
-      {RStudio extension};
+    \node[scale=\LargeScale, anchor=base east, inner sep=0] at (rstudio.east |- cl.base)
+      {\st{RStudio} Positron extension};
 
     \node[below=100 of vscode, anchor=south] (github)
       {\PicGithubLogo{1.5\U}{!}};
